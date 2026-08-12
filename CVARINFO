@@ -7,3 +7,7 @@ server bool rs_foreignmodels_showall = false;  // include weapons with no slot b
 // Timing is locked after a few observations either way, so both settings are
 // deterministic -- this one just prefers the animation's own pacing.
 server bool rs_foreignmodels_natural = false;
+
+// Learned sequence timings, packed as class:seq:duration:brightTic;...
+// Written once per sequence when its timing locks. Clear it with the menu.
+server string rs_fm_learned = "";

@@ -646,6 +646,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 	RS_ForeignShelf mShelf;   // built once at world-load
 	RS_ForeignClip  mClips;   // our animation clips, per donor
+	RS_ForeignPersist mPersist; // learned timings that survive a restart
 
 	// Live per-hand animation state, and what watching has taught us.
 	RS_ForeignHand  mHandMain;
@@ -691,6 +692,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mClips = new("RS_ForeignClip");
 			mClips.Build();
 		}
+		if (!mPersist) { mPersist = new("RS_ForeignPersist"); mPersist.Load(); }
 		if (!mHandMain) mHandMain = new("RS_ForeignHand");
 		if (!mHandOff)  mHandOff  = new("RS_ForeignHand");
 		mHandMain.Reset();
@@ -936,6 +938,23 @@ class RS_ForeignModelHandler : StaticEventHandler
 			if (li >= 0) { seq = mLearned[li].seq; D = mLearned[li].observedTics; shotTic = mLearned[li].brightTic; }
 			else          seq = "fire";   // unlearned: fire is the better bet than a frozen pose
 
+			// FIRST RUN OF A SESSION, ON A WEAPON WE ALREADY KNOW.
+			//
+			// The runtime entry does not exist until this sequence has
+			// finished once, so without this the very first reload after
+			// loading the game plays at natural rate even though the timing
+			// was worked out days ago. The archive is keyed by name rather
+			// than by pointer precisely so it can be consulted here, before
+			// any pointer has been associated with anything.
+			if (li < 0 && D <= 0 && mPersist && hs.liveSeq.Length() > 0)
+			{
+				int pd, pb;
+				if (mPersist.Get(w.GetClassName(), hs.liveSeq, pd, pb))
+				{
+					seq = hs.liveSeq; D = pd; shotTic = pb;
+				}
+			}
+
 			// What the weapon has actually DONE this run outranks anything
 			// remembered from a previous one. A weapon whose fire and reload
 			// share an entry state -- common where reload is reached by a
@@ -1074,6 +1093,21 @@ class RS_ForeignModelHandler : StaticEventHandler
 			L.entry   = hs.entry;
 			L.seq     = GuessSeq(hs, w);
 			L.plays   = 0;
+
+			// Seen this weapon's sequence in a previous session? Then it is
+			// already known and arrives locked -- no relearning, no first few
+			// reloads at the wrong pace.
+			if (mPersist)
+			{
+				int pd, pb;
+				if (mPersist.Get(L.clsName, L.seq, pd, pb))
+				{
+					L.observedTics = pd;
+					L.brightTic    = pb;
+					L.plays        = 3;   // already locked
+				}
+			}
+
 			mLearned.Push(L);
 			li = mLearned.Size() - 1;
 		}
@@ -1087,6 +1121,26 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mLearned[li].observedTics = 0;
 			mLearned[li].brightTic    = -1;
 		}
+		// REJECT RUNS THAT WERE NOT REAL.
+		//
+		// The estimate is the shortest run seen, which makes it exactly as
+		// good as the worst outlier. A reload cancelled two tics in by
+		// switching weapons, or a fire loop clipped by running out of ammo,
+		// would become the new "shortest" and every subsequent play would be
+		// crushed into a fraction of its proper length.
+		//
+		// Two guards. A run has to be long enough to be plausible at all, and
+		// once an estimate exists a run has to be within reach of it -- a
+		// quarter is generous for genuine variation (a one-shell top-up
+		// against a full tube reload) and still rejects a cancel.
+		if (hs.elapsed < 3) { mLearned[li].plays++; return; }
+		if (mLearned[li].observedTics > 0
+		 && hs.elapsed * 4 < mLearned[li].observedTics)
+		{
+			mLearned[li].plays++;
+			return;
+		}
+
 		// LEARN, THEN LOCK.
 		//
 		// The timing used to be refitted on every single play, and THAT is
@@ -1109,6 +1163,13 @@ class RS_ForeignModelHandler : StaticEventHandler
 		{
 			if (mLearned[li].observedTics <= 0 || hs.elapsed < mLearned[li].observedTics)
 				mLearned[li].observedTics = hs.elapsed;
+		}
+		else if (mLearned[li].plays == LOCK_AFTER && mPersist)
+		{
+			// Just locked: archive it, keyed by something that survives a
+			// restart. Written once per sequence, ever.
+			mPersist.Store(mLearned[li].clsName, mLearned[li].seq,
+			               mLearned[li].observedTics, mLearned[li].brightTic);
 		}
 
 		if (hs.sawBrightAt >= 0) mLearned[li].brightTic = hs.sawBrightAt;
@@ -1247,6 +1308,18 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// Re-run the scan without reloading the map. Pinned rows keep their
 		// player-chosen family and models; everything else re-guesses.
 		if (e.name == "rs-fm-rescan") { Rescan(); return; }
+
+		// Throw away every learned timing, this session's and the archive's.
+		// For when a mod is updated and its weapons no longer behave the way
+		// they did when this was measured.
+		if (e.name == "rs-fm-forget")
+		{
+			mLearned.Clear();
+			if (mPersist) mPersist.Forget();
+			if (mHandMain) mHandMain.Reset();
+			if (mHandOff)  mHandOff.Reset();
+			return;
+		}
 
 		if (e.name != "rs-fm-cycle") return;
 		if (multiplayer) return;   // row indices are per-client; see WorldTick

@@ -32,6 +32,11 @@ OptionMenu "RSFM_Main"
     StaticText "Re-reads the loaded mod. Models you picked are kept.", "DarkGray"
     StaticText " "
 
+    Command  "Forget Learned Timing", "netevent rs-fm-forget"
+    StaticText "Animation timings are measured by watching, then kept between", "DarkGray"
+    StaticText "sessions. Clear them if a mod update changed how a weapon moves.", "DarkGray"
+    StaticText " "
+
     Option "List Unbound Weapons", "rs_foreignmodels_showall", "OnOff"
     StaticText "Turn on if the weapon list comes up empty.", "DarkGray"
 }
