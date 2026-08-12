@@ -500,28 +500,24 @@ class RS_ForeignScanner
 	{
 		outList.Clear();
 
-		// ITERATE THE MOD'S DECLARATIONS, NOT AllActorClasses.
+		// THE ONLY SOURCE IS THE MOD'S OWN DECLARATIONS.
 		//
-		// This used to walk every class the engine compiled -- Heretic, Hexen,
-		// Strife, Chex, hundreds of them -- and filter back down. That is
-		// backwards: the default was five hundred rows and correctness
-		// depended on a filter working. Every time the filter broke, and it
-		// broke three times, the menu filled with weapons from games nobody
-		// was playing.
+		// There is deliberately no fallback to AllActorClasses. That fallback
+		// existed for the bare-IWAD case and it was the last remaining way for
+		// the engine's Heretic, Hexen, Strife and Chex arsenals -- five
+		// hundred weapons from games nobody is playing -- to reach the menu.
+		// Any failure in the source parse would silently take it.
 		//
-		// Read the mod's own DECORATE/ZSCRIPT declarations and look up only
-		// those. A failure now yields an EMPTY list, which is obvious and
-		// harmless, rather than the engine's entire back catalogue.
-		bool useSrc = (src && src.Usable());
-		int n = useSrc ? src.Count() : AllActorClasses.Size();
+		// If the parse finds nothing, this list is EMPTY. That is obvious the
+		// moment you open the menu and it points straight at the real fault,
+		// instead of burying the mod's twenty weapons under everything id and
+		// Raven ever shipped. A bare IWAD has no foreign weapons to model
+		// anyway, so nothing is lost.
+		if (!src) return;
+		int n = src.Count();
 		for (int i = 0; i < n; ++i)
 		{
-			// The candidate comes from the MOD'S OWN declaration list when we
-			// have one. AllActorClasses is only the fallback for a bare IWAD.
-			class<Weapon> type;
-			if (useSrc) type = (class<Weapon>)(src.Name(i));
-			else        type = (class<Weapon>)(AllActorClasses[i]);
-
+			class<Weapon> type = (class<Weapon>)(src.Name(i));
 			if (type == null || type == "Weapon") continue;
 
 			readonly<Weapon> def = GetDefaultByType(type);
