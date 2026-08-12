@@ -604,7 +604,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 	static RS_ForeignModelHandler Get()
 	{
-		return RS_ForeignModelHandler(EventHandler.Find("RS_ForeignModelHandler"));
+		return RS_ForeignModelHandler(StaticEventHandler.Find("RS_ForeignModelHandler"));
 	}
 
 	override void WorldLoaded(WorldEvent e)

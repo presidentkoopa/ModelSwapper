@@ -42,7 +42,7 @@ class RS_Menu_ForeignModels : OptionMenu
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
 			"Foreign Weapon Models", Font.CR_GOLD));
 
-		let h = RS_ForeignModelHandler(EventHandler.Find("RS_ForeignModelHandler"));
+		let h = RS_ForeignModelHandler(StaticEventHandler.Find("RS_ForeignModelHandler"));
 		if (!h || h.EntryCount() == 0)
 		{
 			desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
@@ -201,7 +201,7 @@ class OptionMenuItemRS_ForeignRow : OptionMenuItem
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		let h = RS_ForeignModelHandler(EventHandler.Find("RS_ForeignModelHandler"));
+		let h = RS_ForeignModelHandler(StaticEventHandler.Find("RS_ForeignModelHandler"));
 		if (!h) return indent;
 
 		// Re-read every frame so a cycled value updates without a rebuild.
@@ -254,7 +254,7 @@ class RS_Menu_ForeignReport : OptionMenu
 
 	void Build(OptionMenuDescriptor desc)
 	{
-		let h = RS_ForeignModelHandler(EventHandler.Find("RS_ForeignModelHandler"));
+		let h = RS_ForeignModelHandler(StaticEventHandler.Find("RS_ForeignModelHandler"));
 
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
 			"Scan Report", Font.CR_GOLD));
