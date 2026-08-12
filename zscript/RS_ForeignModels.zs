@@ -583,24 +583,29 @@ class RS_ForeignScanner
 				if (located) e.slot = sl;
 			}
 
-			// DO NOT REJECT ON !located. It looks like a clean way to keep the
-			// Heretic/Hexen/Strife weapons GZDoom compiles into every session
-			// out of the picker -- and it silently returns an EMPTY LIST on
-			// Golden Souls.
-			//
-			// GS binds its whole arsenal through Player.WeaponSlot on its own
-			// player class and sets no Weapon.SlotNumber anywhere. Load RS_Main
-			// too and its MAPINFO PlayerClasses key CLEARS the class list
-			// before adding its own, so GS's player class never spawns, the
-			// slot table is read from RS_GH_Weaponset instead, AddExtraWeapons
-			// never picks the GS weapons up either, and LocateWeapon comes back
-			// false for every single one. Every weapon gets skipped and the
-			// feature does nothing at all, with no error.
-			//
-			// So keep it as INFORMATION, not a filter: the picker dims unbound
-			// rows and sorts them last. (Ashes is unaffected either way -- it
-			// puts weapon.slotnumber on each weapon.)
 			e.located = located;
+
+			// CAN THE PLAYER ACTUALLY SELECT THIS WEAPON?
+			//
+			// That is the only question worth asking, and the slot table is
+			// the answer. GZDoom compiles the Heretic, Hexen, Strife and Chex
+			// arsenals into every session out of game_support.pk3 -- Timon's
+			// Axe, Quietus, Bloodscourge, the Sigil, the Calamity Blade -- and
+			// none of them are obtainable in a Doom game. Listing them buried
+			// the actual mod's weapons under forty rows of noise.
+			//
+			// Filtering them by class NAME cannot work: there are hundreds and
+			// the list would rot the moment anything was added. Filtering on
+			// "is it bound to one of this player's weapon slots" is structural,
+			// needs no names, and is exactly the property that matters.
+			//
+			// Escape hatch, because a mod could in principle grant a weapon
+			// with no slot binding at all: rs_foreignmodels_showall.
+			if (!located)
+			{
+				CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
+				if (!sa || !sa.GetBool()) continue;
+			}
 
 			string ammo1 = "", ammo2 = "";
 			if (def.AmmoType1 != null) ammo1 = "" .. def.AmmoType1.GetClassName();
