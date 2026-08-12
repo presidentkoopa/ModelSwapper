@@ -476,46 +476,6 @@ class RS_ForeignScanner
 		     || cn.IndexOf("VR_") == 0 || cn.IndexOf("Vanilla_") == 0);
 	}
 
-	// Weapons GZDoom compiles into EVERY session regardless of what is loaded.
-	// Heretic, Hexen, Strife and Chex Quest arsenals are all present in a Doom
-	// game, unobtainable, and they buried the picker: forty rows of Zorch
-	// Propulsors and Bootspoons above the weapons the player actually has.
-	//
-	// Skipping them by exact class name is safe in a way that skipping "IWAD
-	// weapons" generally is not. A mod that replaces Doom's Shotgun defines a
-	// NEW class with its own name -- "AshesShotgun replaces Shotgun" -- which
-	// is not on this list and is still scanned. The only thing dropped is the
-	// literal built-in, which in that situation never spawns anyway.
-	static bool IsEngineBuiltin(string cn)
-	{
-		static const string BUILTIN[] = {
-			// Doom
-			"Fist", "Chainsaw", "Pistol", "Shotgun", "SuperShotgun", "Chaingun",
-			"RocketLauncher", "PlasmaRifle", "BFG9000", "DoomWeapon",
-			// Heretic
-			"HereticWeapon", "Staff", "StaffPowered", "GoldWand", "GoldWandPowered",
-			"Crossbow", "CrossbowPowered", "Gauntlets", "GauntletsPowered",
-			"Mace", "MacePowered", "Blaster", "BlasterPowered", "SkullRod",
-			"SkullRodPowered", "PhoenixRod", "PhoenixRodPowered", "Beak", "BeakPowered",
-			// Hexen
-			"FighterWeapon", "ClericWeapon", "MageWeapon", "Snout",
-			"CWeapMace", "CWeapStaff", "CWeapFlame", "CWeapWraithverge",
-			"MWeapWand", "MWeapFrost", "MWeapLightning", "MWeapBloodscourge",
-			"FWeapFist", "FWeapAxe", "FWeapHammer", "FWeapQuietus",
-			// Strife
-			"StrifeWeapon", "PunchDagger", "StrifeCrossbow", "StrifeCrossbow2",
-			"AssaultGun", "AssaultGunStanding", "MiniMissileLauncher", "FlameThrower",
-			"StrifeGrenadeLauncher", "StrifeGrenadeLauncher2", "Mauler", "Mauler2",
-			"Sigil", "Sigil1", "Sigil2", "Sigil3", "Sigil4", "Sigil5",
-			// Chex Quest
-			"MiniZorcher", "LargeZorcher", "SuperLargeZorcher", "RapidZorcher",
-			"ZorchPropulsor", "PhasingZorcher", "LAZDevice", "Bootspoon",
-			"SuperBootspork"
-		};
-		for (int i = 0; i < BUILTIN.Size(); ++i)
-			if (cn == BUILTIN[i]) return true;
-		return false;
-	}
 
 	// Does this class already carry a HUD model of its own? Never paint over a
 	// mod that shipped 3D weapons.
@@ -536,9 +496,16 @@ class RS_ForeignScanner
 	}
 
 	// -----------------------------------------------------------------
-	static void Scan(in out Array<RS_ForeignEntry> outList)
+	static void Scan(in out Array<RS_ForeignEntry> outList, RS_ForeignSource src)
 	{
 		outList.Clear();
+
+		// Only the weapons the loaded mod actually DECLARED. Read out of its
+		// own DECORATE/ZSCRIPT lumps -- see RS_ForeignSource. Without this the
+		// list is four hundred rows of Heretic, Hexen, Strife and Chex weapons
+		// that GZDoom compiles into every session and nobody can obtain.
+		bool useSrc = (src && src.Usable());
+
 		int n = AllActorClasses.Size();
 		for (int i = 0; i < n; ++i)
 		{
@@ -554,9 +521,9 @@ class RS_ForeignScanner
 			string lcn = cn; lcn = lcn.MakeLower();
 			if (lcn.IndexOf("random") == 0) continue;   // RandomSpawner-style
 
-			// The engine's own Heretic/Hexen/Strife/Chex arsenals. Present in
-			// every session, obtainable in none of them.
-			if (RS_ForeignScanner.IsEngineBuiltin(cn))
+			// Not declared by the mod we are loaded with -- it belongs to some
+			// other game the engine happens to compile in. showall overrides.
+			if (useSrc && !src.Declares(cn))
 			{
 				CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
 				if (!sa || !sa.GetBool()) continue;
@@ -584,28 +551,6 @@ class RS_ForeignScanner
 			}
 
 			e.located = located;
-
-			// CAN THE PLAYER ACTUALLY SELECT THIS WEAPON?
-			//
-			// That is the only question worth asking, and the slot table is
-			// the answer. GZDoom compiles the Heretic, Hexen, Strife and Chex
-			// arsenals into every session out of game_support.pk3 -- Timon's
-			// Axe, Quietus, Bloodscourge, the Sigil, the Calamity Blade -- and
-			// none of them are obtainable in a Doom game. Listing them buried
-			// the actual mod's weapons under forty rows of noise.
-			//
-			// Filtering them by class NAME cannot work: there are hundreds and
-			// the list would rot the moment anything was added. Filtering on
-			// "is it bound to one of this player's weapon slots" is structural,
-			// needs no names, and is exactly the property that matters.
-			//
-			// Escape hatch, because a mod could in principle grant a weapon
-			// with no slot binding at all: rs_foreignmodels_showall.
-			if (!located)
-			{
-				CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
-				if (!sa || !sa.GetBool()) continue;
-			}
 
 			string ammo1 = "", ammo2 = "";
 			if (def.AmmoType1 != null) ammo1 = "" .. def.AmmoType1.GetClassName();
@@ -642,6 +587,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 	RS_ForeignShelf mShelf;   // built once at world-load
 	RS_ForeignClip  mClips;   // our animation clips, per donor
+	RS_ForeignSource mSource; // what the loaded mod declared
 
 	// Live per-hand animation state, and what watching has taught us.
 	RS_ForeignHand  mHandMain;
@@ -696,7 +642,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 		for (int i = 0; i < mEntries.Size(); ++i)
 			if (mEntries[i].pinned) keep.Push(mEntries[i]);
 
-		RS_ForeignScanner.Scan(mEntries);
+		if (!mSource) { mSource = new("RS_ForeignSource"); mSource.Build(); }
+		RS_ForeignScanner.Scan(mEntries, mSource);
 
 		for (int k = 0; k < keep.Size(); ++k)
 		{
