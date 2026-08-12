@@ -305,10 +305,28 @@ class RS_ForeignHand
 	// a weapon play the reload animation instead of the fire one.
 	string liveSeq;
 
+	// GAP GLUE. Consecutive tics spent idle while a sequence is still, in
+	// truth, running. Brutal Doom's shotgun calls A_WeaponReady for five tics
+	// inside EVERY shell insertion, so an eight-shell reload looks like eight
+	// separate sequences and the model replays the first fifth of the reload
+	// eight times, snapping to rest between each. A short idle gap is part of
+	// the action, not the end of it.
+	int idleRun;
+
+	// Ammo at the last observed change, for spotting a NEW shot inside a run
+	// that never returned to idle -- held fire, A_Refire, autofire loops.
+	int ammoMark;
+
+	// Alt-fire was held when this sequence began. The only thing that can
+	// distinguish an alt-fire sequence from a primary one when both leave
+	// idle the same way.
+	bool altHeld;
+
 	void Reset()
 	{
 		lastCaller = null; lastState = null; predictedNext = null;
 		entry = null; lastTics = 0; elapsed = 0; sawBrightAt = -1;
 		ammoAtEntry = -1; ammo2AtEntry = -1; liveSeq = "";
+		idleRun = 0; ammoMark = -1; altHeld = false;
 	}
 }

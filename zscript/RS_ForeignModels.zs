@@ -881,9 +881,26 @@ class RS_ForeignModelHandler : StaticEventHandler
 		}
 		else if (idle && hs.entry)
 		{
-			// Came back to idle: the sequence just finished. Learn it.
-			Commit(hs, w);
-			hs.entry = null;
+			// GAP GLUE -- do not end a sequence on the first idle tic.
+			//
+			// Brutal Doom's shotgun calls A_WeaponReady for five tics inside
+			// EVERY shell insertion. Treating that as the end meant an
+			// eight-shell reload was eight sequences: the model replayed the
+			// first fifth of the reload clip eight times and snapped back to
+			// rest between each. Trailblazer's ChromeJustice does it ten
+			// times. A brief idle gap is part of the action, not the end of
+			// it.
+			//
+			// The cost is that a real return to idle is noticed six tics
+			// late, so the ready pose starts a fifth of a second after the
+			// action finishes. Invisible next to an eightfold stutter.
+			hs.idleRun++;
+			hs.elapsed++;
+			if (hs.idleRun >= 6)
+			{
+				Commit(hs, w);
+				hs.entry = null;
+			}
 		}
 		else if (!idle && !hs.entry)
 		{
@@ -893,14 +910,46 @@ class RS_ForeignModelHandler : StaticEventHandler
 			hs.elapsed      = 0;
 			hs.sawBrightAt  = -1;
 			hs.liveSeq      = "";
+			hs.idleRun      = 0;
 			hs.ammoAtEntry  = (w.Ammo1 ? w.Ammo1.Amount : -1);
 			hs.ammo2AtEntry = (w.Ammo2 ? w.Ammo2.Amount : -1);
+			hs.ammoMark     = hs.ammoAtEntry;
+
+			// Alt-fire held at the start is the only thing that separates an
+			// alt-fire from a primary when both leave idle identically. The
+			// clip table already carries eleven altfire rows that nothing
+			// could reach until now.
+			hs.altHeld = (pi.cmd.buttons & BT_ALTATTACK) != 0;
+		}
+		else if (!idle && hs.entry)
+		{
+			hs.idleRun = 0;   // still going; any glue accrued was a gap
 		}
 
-		if (hs.entry)
+		if (hs.entry && !idle)
 		{
 			hs.elapsed++;
 			if (cur && cur.bFullbright && hs.sawBrightAt < 0) hs.sawBrightAt = hs.elapsed;
+
+			// RE-TRIGGER, DO NOT SMEAR.
+			//
+			// Held fire never returns to idle: A_Refire and its hand-rolled
+			// equivalents keep one sequence running for as long as the trigger
+			// is down. Stretching one clip across that ran an eight-frame
+			// recoil over five seconds -- the chaingun kicking in visible slow
+			// motion, once, while the real weapon cycled ten times a second.
+			//
+			// A fresh ammo decrement is a fresh shot. Restart the clip on it
+			// and held fire becomes a repeating cycle at the mod's own
+			// cadence, which is what it looks like.
+			int nowAmmo = (w.Ammo1 ? w.Ammo1.Amount : -1);
+			if (hs.liveSeq == "fire" && nowAmmo >= 0 && hs.ammoMark >= 0
+			 && nowAmmo < hs.ammoMark && hs.elapsed > 2)
+			{
+				hs.elapsed     = 1;
+				hs.sawBrightAt = -1;
+			}
+			if (nowAmmo >= 0) hs.ammoMark = nowAmmo;
 
 			// SETTLE THE SEQUENCE WHILE IT IS STILL RUNNING.
 			//
@@ -921,7 +970,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 					hs.liveSeq = "reload";
 				else if ((hs.ammoAtEntry  >= 0 && a1 < hs.ammoAtEntry)
 				      || (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry))
-					hs.liveSeq = "fire";
+					hs.liveSeq = hs.altHeld ? "altfire" : "fire";
 			}
 		}
 		hs.lastState  = cur;
@@ -936,7 +985,22 @@ class RS_ForeignModelHandler : StaticEventHandler
 		{
 			int li = FindLearned(w.GetClassName(), hs.entry);
 			if (li >= 0) { seq = mLearned[li].seq; D = mLearned[li].observedTics; shotTic = mLearned[li].brightTic; }
-			else          seq = "fire";   // unlearned: fire is the better bet than a frozen pose
+			else
+			{
+				// UNLEARNED AND NOTHING PROVEN YET -- hold the rest pose.
+				//
+				// This used to default to "fire", which meant every melee
+				// swing, kick, taunt, scope-in and mode toggle played the
+				// firing animation the first time it was ever seen -- and
+				// then Commit() learned "fire" for it permanently. Brutal
+				// Doom alone inherits kick, slide attack, taunt and execution
+				// onto all 37 of its weapons.
+				//
+				// A weapon at rest during an action we cannot identify is
+				// wrong quietly. A weapon miming a gunshot while you kick
+				// something is wrong loudly, and then stays wrong.
+				seq = "ready";
+			}
 
 			// FIRST RUN OF A SESSION, ON A WEAPON WE ALREADY KNOW.
 			//
@@ -1133,6 +1197,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// once an estimate exists a run has to be within reach of it -- a
 		// quarter is generous for genuine variation (a one-shell top-up
 		// against a full tube reload) and still rejects a cancel.
+		// The trailing idle gap that the glue kept alive is not part of the
+		// action; counting it would inflate every learned duration by six.
+		if (hs.idleRun > 0) hs.elapsed -= hs.idleRun;
+
 		if (hs.elapsed < 3) { mLearned[li].plays++; return; }
 		if (mLearned[li].observedTics > 0
 		 && hs.elapsed * 4 < mLearned[li].observedTics)
@@ -1187,10 +1255,14 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int a1 = (w.Ammo1 ? w.Ammo1.Amount : -1);
 		int a2 = (w.Ammo2 ? w.Ammo2.Amount : -1);
 
+		// Anything the run PROVED outranks a fresh reading -- liveSeq already
+		// applied the alt-fire distinction and the UP-before-DOWN priority.
+		if (hs.liveSeq.Length() > 0) return hs.liveSeq;
+
 		if (hs.ammoAtEntry >= 0 && a1 > hs.ammoAtEntry)  return "reload";
 		if (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry) return "reload";
-		if (hs.ammoAtEntry >= 0 && a1 < hs.ammoAtEntry)  return "fire";
-		if (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry) return "fire";
+		if (hs.ammoAtEntry >= 0 && a1 < hs.ammoAtEntry)  return hs.altHeld ? "altfire" : "fire";
+		if (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry) return hs.altHeld ? "altfire" : "fire";
 		if (hs.sawBrightAt >= 0) return "fire";
 		return "ready";
 	}
