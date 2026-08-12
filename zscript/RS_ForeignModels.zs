@@ -102,7 +102,7 @@ class RS_ForeignShelf
 			"supershotgun|RS_GH_SSG|HBSS|0|1|52",
 			"supershotgun|VR_SuperShotgun|SHT2|0|0|26",
 			"supershotgun|RS_PS_SSG|SSGG|0|0|12",
-			"chaingun|RS_GH_Machinegun|HBMG|0|4|36",
+			"machinegun|RS_GH_Machinegun|HBMG|0|4|36",
 			"chaingun|RS_GH_Minigun|HBMN|0|4|16",
 			"chaingun|VR_Chaingun|CHGG|0|4|16",
 			"chaingun|RS_PS_Chaingun|MGUG|0|0|6",
@@ -151,7 +151,7 @@ class RS_ForeignShelf
 			"smg|MS_GH_MP40|CHGG|0|2|14",
 			"chaingun|MS_GH_Minigun|CHGG|0|4|16",
 			"shotgun|MS_GH_AutoShotgun|SHTG|0|4|32",
-			"rocket|MS_GH_GrenadeLauncher|MISG|0|3|33",
+			"launcher|MS_GH_GrenadeLauncher|MISG|0|3|33",
 			"plasma|MS_GH_Plasma|PLSG|0|4|30",
 			"railgun|MS_GH_Railgun|PLSG|0|3|37",
 			"melee|MS_GH_Fist|PUNG|0|0|75",
@@ -159,6 +159,9 @@ class RS_ForeignShelf
 			// ---- MeatGrinder set. Nine models in 6MB, and a grittier look
 			// than either of the others -- the cheapest breadth on offer.
 			"melee|MS_MG_Knife|PUNG|0|0|9",
+
+			// ---- axe/blade: a held edge, not a bare hand ----
+			"axe|MS_MG_Knife|PUNG|0|0|9",
 
 			// ---- thrown explosives ----
 			// A hand grenade is not a rocket launcher. Every mod with a frag
@@ -205,7 +208,7 @@ class RS_ForeignShelf
 			"rifle|MS_BW_STG44|CHGG|0|13|51",
 			"smg|MS_BW_MP40|CHGG|0|13|48",
 			"smg|MS_BW_Thompson|CHGG|0|1|53",
-			"chaingun|MS_BW_MG42|CHGG|0|12|97",
+			"machinegun|MS_BW_MG42|CHGG|0|12|97",
 			"shotgun|MS_BW_Trenchgun|SHTG|0|1|47",
 			"flamethrower|MS_BW_Flamethrower|PLSG|0|0|15",
 
@@ -229,9 +232,8 @@ class RS_ForeignShelf
 			// Brutal Wolfenstein.
 			"supershotgun|MS_GH_SSG|SHT2|0|1|52",
 			"shotgun|MS_GH_PumpShotgun|SHTG|0|4|36",
-			"chaingun|MS_GH_Machinegun|CHGG|0|4|36",
-			"bfg|MS_GH_Unmaker|BFGG|0|0|16",
-			"plasma|MS_GH_Unmaker|BFGG|0|0|16",
+			"machinegun|MS_GH_Machinegun|CHGG|0|4|36",
+			"unmaker|MS_GH_Unmaker|BFGG|0|0|16",
 			"smg|MS_SMG|CHGG|0|3|27"
 		};
 		mRows.Clear();
@@ -261,8 +263,12 @@ class RS_ForeignShelf
 	static string FallbackArchetype(string a)
 	{
 		if (a == "saw")          return "melee";
+		if (a == "axe")          return "melee";
 		if (a == "grenade")      return "rocket";
 		if (a == "sniper")       return "rifle";
+		if (a == "machinegun")  return "chaingun";
+		if (a == "launcher")    return "rocket";
+		if (a == "unmaker")     return "bfg";
 		if (a == "smg")          return "pistol";
 		if (a == "railgun")      return "rifle";
 		if (a == "revolver")     return "pistol";
@@ -483,8 +489,19 @@ class RS_ForeignScanner
 		 || hay.IndexOf("mac10") >= 0 || hay.IndexOf("mac-10") >= 0
 		 || hay.IndexOf("uzi") >= 0 || hay.IndexOf("mp40") >= 0
 		 || hay.IndexOf("tec9") >= 0 || hay.IndexOf("sten") >= 0) return "smg";
+		// MACHINEGUN before CHAINGUN. A fixed single barrel on a bipod (an
+		// MG42, a GH machinegun) is a different weapon from a rotating
+		// barrel cluster (a minigun, a Vulcan/gatling chaingun) -- neither
+		// looks nor handles like the other, and "machinegun" was folding
+		// into "chaingun" and getting a rotary barrel welded onto a fixed one.
+		if (hay.IndexOf("machinegun") >= 0 || hay.IndexOf("machine gun") >= 0
+		 || hay.IndexOf("mg42") >= 0 || hay.IndexOf("lmg") >= 0
+		 || hay.IndexOf("bipod") >= 0
+		 || hay.IndexOf("m249") >= 0 || hay.IndexOf("m60") >= 0) return "machinegun";
+
 		if (hay.IndexOf("chaingun") >= 0 || hay.IndexOf("minigun") >= 0
-		 || hay.IndexOf("gatling") >= 0 || hay.IndexOf("machinegun") >= 0) return "chaingun";
+		 || hay.IndexOf("gatling") >= 0 || hay.IndexOf("vulcan") >= 0
+		 || hay.IndexOf("rotary") >= 0) return "chaingun";
 		// SNIPER before RIFLE -- a scoped bolt-action reads nothing like an
 		// assault rifle, and "sniper rifle" contains "rifle".
 		if (hay.IndexOf("sniper") >= 0 || hay.IndexOf("marksman") >= 0
@@ -500,14 +517,28 @@ class RS_ForeignScanner
 		// pipebomb/dynamite before any "pipe" melee token.
 		// BFG and RAILGUN must be tested BEFORE the rocket line, because
 		// "launcher" lives there and would eat BFGLauncher / RailLauncher.
+		// UNMAKER before BFG/PLASMA. Doom 64's Unmaker and Brutal Doom v22's
+		// own version of it are a named, specific superweapon -- not "a BFG"
+		// and not "a plasma gun", a thing modders who include one clearly
+		// mean deliberately. It deserves to be recognised as itself rather
+		// than folded into whichever energy-weapon shelf it resembled least
+		// badly.
+		if (hay.IndexOf("unmaker") >= 0) return "unmaker";
 		if (hay.IndexOf("bfg") >= 0) return "bfg";
 		// "rail" alone false-positives on guardrail/trail/derail.
 		if (hay.IndexOf("railgun") >= 0 || hay.IndexOf("rail gun") >= 0
 		 || hay.IndexOf("railrifle") >= 0) return "railgun";
 		if (hay.IndexOf("flame") >= 0 || hay.IndexOf("thrower") >= 0) return "flamethrower";
-		// LAUNCHED before THROWN. "Grenade launcher" is a rocket; a grenade is
-		// a grenade, and the two share a word. Anything that launches or fires
-		// takes the rocket branch first.
+		// LAUNCHED-GRENADE before ROCKET before THROWN. Three weapons share
+		// the word "grenade" and none of them look alike: a break-action
+		// tube fired from the shoulder (an M79) is not a rocket launcher and
+		// is not a hand-thrown frag. The specific combination has to be
+		// tested first or "launcher" alone eats it into rocket.
+		if (hay.IndexOf("grenadelauncher") >= 0 || hay.IndexOf("grenade launcher") >= 0
+		 || hay.IndexOf("m79") >= 0 || hay.IndexOf("40mm") >= 0
+		 || hay.IndexOf("underslung") >= 0 || hay.IndexOf("underbarrel") >= 0
+		 || hay.IndexOf("m203") >= 0) return "launcher";
+
 		if (hay.IndexOf("rocket") >= 0 || hay.IndexOf("launcher") >= 0
 		 || hay.IndexOf("bazooka") >= 0 || hay.IndexOf("mortar") >= 0
 		 || hay.IndexOf("napalm") >= 0) return "rocket";
@@ -536,9 +567,16 @@ class RS_ForeignScanner
 		if (hay.IndexOf("chainsaw") >= 0 || hay.IndexOf("chain saw") >= 0
 		 || hay.IndexOf("buzzsaw")  >= 0 || hay.IndexOf("sawblade") >= 0
 		 || hay.IndexOf("ripper")   >= 0) return "saw";
+		// AXE/BLADE before bare-hand melee. A hatchet, machete or combat knife
+		// is a held edge with reach and a swing arc -- nothing like a fist,
+		// and it was defaulting to one.
+		if (hay.IndexOf("axe") >= 0 || hay.IndexOf("hatchet") >= 0
+		 || hay.IndexOf("tomahawk") >= 0 || hay.IndexOf("machete") >= 0
+		 || hay.IndexOf("knife") >= 0 || hay.IndexOf("dagger") >= 0
+		 || hay.IndexOf("blade") >= 0) return "axe";
+
 		if (hay.IndexOf("fist") >= 0
 		 || hay.IndexOf("punch") >= 0 || hay.IndexOf("knuckle") >= 0
-		 || hay.IndexOf("machete") >= 0 || hay.IndexOf("knife") >= 0
 		 || hay.IndexOf("crowbar") >= 0 || hay.IndexOf("whip") >= 0
 		 || hay.IndexOf("jackhammer") >= 0 || hay.IndexOf("wrench") >= 0
 		 || hay.IndexOf("shovel") >= 0) return "melee";
@@ -1364,6 +1402,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			"pistol", "revolver", "smg", "rifle", "shotgun", "supershotgun",
 			"chaingun", "rocket", "plasma", "railgun", "flamethrower",
 			"bfg", "melee", "saw", "grenade", "sniper",
+			"machinegun", "launcher", "unmaker", "axe",
 			// Last, so cycling forward through the sensible families reaches
 			// it only after they are exhausted -- but it is one step BACK
 			// from "pistol", which is where most weapons start.
