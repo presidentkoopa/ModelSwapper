@@ -345,11 +345,23 @@ class RS_ForeignScanner
 		     || cn.IndexOf("Vanilla_") == 0);
 	}
 
-	// NOTE: there is deliberately no HasOwnModel() here. ZScript exposes no
-	// way to ask whether a class already has a MODELDEF binding (the engine
-	// keeps that in FSpriteModelFrame/hasmodel, native-side only), so a mod
-	// that already ships 3D weapons WILL get painted over. Skipping those
-	// needs an engine accessor -- see the notes on the model-frame work.
+	// Does this class already carry a HUD model of its own? Never paint over a
+	// mod that shipped 3D weapons.
+	//
+	// hasmodel is set on the CLASS DEFAULTS by the MODELDEF parser and is the
+	// same flag FindModelFrameRaw gates on, so it answers exactly the right
+	// question. It is an RS-fork export (FORK_CHANGES.md §15); on stock GZDoom
+	// this is not answerable from ZScript at all.
+	//
+	// READ IT OFF THE DEFAULTS, NEVER OFF A LIVE ACTOR. A_ChangeModel sets
+	// hasmodel on the instance as a side effect, so an instance read reports
+	// true for every weapon we already painted -- and the second scan would
+	// skip everything the first one bound.
+	static bool HasOwnModel(class<Weapon> type)
+	{
+		readonly<Actor> def = GetDefaultByType(type);
+		return (def && def.hasmodel);
+	}
 
 	// -----------------------------------------------------------------
 	static void Scan(in out Array<RS_ForeignEntry> outList)
@@ -369,6 +381,10 @@ class RS_ForeignScanner
 
 			string lcn = cn; lcn = lcn.MakeLower();
 			if (lcn.IndexOf("random") == 0) continue;   // RandomSpawner-style
+
+			// A mod that already ships its own 3D weapon models is not asking
+			// for ours. Leave it alone.
+			if (RS_ForeignScanner.HasOwnModel(type)) continue;
 
 			RS_ForeignEntry e = new("RS_ForeignEntry");
 			e.clsName = cn;
