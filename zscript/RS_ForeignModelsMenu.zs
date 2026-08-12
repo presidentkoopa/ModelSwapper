@@ -162,15 +162,39 @@ class OptionMenuItemRS_ForeignRow : OptionMenuItem
 		return Super.MenuEvent(mkey, fromcontroller);
 	}
 
-	// Trim the donor class name down to something readable in a menu row.
+	// Donor class name -> "Weapon (Set)".
+	//
+	// Which SET a model came from matters as much as which weapon it is:
+	// every family carries several, and choosing between them is choosing a
+	// look. A shotgun row offers a Doom pump, a Bv21 auto, a MeatG sawn-off
+	// and a BWolf trenchgun -- so the row has to say which is which.
+	//
+	// Internal prefixes are meaningless to a player. MS_ is only there so
+	// this pk3 can load beside RS_Main without duplicate-class errors, and
+	// GH/MG/BW are shorthand nobody outside the source tree knows.
 	static string Pretty(string cls)
 	{
 		if (cls.Length() == 0) return "-";
-		if (cls.IndexOf("RS_GH_") == 0) return cls.Mid(6);
-		if (cls.IndexOf("RS_PS_") == 0) return cls.Mid(6) .. " (MG)";
-		if (cls.IndexOf("MS_")    == 0) return cls.Mid(3);
-		if (cls.IndexOf("VR_")    == 0) return cls.Mid(3);
-		return cls;
+
+		string set = "";
+		string nm  = cls;
+
+		// standalone donors
+		if (nm.IndexOf("MS_") == 0) nm = nm.Mid(3);
+		// ...and the RS_Main ones, when it is loaded as the donor instead
+		else if (nm.IndexOf("RS_GH_") == 0) { nm = nm.Mid(6); set = "Bv21"; }
+		else if (nm.IndexOf("RS_PS_") == 0) { nm = nm.Mid(6); set = "MeatG"; }
+		else if (nm.IndexOf("VR_")    == 0) { nm = nm.Mid(3); set = "VanAlek"; }
+
+		if (set.Length() == 0)
+		{
+			if      (nm.IndexOf("GH_") == 0) { nm = nm.Mid(3); set = "Bv21";  }
+			else if (nm.IndexOf("MG_") == 0) { nm = nm.Mid(3); set = "MeatG"; }
+			else if (nm.IndexOf("BW_") == 0) { nm = nm.Mid(3); set = "BWolf"; }
+			else                             { set = "VanAlek"; }
+		}
+
+		return nm .. " \c[DarkGray](" .. set .. ")\c-";
 	}
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
