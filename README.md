@@ -201,7 +201,13 @@ names case-fold away.
 
 So the fork skips the encoding instead of stretching it: `int ModelFrame` on `DPSprite`,
 read directly by the HUD path, with `ModelFrameNext` and `ModelFrameLerp` for sub-tic
-blending. Documented as **§19** in `FORK_CHANGES.md`.
+blending.
+
+**[`ENGINE_CHANGES.md`](ENGINE_CHANGES.md) is the full patch** — every file, every
+function, the exact code, and the one signature change that fails as a *link* error
+rather than a compile error if you miss it. Five edits across six files, all confined to
+the HUD path; world models are untouched. It's written so someone can apply it to their
+own GZDoom build without reading this mod's source.
 
 ---
 
