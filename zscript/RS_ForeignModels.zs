@@ -250,9 +250,38 @@ class RS_ForeignShelf
 		return "";
 	}
 
+	// Is this row's donor the first occurrence of that donor in the table?
+	// A donor can sit on several shelves -- the Bolter is a sidearm, a rifle
+	// and an energy weapon -- and the "any" shelf must list it once.
+	bool FirstOf(int row) const
+	{
+		Array<string> f;
+		mRows[row].Split(f, "|");
+		if (f.Size() < 2) return false;
+		for (int i = 0; i < row; ++i)
+		{
+			Array<string> g;
+			mRows[i].Split(g, "|");
+			if (g.Size() >= 2 && g[1] == f[1]) return false;
+		}
+		return true;
+	}
+
 	// how many models sit on this archetype's shelf
 	int Count(string arche) const
 	{
+		// "any" is every model we have, deduped -- the escape hatch for
+		// putting a specific mesh on a specific weapon regardless of what the
+		// classifier thinks it is. A chainsaw on a rocket launcher is a
+		// legitimate thing to want and nothing should be in the way of it.
+		if (arche == "any")
+		{
+			int t = 0;
+			for (int i = 0; i < mRows.Size(); ++i)
+				if (FirstOf(i)) t++;
+			return t;
+		}
+
 		string pfx = arche .. "|";
 		int n = 0;
 		for (int i = 0; i < mRows.Size(); ++i)
@@ -274,6 +303,33 @@ class RS_ForeignShelf
 		// entries standalone. Without this every slot-8 weapon silently got no
 		// model at all.
 		int have = Count(arche);
+
+		// "any" walks the whole table, one entry per donor.
+		if (arche == "any")
+		{
+			if (have <= 0) return false;
+			if (pick < 0 || pick >= have) pick = ((pick % have) + have) % have;
+
+			int seen2 = 0;
+			for (int i = 0; i < mRows.Size(); ++i)
+			{
+				if (!FirstOf(i)) continue;
+				if (seen2 == pick)
+				{
+					Array<string> f;
+					mRows[i].Split(f, "|");
+					if (f.Size() < 6) return false;
+					cls        = f[1];
+					anchor     = f[2];
+					frame      = f[3].ToInt();
+					restFrame  = f[4].ToInt();
+					frameCount = f[5].ToInt();
+					return true;
+				}
+				seen2++;
+			}
+			return false;
+		}
 
 		// An archetype with no shelf at all in this load falls back one hop to
 		// the nearest thing we do have. The standalone pk3 ships 13 donors and
@@ -1101,7 +1157,11 @@ class RS_ForeignModelHandler : StaticEventHandler
 		static const string ARCHE[] = {
 			"pistol", "revolver", "smg", "rifle", "shotgun", "supershotgun",
 			"chaingun", "rocket", "plasma", "railgun", "flamethrower",
-			"bfg", "melee"
+			"bfg", "melee",
+			// Last, so cycling forward through the sensible families reaches
+			// it only after they are exhausted -- but it is one step BACK
+			// from "pistol", which is where most weapons start.
+			"any"
 		};
 		a.Clear();
 		for (int i = 0; i < ARCHE.Size(); ++i) a.Push(ARCHE[i]);

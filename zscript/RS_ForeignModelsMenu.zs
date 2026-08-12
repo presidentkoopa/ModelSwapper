@@ -60,6 +60,8 @@ class RS_Menu_ForeignModels : OptionMenu
 			"\c[Brick]?\c- = guessed from weapon slot only -- worth a look.", Font.CR_DARKGRAY));
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
 			"\c[Brick]*\c- = that model has no reload animation.", Font.CR_DARKGRAY));
+		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
+			"Set the family to \c[Gold]any\c- to pick from every model we have.", Font.CR_DARKGRAY));
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(" ", Font.CR_WHITE));
 
 		int n = h.EntryCount();
