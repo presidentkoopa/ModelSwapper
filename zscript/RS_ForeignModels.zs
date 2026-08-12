@@ -469,13 +469,52 @@ class RS_ForeignScanner
 		return "pistol";
 	}
 
-	// Is this one of OURS (or a base-game class we don't want to touch)?
-	// NOTE: unlike the old scanner this does NOT blanket-skip IWAD names --
-	// a mod that REPLACES Shotgun is still a foreign weapon worth modelling.
+	// Is this one of OURS?
 	static bool IsOurs(string cn)
 	{
-		return (cn.IndexOf("RS_") == 0 || cn.IndexOf("VR_") == 0
-		     || cn.IndexOf("Vanilla_") == 0);
+		return (cn.IndexOf("MS_") == 0 || cn.IndexOf("RS_") == 0
+		     || cn.IndexOf("VR_") == 0 || cn.IndexOf("Vanilla_") == 0);
+	}
+
+	// Weapons GZDoom compiles into EVERY session regardless of what is loaded.
+	// Heretic, Hexen, Strife and Chex Quest arsenals are all present in a Doom
+	// game, unobtainable, and they buried the picker: forty rows of Zorch
+	// Propulsors and Bootspoons above the weapons the player actually has.
+	//
+	// Skipping them by exact class name is safe in a way that skipping "IWAD
+	// weapons" generally is not. A mod that replaces Doom's Shotgun defines a
+	// NEW class with its own name -- "AshesShotgun replaces Shotgun" -- which
+	// is not on this list and is still scanned. The only thing dropped is the
+	// literal built-in, which in that situation never spawns anyway.
+	static bool IsEngineBuiltin(string cn)
+	{
+		static const string BUILTIN[] = {
+			// Doom
+			"Fist", "Chainsaw", "Pistol", "Shotgun", "SuperShotgun", "Chaingun",
+			"RocketLauncher", "PlasmaRifle", "BFG9000", "DoomWeapon",
+			// Heretic
+			"HereticWeapon", "Staff", "StaffPowered", "GoldWand", "GoldWandPowered",
+			"Crossbow", "CrossbowPowered", "Gauntlets", "GauntletsPowered",
+			"Mace", "MacePowered", "Blaster", "BlasterPowered", "SkullRod",
+			"SkullRodPowered", "PhoenixRod", "PhoenixRodPowered", "Beak", "BeakPowered",
+			// Hexen
+			"FighterWeapon", "ClericWeapon", "MageWeapon", "Snout",
+			"CWeapMace", "CWeapStaff", "CWeapFlame", "CWeapWraithverge",
+			"MWeapWand", "MWeapFrost", "MWeapLightning", "MWeapBloodscourge",
+			"FWeapFist", "FWeapAxe", "FWeapHammer", "FWeapQuietus",
+			// Strife
+			"StrifeWeapon", "PunchDagger", "StrifeCrossbow", "StrifeCrossbow2",
+			"AssaultGun", "AssaultGunStanding", "MiniMissileLauncher", "FlameThrower",
+			"StrifeGrenadeLauncher", "StrifeGrenadeLauncher2", "Mauler", "Mauler2",
+			"Sigil", "Sigil1", "Sigil2", "Sigil3", "Sigil4", "Sigil5",
+			// Chex Quest
+			"MiniZorcher", "LargeZorcher", "SuperLargeZorcher", "RapidZorcher",
+			"ZorchPropulsor", "PhasingZorcher", "LAZDevice", "Bootspoon",
+			"SuperBootspork"
+		};
+		for (int i = 0; i < BUILTIN.Size(); ++i)
+			if (cn == BUILTIN[i]) return true;
+		return false;
 	}
 
 	// Does this class already carry a HUD model of its own? Never paint over a
@@ -514,6 +553,14 @@ class RS_ForeignScanner
 
 			string lcn = cn; lcn = lcn.MakeLower();
 			if (lcn.IndexOf("random") == 0) continue;   // RandomSpawner-style
+
+			// The engine's own Heretic/Hexen/Strife/Chex arsenals. Present in
+			// every session, obtainable in none of them.
+			if (RS_ForeignScanner.IsEngineBuiltin(cn))
+			{
+				CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
+				if (!sa || !sa.GetBool()) continue;
+			}
 
 			// A mod that already ships its own 3D weapon models is not asking
 			// for ours. Leave it alone.

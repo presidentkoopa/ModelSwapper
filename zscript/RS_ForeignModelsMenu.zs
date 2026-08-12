@@ -83,6 +83,10 @@ class RS_Menu_ForeignModels : OptionMenu
 		// class, so EVERY entry reports unbound -- and the list came up empty
 		// while the models were working perfectly. An empty picker for a mod
 		// the swapper is visibly running on is worse than a bit of clutter.
+		//
+		// The engine's own Heretic/Hexen/Strife/Chex weapons are dropped at
+		// SCAN time now, not hidden here, so falling back to showing
+		// everything no longer means forty rows of Zorch Propulsors.
 		if (!showAll)
 		{
 			bool anyLocated = false;
