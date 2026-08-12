@@ -121,21 +121,29 @@ class RS_ForeignSource
 		int ourLump = Wads.CheckNumForFullName("zscript/RS_ForeignModels.zs");
 		int ourFile = (ourLump >= 0) ? Wads.GetLumpContainer(ourLump) : -1;
 
-		static const string ROOTS[] = { "DECORATE", "ZSCRIPT" };
-		for (int r = 0; r < ROOTS.Size(); ++r)
+		// Walk EVERY lump rather than asking for one by name. Mods spell the
+		// entry point half a dozen ways -- DECORATE, DECORATE.TXT, ZScript.zsc,
+		// zscript.txt -- and whether the extension survives into the lump name
+		// is not something to bet the whole feature on. Ashes Afterglow ships
+		// DECORATE.TXT; asking for "DECORATE" found nothing and the filter
+		// silently did not apply.
+		int total = Wads.GetNumLumps();
+		for (int l = 0; l < total; ++l)
 		{
-			int l = -1;
-			while (true)
-			{
-				l = Wads.FindLump(ROOTS[r], l + 1);
-				if (l < 0) break;
+			string nm = Wads.GetLumpName(l);
+			nm = nm.MakeLower();
 
-				int f = Wads.GetLumpContainer(l);
-				if (f == ourFile) continue;
-				if (IsEngineContainer(Wads.GetContainerName(l))) continue;
+			// strip an extension if the lump name kept one
+			int dot = nm.IndexOf(".");
+			if (dot > 0) nm = nm.Left(dot);
 
-				Harvest(l, 0);
-			}
+			if (nm != "decorate" && nm != "zscript") continue;
+
+			int f = Wads.GetLumpContainer(l);
+			if (f == ourFile) continue;
+			if (IsEngineContainer(Wads.GetContainerName(l))) continue;
+
+			Harvest(l, 0);
 		}
 	}
 
