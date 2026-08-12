@@ -176,7 +176,34 @@ class RS_ForeignShelf
 			// three shelves. Nothing stops a donor appearing under more than
 			// one archetype; the row is the same, only the shelf differs.
 			"pistol|MS_MG_Bolter|PLSG|0|0|5",
-			"rifle|MS_MG_Bolter|PLSG|0|0|5"
+			"rifle|MS_MG_Bolter|PLSG|0|0|5",
+
+			// ---- Brutal Wolfenstein set. Real WW2 weapons, which is what a
+			// post-apocalyptic or contemporary mod actually wants -- Ashes'
+			// arsenal is scavenged small arms, not Doom's science fiction.
+			//
+			// Note the idle frames. These are NOT 0: the MG42 rests at 12 of
+			// 97, the STG44 and MP40 at 13. Under the old sprite-letter route
+			// most of these meshes were unreachable AND would have rested in
+			// the wrong pose. Read out of each weapon's own state that calls
+			// A_WeaponReady, which is the idle by definition -- the label
+			// "Ready:" is the DEPLOY animation in this mod and would have put
+			// the Luger at frame 53.
+			"pistol|MS_BW_Colt|PISG|0|1|60",
+			"pistol|MS_BW_Luger|PISG|0|0|61",
+			"rifle|MS_BW_Kar98|CHGG|0|1|44",
+			"rifle|MS_BW_Garand|CHGG|0|1|36",
+			"rifle|MS_BW_STG44|CHGG|0|13|51",
+			"smg|MS_BW_MP40|CHGG|0|13|48",
+			"smg|MS_BW_Thompson|CHGG|0|1|53",
+			"chaingun|MS_BW_MG42|CHGG|0|12|97",
+			"shotgun|MS_BW_Trenchgun|SHTG|0|1|47",
+			"flamethrower|MS_BW_Flamethrower|PLSG|0|0|15",
+
+			// The Kar98 is a bolt-action rifle -- it reads as a marksman
+			// weapon as well as a battle rifle, so it also sits on railgun,
+			// which otherwise has one model.
+			"railgun|MS_BW_Kar98|CHGG|0|1|44"
 		};
 		mRows.Clear();
 		for (int i = 0; i < SHELF.Size(); ++i)

@@ -387,3 +387,115 @@ Model MS_MG_BFG
    FrameIndex BFGG A 0 0
 }
 
+Model MS_BW_Colt
+{
+Model MS_BW_Colt
+{
+	Path "models/bw/1911"
+	Model 0 "1911.md3"
+	Skin 0 "1911.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex PISG A 0 1
+}
+
+Model MS_BW_Flamethrower
+{
+	Path "models/bw/Flammenwerfer"
+	Model 0 "flammenwerfer.md3"
+	Skin 0 "flammenwerfer.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex PLSG A 0 0
+}
+
+Model MS_BW_Garand
+{
+	Path "models/bw/Garand"
+	Model 0 "garand.md3"
+	Skin 0 "garand.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex CHGG A 0 1
+}
+
+Model MS_BW_Luger
+{
+	Path "models/bw/Luger"
+	Model 0 "luger.md3"
+	Skin 0 "luger.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex PISG A 0 0
+}
+
+Model MS_BW_MG42
+{
+	Path "models/bw/MG42"
+	Model 0 "mg42.md3"
+	Skin 0 "mg42.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex CHGG A 0 12
+}
+
+Model MS_BW_MP40
+{
+	Path "models/bw/MP40"
+	Model 0 "mp40.md3"
+	Skin 0 "mp40.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex CHGG A 0 13
+}
+
+Model MS_BW_Kar98
+{
+	Path "models/bw/Mauser"
+	Model 0 "kar98k.md3"
+	Skin 0 "kar98k.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex CHGG A 0 1
+}
+
+Model MS_BW_STG44
+{
+	Path "models/bw/STG44"
+	Model 0 "stg44.md3"
+	Skin 0 "stg44.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex CHGG A 0 13
+}
+
+Model MS_BW_Thompson
+{
+	Path "models/bw/Thompson"
+	Model 0 "m1a1.md3"
+	Skin 0 "m1a1.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex CHGG A 0 1
+}
+
+Model MS_BW_Trenchgun
+{
+	Path "models/bw/Trenchgun"
+	Model 0 "m12.md3"
+	Skin 0 "m12.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	FrameIndex SHTG A 0 1
+}
+

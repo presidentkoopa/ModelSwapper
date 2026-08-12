@@ -45,6 +45,17 @@ class MS_MG_Chaingun : Actor {}
 class MS_MG_RPG : Actor {}
 class MS_MG_Bolter : Actor {}
 class MS_MG_BFG : Actor {}
+class MS_BW_Colt : Actor {}
+class MS_BW_Colt : Actor {}
+class MS_BW_Flamethrower : Actor {}
+class MS_BW_Garand : Actor {}
+class MS_BW_Luger : Actor {}
+class MS_BW_MG42 : Actor {}
+class MS_BW_MP40 : Actor {}
+class MS_BW_Kar98 : Actor {}
+class MS_BW_STG44 : Actor {}
+class MS_BW_Thompson : Actor {}
+class MS_BW_Trenchgun : Actor {}
 
 #include "zscript/RS_ForeignAnim.zs"
 #include "zscript/RS_ForeignModels.zs"

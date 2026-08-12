@@ -173,6 +173,51 @@ class RS_ForeignClip
 			"MS_MG_BFG|ready|0@1|-1|-1|-1",
 			"MS_MG_BFG|fire|1@3,2@3,3@3,4@3,0@1|0|-1|-1",
 
+			// ---- Brutal Wolfenstein set ----
+			// Derived from each weapon's own MODELDEF letter->frame table
+			// crossed with its state machine, not authored by hand. The
+			// reloads are long because they genuinely are -- the MG42 belt
+			// change runs 96 frames, and every one of them was unreachable
+			// before ModelFrame existed.
+			"MS_BW_Colt|ready|1@1|-1|-1|-1",
+			"MS_BW_Colt|fire|2@1,3@1,4-6@1|0|-1|-1",
+			"MS_BW_Colt|reload|36-43@1,44-51@2,52-55@2,56-59@1,16-23@1,24-31@2,32-35@2,23-16@1|-1|0|20",
+
+			"MS_BW_Luger|ready|0@1|-1|-1|-1",
+			"MS_BW_Luger|fire|1@1,2@1,3-4@1,5@1|0|-1|-1",
+			"MS_BW_Luger|reload|6-13@1,14-16@2,17-22@2,22-26@2,27-28@2,29-30@3,31-39@1,40-43@1,44-46@2,47-48@2,49@4,50-52@2,39-31@1|-1|0|24",
+
+			"MS_BW_Kar98|ready|1@1|-1|-1|-1",
+			"MS_BW_Kar98|fire|2@1,3-6@1,6@3,7-10@2,11@6,10-7@2|0|-1|-1",
+			"MS_BW_Kar98|reload|7-8@2,9-11@2,28-29@2,30-33@2,7-8@2,9-11@2,12-27@2,11-7@2|-1|0|18",
+
+			"MS_BW_Garand|ready|1@1|-1|-1|-1",
+			"MS_BW_Garand|fire|2@1,3-5@1,6-9@1|0|-1|-1",
+			"MS_BW_Garand|reload|19-24@1,25-30@2,31-35@1|-1|0|12",
+
+			"MS_BW_STG44|ready|13@1|-1|-1|-1",
+			"MS_BW_STG44|fire|14@1,15-17@1,18@1|0|-1|-1",
+			"MS_BW_STG44|reload|19-24@1,25-27@1,28@2,29-37@2,42-44@1,45@3,46-50@1,24-19@1|-1|0|22",
+
+			"MS_BW_MP40|ready|13@1|-1|-1|-1",
+			"MS_BW_MP40|fire|14@1,15-16@1,17-18@1|0|-1|-1",
+			"MS_BW_MP40|reload|19-27@1,28-31@2,32-34@2,35-37@2,38@2,39@10,40-42@3,43-47@3,27-19@1|-1|0|26",
+
+			"MS_BW_Thompson|ready|1@1|-1|-1|-1",
+			"MS_BW_Thompson|fire|2@1,3@1,4@1|0|-1|-1",
+			"MS_BW_Thompson|reload|6-13@1,14-17@2,18-27@2,28-30@2,31-32@3,33-35@1,35-37@1,32-28@1,13-6@1|-1|0|28",
+
+			"MS_BW_MG42|ready|12@1|-1|-1|-1",
+			"MS_BW_MG42|fire|13@1,14@1,17@1|0|-1|-1",
+			"MS_BW_MG42|reload|18-28@1,29@3,30-46@1,47-72@2,73-78@1,79@3,80@1,81@3,82-87@1,88@3,89-92@1,93@3,94-96@1|-1|0|60",
+
+			"MS_BW_Trenchgun|ready|1@1|-1|-1|-1",
+			"MS_BW_Trenchgun|fire|2@1,3-7@1,23@1,25@1,27@1,29@1,31@1,32@1,34@1,32@1,30@1,28@1,26@1,23@1|0|4|-1",
+			"MS_BW_Trenchgun|reload|23-31@1,35-36@2,37-44@1,45@4,34-23@1|-1|0|14",
+
+			"MS_BW_Flamethrower|ready|0@1|-1|-1|-1",
+			"MS_BW_Flamethrower|fire|14@1|0|-1|-1",
+
 			// ---- RS_Main donors (present when RS_Main is loaded) ----
 			"VR_Pistol|ready|0@1|-1|-1|-1",
 			"VR_Pistol|fire|1@2,2@2,0@1|0|-1|-1",
