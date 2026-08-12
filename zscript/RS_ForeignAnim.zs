@@ -135,6 +135,9 @@ class RS_ForeignClip
 			"MS_GH_SSG|reload|13-37@1|0|-1|-1",
 			"MS_GH_Unmaker|fire|12@1,13@2,14@2|0|-1|-1",
 			"MS_MG_BFG|fire|1-4@1,1-4@1,1-4@1,5-10@1,0@5|0|-1|-1",
+
+			"MS_GH_Grenade|ready|2@1|-1|-1|-1",
+			"MS_GH_Grenade|fire|3-14@1,15-26@1|6|-1|-1",
 			"MS_MG_Bolter|fire|3@1,1@1,1@1,2@1|0|-1|-1",
 			"MS_MG_Chaingun|fire|4@1,5@1,0-3@1,0-3@1,0-3@1,0-3@2,0-3@2,0-3@2|0|-1|-1",
 			"MS_MG_Knife|fire|1@1,2@1,3@1,4@1,5@1,6@1,7@1,8@1,0@1|0|-1|-1",

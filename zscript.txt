@@ -32,6 +32,7 @@ class MS_GH_AutoShotgun : Actor {}
 class MS_GH_Chainsaw : Actor {}
 class MS_GH_Fist : Actor {}
 class MS_GH_GrenadeLauncher : Actor {}
+class MS_GH_Grenade : Actor {}
 class MS_GH_MP40 : Actor {}
 class MS_GH_Machinegun : Actor {}
 class MS_GH_Minigun : Actor {}

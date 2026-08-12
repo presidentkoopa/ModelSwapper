@@ -159,6 +159,11 @@ class RS_ForeignShelf
 			// than either of the others -- the cheapest breadth on offer.
 			"melee|MS_MG_Knife|PUNG|0|0|9",
 
+			// ---- thrown explosives ----
+			// A hand grenade is not a rocket launcher. Every mod with a frag
+			// or a pipe bomb was getting an RPG welded to its hand.
+			"grenade|MS_GH_Grenade|MISG|0|2|27",
+
 			// ---- saws, on their own shelf ----
 			"saw|MS_Chainsaw|SAWG|0|0|8",
 			"saw|MS_GH_Chainsaw|SAWG|0|27|65",
@@ -208,6 +213,16 @@ class RS_ForeignShelf
 			// which otherwise has one model.
 			"railgun|MS_BW_Kar98|CHGG|0|1|44",
 
+			// ---- sniper ----
+			// The Kar98 is a bolt-action: one shot, work the bolt, shoot
+			// again. It reads as a marksman weapon far better than as a
+			// battle rifle, and it is the only mesh here with that
+			// silhouette. The Garand backs it up, and the Railgun is the
+			// long scoped-looking option for a sci-fi mod.
+			"sniper|MS_BW_Kar98|CHGG|0|1|44",
+			"sniper|MS_BW_Garand|CHGG|0|1|36",
+			"sniper|MS_GH_Railgun|PLSG|0|3|37",
+
 			// ---- the rest of the GoldHunter set, and the VR SMG. All four
 			// donor sets are now complete: VR, GoldHunter, MeatGrinder and
 			// Brutal Wolfenstein.
@@ -245,6 +260,8 @@ class RS_ForeignShelf
 	static string FallbackArchetype(string a)
 	{
 		if (a == "saw")          return "melee";
+		if (a == "grenade")      return "rocket";
+		if (a == "sniper")       return "rifle";
 		if (a == "smg")          return "pistol";
 		if (a == "railgun")      return "rifle";
 		if (a == "revolver")     return "pistol";
@@ -467,12 +484,18 @@ class RS_ForeignScanner
 		 || hay.IndexOf("tec9") >= 0 || hay.IndexOf("sten") >= 0) return "smg";
 		if (hay.IndexOf("chaingun") >= 0 || hay.IndexOf("minigun") >= 0
 		 || hay.IndexOf("gatling") >= 0 || hay.IndexOf("machinegun") >= 0) return "chaingun";
+		// SNIPER before RIFLE -- a scoped bolt-action reads nothing like an
+		// assault rifle, and "sniper rifle" contains "rifle".
+		if (hay.IndexOf("sniper") >= 0 || hay.IndexOf("marksman") >= 0
+		 || hay.IndexOf("scoped") >= 0 || hay.IndexOf("boltaction") >= 0
+		 || hay.IndexOf("bolt action") >= 0 || hay.IndexOf("kar98") >= 0
+		 || hay.IndexOf("mosin") >= 0 || hay.IndexOf("springfield") >= 0
+		 || hay.IndexOf("musket") >= 0 || hay.IndexOf("dmr") >= 0) return "sniper";
+
 		if (hay.IndexOf("rifle") >= 0 || hay.IndexOf("assault") >= 0
 		 || hay.IndexOf("ar15") >= 0 || hay.IndexOf("m16") >= 0
 		 || hay.IndexOf("ak47") >= 0 || hay.IndexOf("carbine") >= 0
-		 || hay.IndexOf("musket") >= 0 || hay.IndexOf("sniper") >= 0
-		 || hay.IndexOf("marksman") >= 0 || hay.IndexOf("garand") >= 0
-		 || hay.IndexOf("mosin") >= 0) return "rifle";
+		 || hay.IndexOf("garand") >= 0) return "rifle";
 		// pipebomb/dynamite before any "pipe" melee token.
 		// BFG and RAILGUN must be tested BEFORE the rocket line, because
 		// "launcher" lives there and would eat BFGLauncher / RailLauncher.
@@ -481,11 +504,20 @@ class RS_ForeignScanner
 		if (hay.IndexOf("railgun") >= 0 || hay.IndexOf("rail gun") >= 0
 		 || hay.IndexOf("railrifle") >= 0) return "railgun";
 		if (hay.IndexOf("flame") >= 0 || hay.IndexOf("thrower") >= 0) return "flamethrower";
+		// LAUNCHED before THROWN. "Grenade launcher" is a rocket; a grenade is
+		// a grenade, and the two share a word. Anything that launches or fires
+		// takes the rocket branch first.
 		if (hay.IndexOf("rocket") >= 0 || hay.IndexOf("launcher") >= 0
-		 || hay.IndexOf("bazooka") >= 0 || hay.IndexOf("grenade") >= 0
-		 || hay.IndexOf("pipebomb") >= 0 || hay.IndexOf("dynamite") >= 0
-		 || hay.IndexOf("molotov") >= 0 || hay.IndexOf("satchel") >= 0
-		 || hay.IndexOf("mortar") >= 0 || hay.IndexOf("napalm") >= 0) return "rocket";
+		 || hay.IndexOf("bazooka") >= 0 || hay.IndexOf("mortar") >= 0
+		 || hay.IndexOf("napalm") >= 0) return "rocket";
+
+		// THROWN. A grenade held for the throw is nothing like a tube on the
+		// shoulder, and until now everything that was not a launcher got one.
+		if (hay.IndexOf("grenade") >= 0 || hay.IndexOf("frag") >= 0
+		 || hay.IndexOf("pipebomb") >= 0 || hay.IndexOf("pipe bomb") >= 0
+		 || hay.IndexOf("dynamite") >= 0 || hay.IndexOf("molotov") >= 0
+		 || hay.IndexOf("satchel") >= 0 || hay.IndexOf("throwable") >= 0
+		 || hay.IndexOf("cocktail") >= 0) return "grenade";
 		if (hay.IndexOf("plasma") >= 0 || hay.IndexOf("energy") >= 0
 		 || hay.IndexOf("beam") >= 0)  return "plasma";
 		if (hay.IndexOf("pistol") >= 0 || hay.IndexOf("handgun") >= 0
@@ -1330,7 +1362,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		static const string ARCHE[] = {
 			"pistol", "revolver", "smg", "rifle", "shotgun", "supershotgun",
 			"chaingun", "rocket", "plasma", "railgun", "flamethrower",
-			"bfg", "melee", "saw",
+			"bfg", "melee", "saw", "grenade", "sniper",
 			// Last, so cycling forward through the sensible families reaches
 			// it only after they are exhausted -- but it is one step BACK
 			// from "pistol", which is where most weapons start.

@@ -570,3 +570,15 @@ Model MS_GH_Machinegun
 	FrameIndex CHGG A 0 4
 }
 
+Model MS_GH_Grenade
+{
+	Path "Models/Weapons/hud/RS_GH_Weapon/RS_GH_HandGrenade"
+	Model 0 "nade.md3"
+	Skin 0 "nade.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	NoInterpolation
+	ZOffset -5
+	FrameIndex MISG A 0 2
+}
+
