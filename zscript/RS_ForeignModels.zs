@@ -971,12 +971,33 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		int N = frames.Size();
 		double ct;
-		if (D <= 0)
+
+		// DETERMINISTIC BY DEFAULT.
+		//
+		// Playback used to fit the clip to a duration LEARNED by watching, and
+		// that duration kept moving -- first run had none and played at
+		// natural rate, later runs refitted, a relabel reset it to zero and
+		// started over. So the same reload looked different every time, and
+		// "it worked once" was never a promise it would work again.
+		//
+		// An animation that plays identically every time beats one that is
+		// occasionally better timed and never predictable. At natural rate the
+		// clip runs at the speed it was authored, always, and holds its last
+		// frame if their sequence outlasts it -- which is a gun that has
+		// finished reloading and is waiting, not a gun that is broken.
+		//
+		// The adaptive warp is still here behind rs_foreignmodels_warp for
+		// anyone who wants time-matching and can live with it varying.
+		bool warp = false;
 		{
-			// FIRST time we have seen this sequence -- its real duration is
-			// not known yet, and it cannot be predicted from state tics. Play
-			// at our natural rate and hold the last frame. Next time round it
-			// warps properly.
+			CVar wc = CVar.FindCVar("rs_foreignmodels_warp");
+			warp = (wc && wc.GetBool());
+		}
+
+		if (!warp || D <= 0)
+		{
+			// Natural rate: one clip tic per game tic, exactly as authored.
+			// Identical on every play, on every weapon, forever.
 			ct = hs.elapsed - 1;
 		}
 		else
