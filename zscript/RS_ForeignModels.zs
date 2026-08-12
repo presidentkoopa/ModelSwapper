@@ -873,10 +873,11 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// ---- pick the clip ----
 		string seq = "ready";
 		int D = 0;
+		int shotTic = -1;
 		if (hs.entry)
 		{
 			int li = FindLearned(w.GetClassName(), hs.entry);
-			if (li >= 0) { seq = mLearned[li].seq; D = mLearned[li].observedTics; }
+			if (li >= 0) { seq = mLearned[li].seq; D = mLearned[li].observedTics; shotTic = mLearned[li].brightTic; }
 			else          seq = "fire";   // unlearned: fire is the better bet than a frozen pose
 
 			// What the weapon has actually DONE this run outranks anything
@@ -886,10 +887,15 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// whichever one it did first, forever.
 			if (hs.liveSeq.Length() > 0 && hs.liveSeq != seq)
 			{
-				seq = hs.liveSeq;
-				D   = 0;               // learned duration was for the other sequence
+				seq     = hs.liveSeq;
+				D       = 0;           // learned duration was for the other sequence
+				shotTic = -1;
 				int lj = FindLearned(w.GetClassName(), hs.entry);
-				if (lj >= 0 && mLearned[lj].seq == seq) D = mLearned[lj].observedTics;
+				if (lj >= 0 && mLearned[lj].seq == seq)
+				{
+					D       = mLearned[lj].observedTics;
+					shotTic = mLearned[lj].brightTic;
+				}
 			}
 		}
 
@@ -934,7 +940,36 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// reloading; a gun stopped dead reads as broken.
 			double dEff = D;
 			if (hs.elapsed > D) dEff = double(hs.elapsed) * 1.15;
-			ct = double(hs.elapsed - 1) * double(N) / dEff;
+
+			double e  = double(hs.elapsed - 1);
+			double bt = double(shotTic - 1);          // sawBrightAt counts from 1
+			double mf = double(markFire);
+
+			// ANCHOR THE RECOIL TO THEIR SHOT.
+			//
+			// A proportional warp puts our animation in roughly the right
+			// place; it does not put the KICK on the bang. Our clip knows
+			// which of its own frames is the shot (markFire, authored from
+			// the donor's own states) and watching taught us which tic of
+			// their sequence the muzzle flash landed on. Pin those two
+			// together and interpolate on either side, and the recoil hits
+			// the frame the round leaves the barrel rather than merely near
+			// it.
+			//
+			// Two segments: run-up compressed or stretched to reach the kick
+			// exactly on time, then the recovery spread across whatever is
+			// left. Falls back to the straight proportional warp when either
+			// anchor is missing -- no flash seen, or a clip with no marked
+			// shot, which is every reload.
+			if (bt > 0 && mf > 0 && bt < dEff - 1 && mf < N - 1)
+			{
+				if (e <= bt) ct = e * mf / bt;
+				else         ct = mf + (e - bt) * (double(N - 1) - mf) / (dEff - bt);
+			}
+			else
+			{
+				ct = e * double(N) / dEff;
+			}
 		}
 
 		// Past the end -- held triggers and A_ReFire both do this -- hold.
