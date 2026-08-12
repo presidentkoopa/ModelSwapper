@@ -210,30 +210,31 @@ class MS_HitscanHandler : StaticEventHandler
 	// enough that a per-family figure lands far better than one global
 	// number. The slider trims whatever is left.
 	// ---------------------------------------------------------------------
+	// switch() on a String won't compile -- ZScript's switch takes only an
+	// int or a Name (FxSwitchStatement::Resolve casts anything else through
+	// FxIntCast, which rejects a String with "Numeric type expected"). A
+	// plain if/else chain on String == String works fine.
 	static double FamilyMuzzle(string arch)
 	{
-		switch (arch)
-		{
-		case "pistol":       return 13;
-		case "revolver":     return 15;
-		case "smg":          return 17;
-		case "grenade":      return 20;
-		case "supershotgun": return 21;
-		case "flamethrower": return 22;
-		case "plasma":       return 23;
-		case "unmaker":      return 23;
-		case "bfg":          return 24;
-		case "shotgun":      return 25;
-		case "rocket":       return 26;
-		case "launcher":     return 26;
-		case "machinegun":   return 26;
-		case "chaingun":     return 27;
-		case "rifle":        return 28;
-		case "railgun":      return 30;
-		case "sniper":       return 31;
+		if (arch == "pistol")       return 13;
+		if (arch == "revolver")     return 15;
+		if (arch == "smg")          return 17;
+		if (arch == "grenade")      return 20;
+		if (arch == "supershotgun") return 21;
+		if (arch == "flamethrower") return 22;
+		if (arch == "plasma")       return 23;
+		if (arch == "unmaker")      return 23;
+		if (arch == "bfg")          return 24;
+		if (arch == "shotgun")      return 25;
+		if (arch == "rocket")       return 26;
+		if (arch == "launcher")     return 26;
+		if (arch == "machinegun")   return 26;
+		if (arch == "chaingun")     return 27;
+		if (arch == "rifle")        return 28;
+		if (arch == "railgun")      return 30;
+		if (arch == "sniper")       return 31;
 		// melee, saw, axe never reach here -- melee shots are not converted.
-		default:             return 20;
-		}
+		return 20;
 	}
 
 	static double MuzzleTrim()

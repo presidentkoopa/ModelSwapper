@@ -182,6 +182,12 @@ graceful degrade.
 **No offhand grip modelling.** The offhand binds and is pickable, but grip points and
 two-handed placement are not modelled — every donor MD3 here has zero tags.
 
+**Converted shots have no fire haptic.** `P_LineAttack`'s controller vibration
+(`vrmode->Vibrate`, `VR_HapticEvent`) runs *after* the `WorldHitscanPreFired` hook this
+mod cancels on, so a shot rebuilt as a projectile skips the rumble a normal hitscan gets.
+Fixing it means reordering two blocks in `p_map.cpp` — an engine change, not a pk3 one —
+so it's left as a known gap rather than worked around here.
+
 ---
 
 ## Ballistics — the one feature that isn't cosmetic
@@ -208,8 +214,8 @@ In VR the round is spawned from `AttackPos`/`AttackDir` — the controller, not 
 rather than from your face.
 
 **The muzzle.** The engine has no concept of one. `AttackPos` is the raw controller
-transform origin ([hw_vrmodes.cpp](https://github.com/) `GetWeaponTransform`) — the grip,
-in your fist. Every hitscan in the game has always started there; it just never showed,
+transform origin (`hw_vrmodes.cpp`, `GetWeaponTransform`) — the grip, in your fist.
+Every hitscan in the game has always started there; it just never showed,
 because an instant shot has no visible origin. Give the shot a travelling round and it is
 suddenly, obviously coming out of the handle.
 
