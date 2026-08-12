@@ -972,29 +972,26 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int N = frames.Size();
 		double ct;
 
-		// DETERMINISTIC BY DEFAULT.
+		// TIME-MATCHED AND DETERMINISTIC -- these were never in conflict.
 		//
-		// Playback used to fit the clip to a duration LEARNED by watching, and
-		// that duration kept moving -- first run had none and played at
-		// natural rate, later runs refitted, a relabel reset it to zero and
-		// started over. So the same reload looked different every time, and
-		// "it worked once" was never a promise it would work again.
+		// The warp is a pure function of elapsed tics and the learned
+		// duration: the same tick of the same sequence yields the same frame,
+		// every time. What made the animation vary was the DURATION moving
+		// underneath it, refitted on every play. Commit() locks it after a
+		// few observations, so from then on this is fixed.
 		//
-		// An animation that plays identically every time beats one that is
-		// occasionally better timed and never predictable. At natural rate the
-		// clip runs at the speed it was authored, always, and holds its last
-		// frame if their sequence outlasts it -- which is a gun that has
-		// finished reloading and is waiting, not a gun that is broken.
+		// Until it locks, natural rate -- honest about not knowing yet, rather
+		// than guessing at a fit that will change.
 		//
-		// The adaptive warp is still here behind rs_foreignmodels_warp for
-		// anyone who wants time-matching and can live with it varying.
-		bool warp = false;
+		// rs_foreignmodels_natural forces natural rate permanently for anyone
+		// who prefers the authored pacing to a matched one.
+		bool natural = false;
 		{
-			CVar wc = CVar.FindCVar("rs_foreignmodels_warp");
-			warp = (wc && wc.GetBool());
+			CVar nc = CVar.FindCVar("rs_foreignmodels_natural");
+			natural = (nc && nc.GetBool());
 		}
 
-		if (!warp || D <= 0)
+		if (natural || D <= 0)
 		{
 			// Natural rate: one clip tic per game tic, exactly as authored.
 			// Identical on every play, on every weapon, forever.
@@ -1090,20 +1087,29 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mLearned[li].observedTics = 0;
 			mLearned[li].brightTic    = -1;
 		}
-		// KEEP THE SHORTEST RUN, not the latest.
+		// LEARN, THEN LOCK.
 		//
-		// A sequence's real length varies: a reload takes longer when more
-		// rounds are missing, a fire loop runs as long as the trigger is held.
-		// Warping our clip across last time's duration means that when this
-		// run is SHORTER, the animation is cut off partway and the gun snaps
-		// back to rest -- which reads as broken even though every frame of it
-		// was right.
+		// The timing used to be refitted on every single play, and THAT is
+		// what made the animation different every time -- not the warp, which
+		// is a pure function of elapsed tics and duration and yields the same
+		// frame for the same tick, always. A moving duration was the entire
+		// source of "it worked once and then it didn't".
 		//
-		// Fitting the shortest run seen means the clip always completes and
-		// then holds its final pose while their sequence finishes. Finishing
-		// early and waiting is invisible; being interrupted is not.
-		if (mLearned[li].observedTics <= 0 || hs.elapsed < mLearned[li].observedTics)
-			mLearned[li].observedTics = hs.elapsed;
+		// So: watch the first few runs, take the SHORTEST of them, and never
+		// move it again. Shortest rather than average because a run that
+		// outlives the estimate is handled gracefully -- the clip stretches
+		// and keeps moving -- while one that ends early is cut off mid-motion,
+		// which is the failure that looks broken.
+		//
+		// After LOCK_AFTER plays the animation for that sequence is fixed
+		// forever: time-matched to how that weapon actually behaves, and
+		// identical on the hundredth reload as on the fourth.
+		const LOCK_AFTER = 3;
+		if (mLearned[li].plays < LOCK_AFTER)
+		{
+			if (mLearned[li].observedTics <= 0 || hs.elapsed < mLearned[li].observedTics)
+				mLearned[li].observedTics = hs.elapsed;
+		}
 
 		if (hs.sawBrightAt >= 0) mLearned[li].brightTic = hs.sawBrightAt;
 		mLearned[li].plays++;
