@@ -1,7 +1,0 @@
-// ModelSwapper -- register the scanner. Nothing else is touched: no gameinfo,
-// no episodes, no maps, no cluster defs, so this cannot override whatever mod
-// it is loaded next to.
-GameInfo
-{
-    AddEventHandlers = "RS_ForeignModelHandler"
-}

@@ -389,8 +389,6 @@ Model MS_MG_BFG
 
 Model MS_BW_Colt
 {
-Model MS_BW_Colt
-{
 	Path "models/bw/1911"
 	Model 0 "1911.md3"
 	Skin 0 "1911.png"
