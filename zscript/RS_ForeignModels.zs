@@ -496,28 +496,13 @@ class RS_ForeignScanner
 	}
 
 	// -----------------------------------------------------------------
-	static void Scan(in out Array<RS_ForeignEntry> outList, RS_ForeignSource src)
+	static void Scan(in out Array<RS_ForeignEntry> outList)
 	{
 		outList.Clear();
-
-		// THE ONLY SOURCE IS THE MOD'S OWN DECLARATIONS.
-		//
-		// There is deliberately no fallback to AllActorClasses. That fallback
-		// existed for the bare-IWAD case and it was the last remaining way for
-		// the engine's Heretic, Hexen, Strife and Chex arsenals -- five
-		// hundred weapons from games nobody is playing -- to reach the menu.
-		// Any failure in the source parse would silently take it.
-		//
-		// If the parse finds nothing, this list is EMPTY. That is obvious the
-		// moment you open the menu and it points straight at the real fault,
-		// instead of burying the mod's twenty weapons under everything id and
-		// Raven ever shipped. A bare IWAD has no foreign weapons to model
-		// anyway, so nothing is lost.
-		if (!src) return;
-		int n = src.Count();
+		int n = AllActorClasses.Size();
 		for (int i = 0; i < n; ++i)
 		{
-			class<Weapon> type = (class<Weapon>)(src.Name(i));
+			let type = (class<Weapon>)(AllActorClasses[i]);
 			if (type == null || type == "Weapon") continue;
 
 			readonly<Weapon> def = GetDefaultByType(type);
@@ -550,6 +535,23 @@ class RS_ForeignScanner
 				if (located) e.slot = sl;
 			}
 
+			// DO NOT REJECT ON !located. It looks like a clean way to keep the
+			// Heretic/Hexen/Strife weapons GZDoom compiles into every session
+			// out of the picker -- and it silently returns an EMPTY LIST on
+			// Golden Souls.
+			//
+			// GS binds its whole arsenal through Player.WeaponSlot on its own
+			// player class and sets no Weapon.SlotNumber anywhere. Load RS_Main
+			// too and its MAPINFO PlayerClasses key CLEARS the class list
+			// before adding its own, so GS's player class never spawns, the
+			// slot table is read from RS_GH_Weaponset instead, AddExtraWeapons
+			// never picks the GS weapons up either, and LocateWeapon comes back
+			// false for every single one. Every weapon gets skipped and the
+			// feature does nothing at all, with no error.
+			//
+			// So keep it as INFORMATION, not a filter: the picker dims unbound
+			// rows and sorts them last. (Ashes is unaffected either way -- it
+			// puts weapon.slotnumber on each weapon.)
 			e.located = located;
 
 			string ammo1 = "", ammo2 = "";
@@ -584,10 +586,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 	Weapon mLastMain;
 	Weapon mLastOff;
 	bool   mBound;        // something is currently wearing one of our models
+	bool   mLocatedDone;  // slot flags refreshed after the level settled
 
 	RS_ForeignShelf mShelf;   // built once at world-load
 	RS_ForeignClip  mClips;   // our animation clips, per donor
-	RS_ForeignSource mSource; // what the loaded mod declared
 
 	// Live per-hand animation state, and what watching has taught us.
 	RS_ForeignHand  mHandMain;
@@ -642,8 +644,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		for (int i = 0; i < mEntries.Size(); ++i)
 			if (mEntries[i].pinned) keep.Push(mEntries[i]);
 
-		if (!mSource) { mSource = new("RS_ForeignSource"); mSource.Build(); }
-		RS_ForeignScanner.Scan(mEntries, mSource);
+		RS_ForeignScanner.Scan(mEntries);
 
 		for (int k = 0; k < keep.Size(); ++k)
 		{
@@ -760,6 +761,32 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mLastOff = null;
 
 		mBound = (mLastMain != null || mLastOff != null);
+
+		// REFRESH THE SLOT FLAGS, LATE.
+		//
+		// Scan runs at WorldLoaded, before the player's weapon slot table is
+		// populated -- so LocateWeapon came back false for EVERY weapon,
+		// including the mod's own, and the scan report showed "(no slot)" on
+		// all 117 rows. Any filter built on that was doomed.
+		//
+		// A few tics in the table is real. Redo it once and the flag finally
+		// means what it says: this weapon is bound to one of the player's
+		// slots, i.e. the mod put it there, i.e. it is the mod's.
+		//
+		// Deliberately does not touch binding -- only the flag the menus read.
+		if (!mLocatedDone && level.maptime > 8)
+		{
+			mLocatedDone = true;
+			for (int i = 0; i < mEntries.Size(); ++i)
+			{
+				class<Weapon> t = mEntries[i].clsName;
+				if (!t) continue;
+				bool loc; int sl; int prio;
+				[loc, sl, prio] = pi.weapons.LocateWeapon(t);
+				mEntries[i].located = loc;
+				if (loc) mEntries[i].slot = sl;
+			}
+		}
 	}
 
 	// -----------------------------------------------------------------

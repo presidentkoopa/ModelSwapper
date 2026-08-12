@@ -62,7 +62,6 @@ class MS_SMG : Actor {}
 class MS_Shotgun : Actor {}
 class MS_SuperShotgun : Actor {}
 
-#include "zscript/RS_ForeignSource.zs"
 #include "zscript/RS_ForeignAnim.zs"
 #include "zscript/RS_ForeignModels.zs"
 #include "zscript/RS_ForeignModelsMenu.zs"

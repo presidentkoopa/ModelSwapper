@@ -64,23 +64,43 @@ class RS_Menu_ForeignModels : OptionMenu
 
 		int n = h.EntryCount();
 
-		// The scan already dropped anything the player cannot select, so this
-		// list is the loaded mod's arsenal and nothing else -- a couple of
-		// dozen rows, not four hundred. No further filtering here.
-		//
+
+		bool showAll = false;
+		{
+			CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
+			showAll = (sa && sa.GetBool());
+		}
+
 		// UNSURE FIRST. The rows that fell through to the slot fallback are
 		// the ones the classifier is admitting it could not read; everything
 		// below them is a confident guess that probably needs no attention.
+		int shown = 0;
 		for (int pass = 0; pass < 2; ++pass)
 		{
 			bool wantUnsure = (pass == 0);
 			for (int i = 0; i < n; ++i)
 			{
 				if (h.EntryUnsure(i) != wantUnsure) continue;
+
+				// Bound to one of the player's weapon slots by whatever mod is
+				// loaded. Nothing else is: the Heretic, Hexen, Strife and Chex
+				// arsenals the engine compiles in are bound to no slot at all.
+				if (!showAll && !h.EntryLocated(i)) continue;
+
 				desc.mItems.Push(new("OptionMenuItemRS_ForeignRow").InitRow(i));
+				shown++;
 			}
 		}
+
+		if (shown == 0)
+		{
+			desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
+				"Nothing matched the loaded mod.", Font.CR_BRICK));
+			desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
+				"Switch on 'List Unbound Weapons' to see all " .. n .. ".", Font.CR_DARKGRAY));
+		}
 	}
+
 }
 
 // ---------------------------------------------------------------------
@@ -239,20 +259,35 @@ class RS_Menu_ForeignReport : OptionMenu
 		}
 
 		int n = h.EntryCount();
-		int unsure = 0, pinned = 0;
+
+
+		bool showAll = false;
+		{
+			CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
+			showAll = (sa && sa.GetBool());
+		}
+
+		int listed = 0, unsure = 0, pinned = 0;
 		for (int i = 0; i < n; ++i)
 		{
+			if (!showAll && !h.EntryLocated(i)) continue;
+			listed++;
 			if (h.EntryUnsure(i)) unsure++;
 			if (h.EntryPinned(i)) pinned++;
 		}
 
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
-			String.Format("%d foreign weapons  --  %d guessed from slot only  --  %d set by you",
-				n, unsure, pinned), Font.CR_DARKGRAY));
+			String.Format("%d from this mod  --  %d guessed from slot only  --  %d set by you",
+				listed, unsure, pinned), Font.CR_DARKGRAY));
+		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
+			String.Format("\c[DarkGray](%d weapon classes scanned in total; the rest belong to games the engine compiles in)\c-",
+				n), Font.CR_DARKGRAY));
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(" ", Font.CR_WHITE));
 
 		for (int i = 0; i < n; ++i)
 		{
+			if (!showAll && !h.EntryLocated(i)) continue;
+
 			string src;
 			if (h.EntryPinned(i))       src = "\c[Green]yours\c-";
 			else if (h.EntryUnsure(i))  src = "\c[Brick]slot only\c-";
