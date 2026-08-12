@@ -14,7 +14,7 @@ $out  = Join-Path $root 'ModelSwapper.pk3'
 # Everything that belongs in the pk3. Anything else in the repo (README, this
 # script, .git) stays out.
 $include = @('zscript.txt', 'modeldef', 'MENUDEF', 'CVARINFO', 'MAPINFO', 'KEYCONF')
-$dirs    = @('zscript', 'models', 'sprites')
+$dirs    = @('zscript', 'models')   # no sprites: donors anchor on stock Doom sprite names
 
 $files = @()
 foreach ($f in $include) {

@@ -131,16 +131,16 @@ class RS_ForeignShelf
 			// this file works whether the donors come from RS_Main or from
 			// the standalone pk3.
 			"pistol|MS_Pistol|PISG|0|0|32",
-			"revolver|MS_Revolver|REVL|0|0|41",
-			"rifle|MS_Rifle|RIFL|0|0|41",
+			"revolver|MS_Revolver|PISG|0|0|41",
+			"rifle|MS_Rifle|CHGG|0|0|41",
 			"shotgun|MS_Shotgun|SHTG|0|0|32",
 			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
 			"chaingun|MS_Chaingun|CHGG|0|4|16",
 			"rocket|MS_RocketLauncher|MISG|0|5|39",
 			"plasma|MS_PlasmaRifle|PLSG|0|4|30",
-			"flamethrower|MS_Flamethrower|HBFT|0|0|6",
-			"bfg|MS_BFG9000|HBBF|0|6|16",
-			"bfg|MS_BFG10k|HBBT|0|6|21",
+			"flamethrower|MS_Flamethrower|PLSG|0|0|6",
+			"bfg|MS_BFG9000|BFGG|0|6|16",
+			"bfg|MS_BFG10k|BFGG|0|6|21",
 			"melee|MS_Fist|PUNG|0|0|57",
 			"melee|MS_Chainsaw|SAWG|0|0|8"
 		};
