@@ -39,6 +39,29 @@ OptionMenu "RSFM_Main"
 
     Option "List Unbound Weapons", "rs_foreignmodels_showall", "OnOff"
     StaticText "Turn on if the weapon list comes up empty.", "DarkGray"
+    StaticText " "
+
+    Submenu "Ballistics", "RSFM_Ballistic"
+}
+
+// Kept on its own page and off the main one on purpose. Everything else
+// in this mod changes what you see; this changes what happens.
+OptionMenu "RSFM_Ballistic"
+{
+    Title "Ballistics"
+    StaticText " "
+    StaticText "Turns the player's instant-hit weapons into rounds that", "DarkGray"
+    StaticText "actually fly, with a glowing tracer. Their damage, range and", "DarkGray"
+    StaticText "impact effects are unchanged -- the bullet just takes time to", "DarkGray"
+    StaticText "arrive, so it can be led and dodged. Melee is left alone.", "DarkGray"
+    StaticText " "
+    StaticText "This alters how the loaded mod plays, not just how it looks.", "Brick"
+    StaticText " "
+
+    Option "Bullets Travel", "rs_fm_ballistic", "OnOff"
+    Slider "Round Speed", "rs_fm_ballistic_speed", 10, 400, 10, 0
+    StaticText "Map units per tic. Lower is easier to see and easier to", "DarkGray"
+    StaticText "dodge; higher plays closer to the original hitscan.", "DarkGray"
 }
 
 OptionMenu "RSFM_Picker"

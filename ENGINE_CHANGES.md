@@ -248,6 +248,15 @@ an unmodified engine. Only the animation needs the above.
 
 **No new CVars, no renderer state, no shader work.**
 
+**The ballistics option needs nothing either.** Converting the player's hitscans into
+travelling projectiles sounds like it would need a hook, and it does — but the hook is
+already stock. `WorldHitscanPreFired` returns `bool`, and `P_LineAttack` returns
+`nullptr` when a handler returns `true`, which is complete cancellation at the one
+function every hitscan in the game funnels through. The `WorldEvent` it hands over
+already carries the angle, pitch, distance, damage, damage type, puff and offsets of the
+shot that was about to happen — everything needed to rebuild it as a projectile. Nothing
+in `RS_ForeignBallistic.zs` touches the engine.
+
 ---
 
 ## Verifying it

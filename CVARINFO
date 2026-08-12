@@ -11,3 +11,8 @@ server bool rs_foreignmodels_natural = false;
 // Learned sequence timings, packed as class:seq:duration:brightTic;...
 // Written once per sequence when its timing locks. Clear it with the menu.
 server string rs_fm_learned = "";
+
+// Hitscan -> projectile conversion. Off by default, and the only setting
+// here that changes how the loaded mod plays rather than how it looks.
+server bool rs_fm_ballistic       = false;  // player hitscans become travelling rounds
+server int  rs_fm_ballistic_speed = 90;     // map units per tic, clamped 10-400

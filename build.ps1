@@ -14,7 +14,10 @@ $out  = Join-Path $root 'ModelSwapper.pk3'
 # Everything that belongs in the pk3. Anything else in the repo (README, this
 # script, .git) stays out.
 $include = @('zscript.txt', 'modeldef', 'MENUDEF', 'CVARINFO', 'MAPINFO', 'KEYCONF')
-$dirs    = @('zscript', 'models')   # no sprites: donors anchor on stock Doom sprite names
+# Donors still anchor on stock Doom sprite names and ship no sprites of their
+# own. sprites/ carries exactly one thing: RSB0, the ballistic round. That name
+# is ours, collides with nothing stock, and overrides nothing a mod defines.
+$dirs    = @('zscript', 'models', 'sprites')
 
 $files = @()
 foreach ($f in $include) {

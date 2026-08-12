@@ -51,8 +51,12 @@ so cycling is a style choice rather than a shape hunt.
 Thirteen families, four to six models each. Every family has options; nothing is
 ever left unmodelled.
 
-No sprites ship at all. Every donor anchors on a stock Doom sprite name that any
-IWAD already has.
+No donor ships a sprite. Every one anchors on a stock Doom sprite name that any IWAD
+already has. The only sprite in the pk3 is `RSB0`, the ballistic round below — a name
+that is ours and overrides nothing.
+
+**Optional: bullets that travel.** Off by default, on its own menu page, and the only
+thing here that changes how a mod *plays* rather than how it looks. See below.
 
 ---
 
@@ -180,6 +184,43 @@ two-handed placement are not modelled — every donor MD3 here has zero tags.
 
 ---
 
+## Ballistics — the one feature that isn't cosmetic
+
+*Options → Weapon Model Swap Program → Ballistics.* Off by default.
+
+Turn it on and every hitscan the **player** fires becomes a real projectile: a glowing
+round that leaves the muzzle, streaks downrange, and arrives after the sound does. It can
+be led, it can be dodged, and at long range it can be outrun.
+
+Damage, damage type, range and impact are untouched. The shot carries the mod's own
+damage value, and on impact it spawns **the mod's own puff** — so their decals, sparks
+and ricochet sounds all still happen. Only the instantaneous part is gone.
+
+**What it deliberately leaves alone:**
+
+| | Why |
+|---|---|
+| Monster hitscans | Converting those would make every enemy in the game dodgeable. Players only. |
+| Melee | `LAF_ISMELEEATTACK`, plus a 96-unit range floor for the many mods that punch with a plain short-range `LineAttack` and no flag. |
+| Zero-damage traces | `P_LineAttack` is also how the engine and half of ZScript answer *"what am I pointing at"* — autoaim, target readouts, tracer setup. Cancelling one of those returns `nullptr` and the caller silently loses its answer. |
+
+In VR the round is spawned from `AttackPos`/`AttackDir` — the controller, not the eye —
+so it leaves the muzzle of the model in your hand rather than your face.
+
+**The honest cost:** a mod's balance assumes its hitscan lands instantly and always.
+Travel time means shots miss movers that instant ones would have hit, and a weapon's feel
+changes at range. That is the point of the feature and also its risk, which is why it is
+opt-in and why the speed is a slider.
+
+A twenty-pellet shotgun blast converts all twenty pellets — half-travelling and
+half-instant would be worse than either — but only the first eight per tic draw a trail.
+
+**No engine change is needed for this.** `WorldHitscanPreFired` is stock, it is
+cancellable, and `P_LineAttack` is the single funnel every hitscan in the game passes
+through.
+
+---
+
 ## Layout
 
 ```
@@ -188,8 +229,10 @@ zscript/
   RS_ForeignModels.zs        scanner, classifier, binder, animation driver
   RS_ForeignAnim.zs          clip table, expansion, per-hand state
   RS_ForeignModelsMenu.zs    picker + scan report
-modeldef                     49 donor blocks
+  RS_ForeignBallistic.zs     hitscan -> projectile, and the round itself
+modeldef                     51 donor blocks
 models/                      the meshes and skins
+sprites/                     RSB0 — the ballistic round, and nothing else
 MENUDEF  CVARINFO  MAPINFO  KEYCONF
 ```
 
