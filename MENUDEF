@@ -1,0 +1,51 @@
+// AddOptionMenu APPENDS, so neither the RS options page nor the base game's
+// options page gets replaced -- whatever we load next to keeps its own menus.
+// The RS entry is used when RS_Main is loaded; the Options entry is the
+// standalone door. Both point at the same page.
+
+AddOptionMenu "RS_MainOptions"
+{
+    StaticText " "
+    Submenu "Weapon Model Swap Program", "RSFM_Main"
+}
+
+AddOptionMenu "OptionsMenu"
+{
+    Submenu "Weapon Model Swap Program", "RSFM_Main"
+}
+
+OptionMenu "RSFM_Main"
+{
+    Title "Weapon Model Swap Program"
+    StaticText " "
+    StaticText "Puts our 3D weapon models onto weapons from any mod", "DarkGray"
+    StaticText "loaded alongside. Their code, damage and sounds stay", "DarkGray"
+    StaticText "theirs -- only the gun in your hands is ours.", "DarkGray"
+    StaticText " "
+
+    Option "Enable", "rs_foreignmodels", "OnOff"
+    StaticText " "
+
+    Submenu "Choose Models", "RSFM_Picker"
+    Submenu "Scan Report",   "RSFM_Report"
+    StaticText " "
+
+    Command  "Rescan Now", "netevent rs-fm-rescan"
+    StaticText "Re-reads the loaded mod. Models you picked are kept.", "DarkGray"
+    StaticText " "
+
+    Option "List Unbound Weapons", "rs_foreignmodels_showall", "OnOff"
+    StaticText "Turn on if the weapon list comes up empty.", "DarkGray"
+}
+
+OptionMenu "RSFM_Picker"
+{
+    class RS_Menu_ForeignModels
+    Title "Choose Models"
+}
+
+OptionMenu "RSFM_Report"
+{
+    class RS_Menu_ForeignReport
+    Title "Scan Report"
+}

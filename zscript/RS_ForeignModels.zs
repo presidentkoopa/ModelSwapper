@@ -1,0 +1,660 @@
+// =====================================================================
+// RS_ForeignModels -- OUR MODELS ON THEIR WEAPONS.
+//
+// Scans every weapon class loaded alongside us (any wad/pk3), guesses an
+// archetype, and paints one of OUR HUD models over it. Their code, their
+// damage, their projectiles, their effects, their sounds all run
+// untouched underneath -- the ONLY thing we replace is the mesh in the
+// player's hands.
+//
+// HOW THE BIND WORKS (two steps, both runtime, no MODELDEF authoring):
+//   1. A_ChangeModel(<ourClass>) sets the foreign weapon's per-instance
+//      modelData->modelDef. The HUD render path resolves models against
+//      psp->Caller's model data before falling back to its class
+//      (models.cpp FindModelFrame(AActor*)), so lookup now lands in OUR
+//      modeldef block -- carrying its Path/Skin/Scale/Offset/ZOffset.
+//   2. Frame lookup still keys on sprite+frame, so the psprite is pinned
+//      to our anchor sprite at the archetype's RESTING LETTER. That is a
+//      sprite letter index (A=0), NOT a model frame -- the donor's own
+//      MODELDEF does letter -> model frame, and rides along with step 1.
+//
+// Step 1 runs once per weapon INSTANCE. Step 2 has to run per tick because
+// the foreign weapon's own states re-set the psprite sprite every frame.
+//
+// CLASSIFICATION is a guess and is MEANT to be overridden. Order:
+//   name/tag tokens -> melee flag (only if no ammo) -> ammo-class tokens
+//   -> parent class -> SLOT NUMBER.
+// The slot fallback means nothing is ever left without a model: a weapon
+// we can't read at all still gets the Doom-default gun for its slot.
+// A trumpet in slot 5 gets a rocket launcher, and that is correct
+// behaviour -- the player retunes it from the picker.
+//
+// Archetype vocabulary is RS_Weapon.GetPaletteArchetype()'s, not a new
+// one. Model shelves mirror RSWFAM.txt (authoring source; kept in sync
+// by hand for now).
+//
+// GATED behind cvar `rs_foreignmodels`. Off = nothing here runs.
+// =====================================================================
+
+class RS_ForeignEntry
+{
+	string clsName;       // the foreign weapon's class name
+	string tag;           // display tag (falls back to class name)
+	int    slot;          // runtime slot, -1 = none
+	string archetype;     // guessed archetype (our vocabulary)
+	bool   guessedBySlot; // true = name/ammo told us nothing
+	int    modelPick1;    // MAINHAND  model: index into the archetype's shelf
+	int    modelPick2;    // OFFHAND   model: independent pick, same shelf
+	bool   pinned;        // player chose this; don't re-guess
+	// (no "applied" flag -- binding is tracked per-instance on the handler)
+}
+
+// ---------------------------------------------------------------------
+// The shelves. One archetype -> N of our models. Mirrors RSWFAM.txt.
+// Encoded "archetype|modeldefClass|anchorSprite|heldFrame".
+// ---------------------------------------------------------------------
+class RS_ForeignShelf
+{
+	// Built ONCE at world-load. Get() runs per player per hand per tick, so
+	// re-parsing 40 rows and re-resolving every donor class on each call was
+	// pure waste.
+	Array<string> mRows;
+
+	void Build()
+	{
+		// The 4th field is a SPRITE LETTER INDEX (A=0, B=1, C=2 ...) -- it is
+		// what psp.Frame takes. It is NOT the model frame; the donor class's
+		// own MODELDEF maps letter -> model frame (e.g. HBPS A -> model frame
+		// 2), and that mapping comes along for free with the modelDef
+		// override. Verified against every RS_ weapon's Ready: state: they
+		// all rest on letter A except RS_PS_Chainsaw, which rests on SAWG C.
+		static const string SHELF[] = {
+			"pistol|RS_GH_Pistol|HBPS|0",
+			"pistol|VR_Pistol|PISG|0",
+			"revolver|RS_GH_Revolver|HBRV|0",
+			"revolver|VR_Revolver|REVL|0",
+			"smg|RS_GH_SMG|HBSM|0",
+			"smg|RS_GH_MP40|HBMP|0",
+			"smg|VR_SMG|SMGG|0",
+			"smg|RS_PS_Machinegun|MGNG|0",
+			"rifle|RS_GH_Rifle|HBRI|0",
+			"rifle|VR_Rifle|RIFL|0",
+			"shotgun|RS_GH_PumpShotgun|HBSG|0",
+			"shotgun|VR_Shotgun|SHTG|0",
+			"shotgun|RS_GH_AssaultShotgun|HBAG|0",
+			"shotgun|RS_PS_AutoShotgun|SHTG|0",
+			"supershotgun|RS_GH_SSG|HBSS|0",
+			"supershotgun|VR_SuperShotgun|SHT2|0",
+			"supershotgun|RS_PS_SSG|SSGG|0",
+			"chaingun|RS_GH_Machinegun|HBMG|0",
+			"chaingun|RS_GH_Minigun|HBMN|0",
+			"chaingun|VR_Chaingun|CHGG|0",
+			"chaingun|RS_PS_Chaingun|MGUG|0",
+			"rocket|RS_GH_RocketLauncher|HBRL|0",
+			"rocket|VR_RocketLauncher|MISG|0",
+			"rocket|RS_GH_GrenadeLauncher|HBGL|0",
+			"rocket|RS_PS_RocketLauncher|RLNC|0",
+			"plasma|RS_GH_Plasma|HBPL|0",
+			"plasma|VR_PlasmaRifle|PLSG|0",
+			"plasma|RS_PS_Plasma|PLSC|0",
+			"railgun|RS_GH_Railgun|HBRA|0",
+			"flamethrower|RS_GH_Flamethrower|HBFT|0",
+			"bfg|RS_GH_BFG9000|HBBF|0",
+			"bfg|VR_BFG9000|BFGG|0",
+			"bfg|RS_GH_BFG10k|HBBT|0",
+			"bfg|RS_PS_BFG|BFGN|0",
+			"melee|RS_GH_Fist|HBFS|0",
+			"melee|Fist|PUNG|0",
+			"melee|RS_GH_Chainsaw|HBCS|0",
+			"melee|VR_Chainsaw|SAWG|0",
+			"melee|RS_PS_Fist|FSTZ|0",
+			"melee|RS_PS_Chainsaw|SAWG|2",     // rests on SAWG C, not A
+
+			// ---- standalone ModelSwapper.pk3 donors (MS_ namespace) ----
+			// Present only when the standalone asset pk3 is loaded; dropped
+			// automatically otherwise. Listing both sets means ONE build of
+			// this file works whether the donors come from RS_Main or from
+			// the standalone pk3.
+			"pistol|MS_Pistol|PISG|0",
+			"revolver|MS_Revolver|REVL|0",
+			"rifle|MS_Rifle|RIFL|0",
+			"shotgun|MS_Shotgun|SHTG|0",
+			"supershotgun|MS_SuperShotgun|SHT2|0",
+			"chaingun|MS_Chaingun|CHGG|0",
+			"rocket|MS_RocketLauncher|MISG|0",
+			"plasma|MS_PlasmaRifle|PLSG|0",
+			"flamethrower|MS_Flamethrower|HBFT|0",
+			"bfg|MS_BFG9000|HBBF|0",
+			"bfg|MS_BFG10k|HBBT|0",
+			"melee|MS_Fist|PUNG|0",
+			"melee|MS_Chainsaw|SAWG|0"
+		};
+		mRows.Clear();
+		for (int i = 0; i < SHELF.Size(); ++i)
+		{
+			// Drop any row whose donor class is not loaded. A MODELDEF block
+			// is inert without a real actor class owning its name, and
+			// A_ChangeModel would print "invalid modeldef name" on every
+			// weapon select if pointed at nothing.
+			Array<string> f;
+			SHELF[i].Split(f, "|");
+			if (f.Size() < 4) continue;
+			if (!DonorExists(f[1])) continue;
+			mRows.Push(SHELF[i]);
+		}
+	}
+
+	// Is this donor class actually present in the current load?
+	static bool DonorExists(string cls)
+	{
+		return ((class<Actor>)(cls) != null);
+	}
+
+	// how many models sit on this archetype's shelf
+	int Count(string arche) const
+	{
+		string pfx = arche .. "|";
+		int n = 0;
+		for (int i = 0; i < mRows.Size(); ++i)
+			if (mRows[i].IndexOf(pfx) == 0) n++;
+		return n;
+	}
+
+	// pick N off the shelf -> modeldefClass / anchorSprite / restLetter
+	bool Get(string arche, int pick, out string cls, out string anchor, out int frame) const
+	{
+		string pfx = arche .. "|";
+		int seen = 0;
+		cls = ""; anchor = ""; frame = 0;
+		for (int i = 0; i < mRows.Size(); ++i)
+		{
+			if (mRows[i].IndexOf(pfx) != 0) continue;
+			if (seen == pick)
+			{
+				Array<string> f;
+				mRows[i].Split(f, "|");
+				if (f.Size() < 4) return false;
+				cls = f[1]; anchor = f[2]; frame = f[3].ToInt();
+				return true;
+			}
+			seen++;
+		}
+		return false;
+	}
+}
+
+class RS_ForeignScanner
+{
+	// -----------------------------------------------------------------
+	// Guess an archetype. Never returns "" -- slot fallback catches all.
+	// -----------------------------------------------------------------
+	static string Classify(class<Weapon> type, string clsName, string tag,
+	                       int slot, string ammo1, string ammo2,
+	                       out bool bySlot, out int pick)
+	{
+		bySlot = false;
+		pick   = 0;
+
+		readonly<Weapon> def = GetDefaultByType(type);
+
+		// 1. NAME + TAG tokens run FIRST -- ahead of the melee flag.
+		//    Mods set +MELEEWEAPON for autoaim/alert behaviour on things
+		//    that are not melee weapons at all: Ashes flags its SawedOff
+		//    double-barrel, which used to come out as bare fists. A
+		//    positive weapon token beats the flag.
+		string hay = clsName; hay = hay.MakeLower();
+		string lt  = tag;     lt  = lt.MakeLower();
+		hay = hay .. " " .. lt;
+
+		string a = TokenArchetype(hay);
+		if (a.Length() > 0) return a;
+
+		// 2. melee flag, but ONLY on a weapon that carries no ammo at all.
+		//    A gun with a magazine is not a fist no matter what it flags.
+		if (def && def.bMeleeWeapon && ammo1.Length() == 0 && ammo2.Length() == 0)
+			return "melee";
+
+		// 3. ammo class names -- BOTH slots. Reload-based mods put a
+		//    magazine pseudo-ammo in slot 1 ("GlockLoaded", "musketloaded")
+		//    and the REAL pool in slot 2 ("fortyfiveammo", "shotgunammo").
+		//    Reading only slot 1 made this rule dead code on every Ashes
+		//    weapon.
+		a = AmmoArchetype(ammo1);
+		if (a.Length() > 0) return a;
+		a = AmmoArchetype(ammo2);
+		if (a.Length() > 0) return a;
+
+		// 4. INHERIT from the parent weapon class. Tiered variants of one
+		//    gun (Ingram / Ingram2 / Ingram3) share a parent whose name
+		//    still carries the token, so they stop scattering across three
+		//    different archetypes.
+		class<Object> par = type.GetParentClass();
+		while (par != null && par != "Weapon")
+		{
+			a = TokenArchetype(("" .. par.GetClassName()).MakeLower());
+			if (a.Length() > 0) return a;
+			par = par.GetParentClass();
+		}
+
+		// 5. SLOT FALLBACK -- the "nothing goes unmodelled" rule.
+		bySlot = true;
+		return SlotArchetype(slot, pick);
+	}
+
+	// Archetype from an ammo class name, tokens first then the vanilla pools.
+	static string AmmoArchetype(string ammo)
+	{
+		if (ammo.Length() == 0) return "";
+		string la = ammo; la = la.MakeLower();
+
+		string a = TokenArchetype(la);
+		if (a.Length() > 0) return a;
+
+		if (la.IndexOf("shell") >= 0)  return "shotgun";
+		if (la.IndexOf("rocket") >= 0) return "rocket";
+		if (la.IndexOf("cell") >= 0)   return "plasma";
+		if (la.IndexOf("clip") >= 0)   return "pistol";
+		return "";
+	}
+
+	// contains-match archetype words, ordered so the specific wins
+	static string TokenArchetype(string hay)
+	{
+		// SUPERSHOTGUN before SHOTGUN, and both before the SMG/pistol
+		// checks -- "sawedoff" must not fall through to melee.
+		if (hay.IndexOf("supershot") >= 0 || hay.IndexOf("ssg") >= 0
+		 || hay.IndexOf("doublebarrel") >= 0 || hay.IndexOf("double barrel") >= 0
+		 || hay.IndexOf("sawedoff") >= 0 || hay.IndexOf("sawed-off") >= 0
+		 || hay.IndexOf("sawed off") >= 0 || hay.IndexOf("coachgun") >= 0) return "supershotgun";
+		if (hay.IndexOf("shotgun") >= 0 || hay.IndexOf("shotty") >= 0
+		 || hay.IndexOf("trenchgun") >= 0 || hay.IndexOf("boomstick") >= 0
+		 || hay.IndexOf("pumpaction") >= 0) return "shotgun";
+		if (hay.IndexOf("revolver") >= 0 || hay.IndexOf("magnum") >= 0) return "revolver";
+		// SMG before PISTOL: "Machine Pistol" is an SMG, and the space
+		// variant is why the old machinepistol token missed Ashes' Ingram.
+		if (hay.IndexOf("smg") >= 0 || hay.IndexOf("machinepistol") >= 0
+		 || hay.IndexOf("machine pistol") >= 0 || hay.IndexOf("ingram") >= 0
+		 || hay.IndexOf("mac10") >= 0 || hay.IndexOf("mac-10") >= 0
+		 || hay.IndexOf("uzi") >= 0 || hay.IndexOf("mp40") >= 0
+		 || hay.IndexOf("tec9") >= 0 || hay.IndexOf("sten") >= 0) return "smg";
+		if (hay.IndexOf("chaingun") >= 0 || hay.IndexOf("minigun") >= 0
+		 || hay.IndexOf("gatling") >= 0 || hay.IndexOf("machinegun") >= 0) return "chaingun";
+		if (hay.IndexOf("rifle") >= 0 || hay.IndexOf("assault") >= 0
+		 || hay.IndexOf("ar15") >= 0 || hay.IndexOf("m16") >= 0
+		 || hay.IndexOf("ak47") >= 0 || hay.IndexOf("carbine") >= 0
+		 || hay.IndexOf("musket") >= 0 || hay.IndexOf("sniper") >= 0
+		 || hay.IndexOf("marksman") >= 0 || hay.IndexOf("garand") >= 0
+		 || hay.IndexOf("mosin") >= 0) return "rifle";
+		// pipebomb/dynamite before any "pipe" melee token.
+		// BFG and RAILGUN must be tested BEFORE the rocket line, because
+		// "launcher" lives there and would eat BFGLauncher / RailLauncher.
+		if (hay.IndexOf("bfg") >= 0) return "bfg";
+		// "rail" alone false-positives on guardrail/trail/derail.
+		if (hay.IndexOf("railgun") >= 0 || hay.IndexOf("rail gun") >= 0
+		 || hay.IndexOf("railrifle") >= 0) return "railgun";
+		if (hay.IndexOf("flame") >= 0 || hay.IndexOf("thrower") >= 0) return "flamethrower";
+		if (hay.IndexOf("rocket") >= 0 || hay.IndexOf("launcher") >= 0
+		 || hay.IndexOf("bazooka") >= 0 || hay.IndexOf("grenade") >= 0
+		 || hay.IndexOf("pipebomb") >= 0 || hay.IndexOf("dynamite") >= 0
+		 || hay.IndexOf("molotov") >= 0 || hay.IndexOf("satchel") >= 0
+		 || hay.IndexOf("mortar") >= 0 || hay.IndexOf("napalm") >= 0) return "rocket";
+		if (hay.IndexOf("plasma") >= 0 || hay.IndexOf("energy") >= 0
+		 || hay.IndexOf("beam") >= 0)  return "plasma";
+		if (hay.IndexOf("pistol") >= 0 || hay.IndexOf("handgun") >= 0
+		 || hay.IndexOf("glock") >= 0 || hay.IndexOf("autoloader") >= 0
+		 || hay.IndexOf("9mm") >= 0 || hay.IndexOf("luger") >= 0
+		 || hay.IndexOf("beretta") >= 0 || hay.IndexOf("deagle") >= 0
+		 || hay.IndexOf("desert eagle") >= 0 || hay.IndexOf("sidearm") >= 0) return "pistol";
+		if (hay.IndexOf("chainsaw") >= 0 || hay.IndexOf("fist") >= 0
+		 || hay.IndexOf("punch") >= 0 || hay.IndexOf("knuckle") >= 0
+		 || hay.IndexOf("machete") >= 0 || hay.IndexOf("knife") >= 0
+		 || hay.IndexOf("crowbar") >= 0 || hay.IndexOf("whip") >= 0
+		 || hay.IndexOf("jackhammer") >= 0 || hay.IndexOf("wrench") >= 0
+		 || hay.IndexOf("shovel") >= 0) return "melee";
+		return "";
+	}
+
+	// Doom's own slot layout, extended past 7 with what the GH set has
+	// spare: slot 8 takes the second BFG, slot 9 the flamethrower. Mods
+	// that use the high slots get a distinct heavy instead of everything
+	// above 7 collapsing onto one gun.
+	//
+	// `pick` is the default index on that archetype's shelf -- it lets
+	// slots 7 and 8 both land on "bfg" while showing different models.
+	static string SlotArchetype(int slot, out int pick)
+	{
+		pick = 0;
+		if (slot == 1) return "melee";
+		if (slot == 2) return "pistol";
+		if (slot == 3) return "shotgun";
+		if (slot == 4) return "chaingun";
+		if (slot == 5) return "rocket";
+		if (slot == 6) return "plasma";
+		if (slot == 7) return "bfg";                    // RS_GH_BFG9000
+		if (slot == 8) { pick = 2; return "bfg"; }      // RS_GH_BFG10k
+		if (slot == 9) return "flamethrower";
+		return "pistol";
+	}
+
+	// Is this one of OURS (or a base-game class we don't want to touch)?
+	// NOTE: unlike the old scanner this does NOT blanket-skip IWAD names --
+	// a mod that REPLACES Shotgun is still a foreign weapon worth modelling.
+	static bool IsOurs(string cn)
+	{
+		return (cn.IndexOf("RS_") == 0 || cn.IndexOf("VR_") == 0
+		     || cn.IndexOf("Vanilla_") == 0);
+	}
+
+	// NOTE: there is deliberately no HasOwnModel() here. ZScript exposes no
+	// way to ask whether a class already has a MODELDEF binding (the engine
+	// keeps that in FSpriteModelFrame/hasmodel, native-side only), so a mod
+	// that already ships 3D weapons WILL get painted over. Skipping those
+	// needs an engine accessor -- see the notes on the model-frame work.
+
+	// -----------------------------------------------------------------
+	static void Scan(in out Array<RS_ForeignEntry> outList)
+	{
+		outList.Clear();
+		int n = AllActorClasses.Size();
+		for (int i = 0; i < n; ++i)
+		{
+			let type = (class<Weapon>)(AllActorClasses[i]);
+			if (type == null || type == "Weapon") continue;
+
+			readonly<Weapon> def = GetDefaultByType(type);
+			if (!def) continue;
+
+			string cn = type.GetClassName();
+			if (IsOurs(cn)) continue;
+
+			string lcn = cn; lcn = lcn.MakeLower();
+			if (lcn.IndexOf("random") == 0) continue;   // RandomSpawner-style
+
+			RS_ForeignEntry e = new("RS_ForeignEntry");
+			e.clsName = cn;
+			e.tag     = def.GetTag(cn);
+
+			// SlotNumber is -1 for weapons that get their slot from
+			// KEYCONF/MAPINFO instead of the actor property. Read the
+			// player's REAL runtime slot when we can.
+			e.slot = def.SlotNumber;
+			bool located = false;
+			PlayerInfo pl = players[consolePlayer];
+			if (pl && pl.mo)
+			{
+				int sl; int prio;
+				[located, sl, prio] = pl.weapons.LocateWeapon(type);
+				if (located) e.slot = sl;
+			}
+
+			// GZDoom compiles Heretic, Hexen and Strife weapons into EVERY
+			// session, so AllActorClasses hands us Gauntlets, PhoenixRod,
+			// FWeapAxe, Mauler and friends on top of the mod's real arsenal.
+			// A weapon the player has no slot binding for cannot be selected,
+			// so painting it is pointless and it would bury the picker under
+			// 40+ unreachable rows. rs_foreignmodels_showall keeps them.
+			if (!located)
+			{
+				CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
+				if (!sa || !sa.GetBool()) continue;
+			}
+
+			string ammo1 = "", ammo2 = "";
+			if (def.AmmoType1 != null) ammo1 = "" .. def.AmmoType1.GetClassName();
+			if (def.AmmoType2 != null) ammo2 = "" .. def.AmmoType2.GetClassName();
+
+			bool bySlot; int pick;
+			e.archetype     = RS_ForeignScanner.Classify(type, e.clsName, e.tag, e.slot, ammo1, ammo2, bySlot, pick);
+			e.guessedBySlot = bySlot;
+			e.modelPick1    = pick;
+			e.modelPick2    = pick;
+			e.pinned        = false;
+			outList.Push(e);
+		}
+	}
+}
+
+class RS_ForeignModelHandler : EventHandler
+{
+	Array<RS_ForeignEntry> mEntries;
+	bool mScanned;
+
+	// Track the ACTOR, not the class name. A_ChangeModel writes modelData on
+	// one specific instance, so if the player drops and re-picks the same
+	// weapon class the new instance never gets bound -- while step 2 still
+	// pins its psprite to our anchor, leaving a raw sprite in their hands.
+	Weapon mLastMain;
+	Weapon mLastOff;
+
+	RS_ForeignShelf mShelf;   // built once at world-load
+
+	static bool Enabled()
+	{
+		CVar c = CVar.FindCVar("rs_foreignmodels");
+		return (c && c.GetBool());
+	}
+
+	static RS_ForeignModelHandler Get()
+	{
+		return RS_ForeignModelHandler(EventHandler.Find("RS_ForeignModelHandler"));
+	}
+
+	override void WorldLoaded(WorldEvent e)
+	{
+		if (!Enabled()) return;
+		mShelf = new("RS_ForeignShelf");
+		mShelf.Build();
+
+		RS_ForeignScanner.Scan(mEntries);
+		mScanned = true;
+		mLastMain = null; mLastOff = null;
+
+		CVar d = CVar.FindCVar("rs_foreignmodels_dump");
+		if (d && d.GetBool()) Dump();
+	}
+
+	int FindEntry(string cls)
+	{
+		for (int i = 0; i < mEntries.Size(); ++i)
+			if (mEntries[i].clsName == cls) return i;
+		return -1;
+	}
+
+	// Paint ONE hand. `pick` selects which of the entry's two model slots
+	// to use -- mainhand reads modelPick1, offhand reads modelPick2, so the
+	// same weapon class can wear a different model in each hand.
+	// Returns the bound class name (or "") so the caller can track whether
+	// a re-bind is needed.
+	Weapon ApplyHand(PlayerInfo pi, Weapon w, int layer, int pick, Weapon lastBound)
+	{
+		if (!w) return null;
+
+		int idx = FindEntry(w.GetClassName());
+		if (idx < 0) return null;
+		let en = mEntries[idx];
+
+		string mcls, anchor; int heldFrame;
+		if (!mShelf.Get(en.archetype, pick, mcls, anchor, heldFrame))
+			return null;
+
+		// STEP 1 -- once per INSTANCE: point this actor's model lookup at
+		// our class. Brings its Path/Skin/Scale/Offset along with it.
+		if (lastBound != w)
+			w.A_ChangeModel(mcls);
+
+		// STEP 2 -- every tick: their states re-set the psprite each frame,
+		// so re-pin it to our anchor at the resting pose.
+		let psp = pi.GetPSprite(layer);
+		if (psp)
+		{
+			psp.Sprite = Actor.GetSpriteIndex(anchor);
+			psp.Frame  = heldFrame;
+		}
+		return w;
+	}
+
+	override void WorldTick()
+	{
+		if (!Enabled() || !mScanned || !mShelf) return;
+
+		// psprites are local-view state; v1 paints the console player only.
+		if (!playeringame[consolePlayer] || !players[consolePlayer].mo) return;
+		let pi = players[consolePlayer];
+
+		int mi = FindEntry(pi.ReadyWeapon   ? pi.ReadyWeapon.GetClassName()   : "");
+		int oi = FindEntry(pi.OffhandWeapon ? pi.OffhandWeapon.GetClassName() : "");
+
+		mLastMain = ApplyHand(pi, pi.ReadyWeapon, PSP_WEAPON,
+			mi >= 0 ? mEntries[mi].modelPick1 : 0, mLastMain);
+
+		mLastOff  = ApplyHand(pi, pi.OffhandWeapon, PSP_OFFHANDWEAPON,
+			oi >= 0 ? mEntries[oi].modelPick2 : 0, mLastOff);
+	}
+
+	// ----- picker plumbing -----
+	//
+	// SCOPE LAW (same as RS_Screens.zs): the menu runs in UI scope. It may
+	// READ plain data off this play handler through const methods, but it
+	// may NOT call anything that mutates. Every selector write comes back
+	// as a netevent -- see NetworkProcess() below. Calling the mutators
+	// directly from a menu is what produced the "unknown type" scope errors
+	// that killed the previous attempt at this feature.
+
+	// Cycling order for the FAMILY selector.
+	static void ArchetypeList(out Array<string> a)
+	{
+		static const string ARCHE[] = {
+			"pistol", "revolver", "smg", "rifle", "shotgun", "supershotgun",
+			"chaingun", "rocket", "plasma", "railgun", "flamethrower",
+			"bfg", "melee"
+		};
+		a.Clear();
+		for (int i = 0; i < ARCHE.Size(); ++i) a.Push(ARCHE[i]);
+	}
+
+	int EntryCount() const             { return mScanned ? mEntries.Size() : 0; }
+	string EntryName(int i) const      { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].clsName : ""; }
+	string EntryTag(int i) const       { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].tag : ""; }
+	string EntryArchetype(int i) const { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].archetype : ""; }
+	bool   EntryUnsure(int i) const    { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].guessedBySlot : false; }
+	bool   EntryPinned(int i) const    { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].pinned : false; }
+	int    EntrySlot(int i) const      { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].slot : -1; }
+
+	// hand: 1 = mainhand (Model_1), 2 = offhand (Model_2)
+	int EntryPick(int i, int hand) const
+	{
+		if (i < 0 || i >= mEntries.Size()) return 0;
+		return (hand == 2) ? mEntries[i].modelPick2 : mEntries[i].modelPick1;
+	}
+
+	// Which of OUR models that hand is currently wearing (for the row label).
+	string EntryModelName(int i, int hand) const
+	{
+		if (i < 0 || i >= mEntries.Size() || !mShelf) return "";
+		int pick = (hand == 2) ? mEntries[i].modelPick2 : mEntries[i].modelPick1;
+		string mcls, anchor; int hf;
+		if (!mShelf.Get(mEntries[i].archetype, pick, mcls, anchor, hf))
+			return "(none)";
+		return mcls;
+	}
+
+	// ----- the ONE write path -----
+	//   netevent: rs-fm-cycle <row> <selector> <dir>
+	//   selector 0 = family, 1 = mainhand model, 2 = offhand model
+	// Three int args is exactly what SendNetworkEvent carries, so a row's
+	// three selectors need no packing.
+	override void NetworkProcess(ConsoleEvent e)
+	{
+		// Re-run the scan without reloading the map. Pinned rows keep their
+		// player-chosen family and models; everything else re-guesses.
+		if (e.name == "rs-fm-rescan")
+		{
+			Array<RS_ForeignEntry> keep;
+			for (int i = 0; i < mEntries.Size(); ++i)
+				if (mEntries[i].pinned) keep.Push(mEntries[i]);
+
+			RS_ForeignScanner.Scan(mEntries);
+
+			for (int k = 0; k < keep.Size(); ++k)
+			{
+				int idx = FindEntry(keep[k].clsName);
+				if (idx < 0) continue;
+				mEntries[idx].archetype     = keep[k].archetype;
+				mEntries[idx].modelPick1    = keep[k].modelPick1;
+				mEntries[idx].modelPick2    = keep[k].modelPick2;
+				mEntries[idx].guessedBySlot = keep[k].guessedBySlot;
+				mEntries[idx].pinned        = true;
+			}
+			mScanned  = true;
+			mLastMain = null; mLastOff = null;
+			return;
+		}
+
+		if (e.name != "rs-fm-cycle") return;
+
+		int row = e.args[0];
+		int sel = e.args[1];
+		int dir = e.args[2];
+		if (row < 0 || row >= mEntries.Size()) return;
+
+		if (sel == 0) CycleArchetype(row, dir);
+		else          CyclePick(row, sel, dir);
+	}
+
+	void CycleArchetype(int i, int dir)
+	{
+		if (i < 0 || i >= mEntries.Size()) return;
+		Array<string> a; ArchetypeList(a);
+
+		int cur = 0;
+		for (int k = 0; k < a.Size(); ++k)
+			if (a[k] == mEntries[i].archetype) { cur = k; break; }
+
+		int v = (cur + dir) % a.Size();
+		if (v < 0) v += a.Size();
+		SetArchetype(i, a[v]);
+	}
+
+	void SetArchetype(int i, string a)
+	{
+		if (i < 0 || i >= mEntries.Size()) return;
+		mEntries[i].archetype  = a;
+		mEntries[i].modelPick1 = 0;
+		mEntries[i].modelPick2 = 0;
+		mEntries[i].pinned     = true;
+		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
+	}
+
+	void CyclePick(int i, int hand, int dir)
+	{
+		if (i < 0 || i >= mEntries.Size()) return;
+		if (!mShelf) return;
+		int n = mShelf.Count(mEntries[i].archetype);
+		if (n <= 0) return;
+
+		int cur = (hand == 2) ? mEntries[i].modelPick2 : mEntries[i].modelPick1;
+		int v = (cur + dir) % n;
+		if (v < 0) v += n;
+
+		if (hand == 2) mEntries[i].modelPick2 = v;
+		else           mEntries[i].modelPick1 = v;
+
+		mEntries[i].pinned = true;
+		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
+	}
+
+	void Dump()
+	{
+		Console.Printf("\cd[RS Foreign] %d foreign weapons:", mEntries.Size());
+		for (int i = 0; i < mEntries.Size(); ++i)
+		{
+			let en = mEntries[i];
+			string mcls, anchor; int hf;
+			mShelf.Get(en.archetype, en.modelPick, mcls, anchor, hf);
+			Console.Printf("  %s%-24s\c-  slot %d  -> \cf%-14s\c- %s [%s %d]",
+				en.guessedBySlot ? "\cj?\c- " : "  ",
+				en.clsName, en.slot, en.archetype,
+				mcls.Length() > 0 ? mcls : "(no shelf)", anchor, hf);
+		}
+	}
+}

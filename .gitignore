@@ -1,0 +1,7 @@
+# Build artifact -- rebuild with ./build.ps1
+ModelSwapper.pk3
+
+# Windows junk
+Thumbs.db
+desktop.ini
+*.lnk

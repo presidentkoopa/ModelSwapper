@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.md3 binary
+*.md2 binary
+*.MD2 binary
+*.png binary
+*.pcx binary
+*.pk3 binary
+sprites/* binary

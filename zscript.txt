@@ -1,0 +1,30 @@
+version "4.14"
+
+// ============================================================================
+// ModelSwapper -- donor stubs.
+//
+// A MODELDEF block is inert unless a real Actor class owns its name, and
+// A_ChangeModel takes an actor class name. Actor is enough -- these must NOT
+// derive from Weapon (they would become pickup-able) and must NOT be
+// subclassed by anything (FindModelFrameRaw is an exact class-pointer test).
+//
+// MS_ prefix so this pk3 can load alongside RS_Main without duplicate-class
+// errors on VR_* / RS_GH_*.
+// ============================================================================
+
+class MS_BFG10k : Actor {}
+class MS_BFG9000 : Actor {}
+class MS_Chaingun : Actor {}
+class MS_Chainsaw : Actor {}
+class MS_Fist : Actor {}
+class MS_Flamethrower : Actor {}
+class MS_Pistol : Actor {}
+class MS_PlasmaRifle : Actor {}
+class MS_Revolver : Actor {}
+class MS_Rifle : Actor {}
+class MS_RocketLauncher : Actor {}
+class MS_Shotgun : Actor {}
+class MS_SuperShotgun : Actor {}
+
+#include "zscript/RS_ForeignModels.zs"
+#include "zscript/RS_ForeignModelsMenu.zs"
