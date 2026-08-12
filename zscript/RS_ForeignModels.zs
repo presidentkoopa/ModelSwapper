@@ -1239,7 +1239,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// After LOCK_AFTER plays the animation for that sequence is fixed
 		// forever: time-matched to how that weapon actually behaves, and
 		// identical on the hundredth reload as on the fourth.
-		const LOCK_AFTER = 3;
+		int LOCK_AFTER = 3;
 		if (mLearned[li].plays < LOCK_AFTER)
 		{
 			if (mLearned[li].observedTics <= 0 || hs.elapsed < mLearned[li].observedTics)
