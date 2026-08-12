@@ -155,6 +155,25 @@ class RS_ForeignClip
 			"MS_SMG|reload|7@2,8-26@1|0|-1|-1",
 			"MS_Shotgun|fire|1-4@1,5@1,6@1,7@1,8-12@1,13@1,14-19@1,0@1|0|-1|-1",
 			"MS_Shotgun|reload|5@2,6@2,19@1,18@1,17@1,16@1,15@1,14@1,13@1,12@1,11@1,10@1,9@1,8@1,7@1,6@1,5@1|0|-1|-1",
+			// INFERRED RELOADS.
+			//
+			// Only 18 of the 43 source weapons have a Reload: state at all, so
+			// derivation found no reload for these -- but their MESHES do. The
+			// rocket launcher plays 10 of its 39 frames; the GH machinegun 8 of
+			// 36. Those unused tails are reload animations the source weapon
+			// simply never triggered, and a foreign weapon that DOES reload
+			// should get to use them.
+			//
+			// Unlike everything else in this table these are read off the frame
+			// budget rather than off a state machine, so they are the one place
+			// a range could be wrong. If one looks off, the picker is the fix --
+			// every family has three or more donors.
+			"MS_RocketLauncher|reload|11-38@1|-1|0|14",
+			"MS_PlasmaRifle|reload|13-29@1|-1|0|8",
+			"MS_GH_Machinegun|reload|9-35@1|-1|0|13",
+			"MS_MG_SSG|reload|2-11@2|-1|0|5",
+			"MS_BFG10k|reload|10-20@2|-1|0|-1",
+
 			"MS_SuperShotgun|fire|0@2,1-7@2|0|-1|-1",
 			"MS_SuperShotgun|reload|8@2,9-17@3,18@2,19-21@3,23@2,24@2,24@1|0|-1|-1",
 

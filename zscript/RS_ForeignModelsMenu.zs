@@ -58,6 +58,8 @@ class RS_Menu_ForeignModels : OptionMenu
 			"Left/Right cycles \c[Gold]the highlighted field\c-.  Enter moves between fields.", Font.CR_DARKGRAY));
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
 			"\c[Brick]?\c- = guessed from weapon slot only -- worth a look.", Font.CR_DARKGRAY));
+		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
+			"\c[Brick]*\c- = that model has no reload animation.", Font.CR_DARKGRAY));
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(" ", Font.CR_WHITE));
 
 		int n = h.EntryCount();
@@ -209,6 +211,11 @@ class OptionMenuItemRS_ForeignRow : OptionMenuItem
 		string fam    = h.EntryArchetype(mRow);
 		string m1     = Pretty(h.EntryModelName(mRow, 1));
 		string m2     = Pretty(h.EntryModelName(mRow, 2));
+
+		// A model with no reload animation can only hold its rest pose while
+		// the weapon reloads. Worth seeing before you pick it, not after.
+		if (!h.EntryModelHasReload(mRow, 1)) m1 = m1 .. " \c[Brick]*\c-";
+		if (!h.EntryModelHasReload(mRow, 2)) m2 = m2 .. " \c[Brick]*\c-";
 
 		string label = (unsure ? "\c[Brick]?\c- " : "  ") .. tag;
 		mLabel = label;

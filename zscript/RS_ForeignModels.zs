@@ -989,6 +989,22 @@ class RS_ForeignModelHandler : StaticEventHandler
 		return (hand == 2) ? mEntries[i].modelPick2 : mEntries[i].modelPick1;
 	}
 
+	// Does the model on that hand have a reload animation at all?
+	//
+	// Some donors genuinely do not -- a knife, a chainsaw, the shorter
+	// MeatGrinder meshes. Bind one of those to a weapon that reloads and the
+	// reload is silent: the mesh holds its rest pose while the ammo count
+	// changes. That is the honest thing for it to do, but the player should
+	// be able to see it coming rather than discover it mid-fight.
+	bool EntryModelHasReload(int i, int hand) const
+	{
+		if (i < 0 || i >= mEntries.Size() || !mShelf || !mClips) return true;
+		int pick = (hand == 2) ? mEntries[i].modelPick2 : mEntries[i].modelPick1;
+		string mcls, anchor; int hf, rf, fc;
+		if (!mShelf.Get(mEntries[i].archetype, pick, mcls, anchor, hf, rf, fc)) return true;
+		return mClips.Has(mcls, "reload");
+	}
+
 	// Which of OUR models that hand is currently wearing (for the row label).
 	string EntryModelName(int i, int hand) const
 	{
