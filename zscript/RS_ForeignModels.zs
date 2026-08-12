@@ -105,7 +105,6 @@ class RS_ForeignShelf
 			"bfg|RS_GH_BFG10k|HBBT|0",
 			"bfg|RS_PS_BFG|BFGN|0",
 			"melee|RS_GH_Fist|HBFS|0",
-			"melee|Fist|PUNG|0",
 			"melee|RS_GH_Chainsaw|HBCS|0",
 			"melee|VR_Chainsaw|SAWG|0",
 			"melee|RS_PS_Fist|FSTZ|0",
@@ -151,6 +150,19 @@ class RS_ForeignShelf
 		return ((class<Actor>)(cls) != null);
 	}
 
+	// Nearest neighbour when an archetype has no models in this load. One hop
+	// only -- if the fallback is also empty the weapon keeps its own sprite,
+	// which is honest, rather than chaining to something absurd.
+	static string FallbackArchetype(string a)
+	{
+		if (a == "smg")          return "pistol";
+		if (a == "railgun")      return "rifle";
+		if (a == "revolver")     return "pistol";
+		if (a == "supershotgun") return "shotgun";
+		if (a == "flamethrower") return "plasma";
+		return "";
+	}
+
 	// how many models sit on this archetype's shelf
 	int Count(string arche) const
 	{
@@ -173,6 +185,18 @@ class RS_ForeignShelf
 		// entries standalone. Without this every slot-8 weapon silently got no
 		// model at all.
 		int have = Count(arche);
+
+		// An archetype with no shelf at all in this load falls back one hop to
+		// the nearest thing we do have. The standalone pk3 ships 13 donors and
+		// has no SMG and no railgun -- so every Ashes Ingram, the entire reason
+		// the smg token block exists, would have got nothing.
+		if (have <= 0)
+		{
+			string alt = FallbackArchetype(arche);
+			if (alt.Length() == 0) return false;
+			arche = alt;
+			have  = Count(arche);
+		}
 		if (have <= 0) return false;
 		if (pick < 0 || pick >= have) pick = ((pick % have) + have) % have;
 
@@ -336,6 +360,10 @@ class RS_ForeignScanner
 	static string SlotArchetype(int slot, out int pick)
 	{
 		pick = 0;
+		// Slot 0 is where mods park utility items -- Ashes puts its Lantern
+		// there. Melee is the least wrong thing to hand someone holding a
+		// light source; pistol was actively silly.
+		if (slot == 0) return "melee";
 		if (slot == 1) return "melee";
 		if (slot == 2) return "pistol";
 		if (slot == 3) return "shotgun";
@@ -449,7 +477,12 @@ class RS_ForeignScanner
 	}
 }
 
-class RS_ForeignModelHandler : EventHandler
+// STATIC, not per-map. A plain EventHandler is destroyed and re-created on
+// every level change, so every model the player picked died at the exit of
+// every map -- and `pinned` was written in three places and read in none.
+// StaticEventHandler still gets WorldLoaded and WorldTick, survives map
+// changes, and additionally fires WorldLoaded on savegame restore.
+class RS_ForeignModelHandler : StaticEventHandler
 {
 	Array<RS_ForeignEntry> mEntries;
 	bool mScanned;
@@ -460,6 +493,7 @@ class RS_ForeignModelHandler : EventHandler
 	// pins its psprite to our anchor, leaving a raw sprite in their hands.
 	Weapon mLastMain;
 	Weapon mLastOff;
+	bool   mBound;        // something is currently wearing one of our models
 
 	RS_ForeignShelf mShelf;   // built once at world-load
 
@@ -477,15 +511,46 @@ class RS_ForeignModelHandler : EventHandler
 	override void WorldLoaded(WorldEvent e)
 	{
 		if (!Enabled()) return;
-		mShelf = new("RS_ForeignShelf");
-		mShelf.Build();
-
-		RS_ForeignScanner.Scan(mEntries);
-		mScanned = true;
-		mLastMain = null; mLastOff = null;
+		Rescan();
 
 		CVar d = CVar.FindCVar("rs_foreignmodels_dump");
 		if (d && d.GetBool()) Dump();
+	}
+
+	// Re-scan, carrying the player's choices across. This is the ONLY place
+	// the entry list is built -- world load, savegame restore and the menu's
+	// Rescan button all come through here, so a hand-picked model survives a
+	// map change instead of being re-guessed from scratch.
+	//
+	// `pinned` is the whole point of the merge and was, until now, written in
+	// three places and read in none.
+	void Rescan()
+	{
+		if (!mShelf)
+		{
+			mShelf = new("RS_ForeignShelf");
+			mShelf.Build();
+		}
+
+		Array<RS_ForeignEntry> keep;
+		for (int i = 0; i < mEntries.Size(); ++i)
+			if (mEntries[i].pinned) keep.Push(mEntries[i]);
+
+		RS_ForeignScanner.Scan(mEntries);
+
+		for (int k = 0; k < keep.Size(); ++k)
+		{
+			int idx = FindEntry(keep[k].clsName);
+			if (idx < 0) continue;
+			mEntries[idx].archetype     = keep[k].archetype;
+			mEntries[idx].modelPick1    = keep[k].modelPick1;
+			mEntries[idx].modelPick2    = keep[k].modelPick2;
+			mEntries[idx].guessedBySlot = keep[k].guessedBySlot;
+			mEntries[idx].pinned        = true;
+		}
+
+		mScanned  = true;
+		mLastMain = null; mLastOff = null;
 	}
 
 	int FindEntry(string cls)
@@ -535,7 +600,27 @@ class RS_ForeignModelHandler : EventHandler
 
 	override void WorldTick()
 	{
-		if (!Enabled() || !mScanned || !mShelf) return;
+		// Row indices are per-client -- the entry list is built against the
+		// console player -- and NetworkProcess applies `row` verbatim, so a
+		// cycle on one machine would retune a different weapon on another.
+		// Single-player only until the list is made identical everywhere.
+		if (multiplayer) return;
+
+		// Turning the switch OFF has to actually undo the bind. Step 2 stops
+		// on its own, but modelData->modelDef stays attached to the weapon and
+		// DActorModelData::Serialize writes it into the savegame -- so without
+		// this the setting looks like it did nothing and the model comes back
+		// on load.
+		if (!Enabled())
+		{
+			if (mBound) Unbind();
+			return;
+		}
+
+		// Lazy init, so switching the feature on mid-game works without
+		// waiting for the next map.
+		if (!mScanned || !mShelf) Rescan();
+		if (!mScanned || !mShelf) return;
 
 		// psprites are local-view state; v1 paints the console player only.
 		if (!playeringame[consolePlayer] || !players[consolePlayer].mo) return;
@@ -549,8 +634,29 @@ class RS_ForeignModelHandler : EventHandler
 		mLastMain = ApplyHand(pi, pi.ReadyWeapon, PSP_WEAPON,
 			mi >= 0 ? mEntries[mi].modelPick1 : 0, mLastMain);
 
-		mLastOff  = ApplyHand(pi, pi.OffhandWeapon, PSP_OFFHANDWEAPON,
-			oi >= 0 ? mEntries[oi].modelPick2 : 0, mLastOff);
+		// SAME ACTOR IN BOTH HANDS: A_ChangeModel writes modelData on the
+		// actor, not the psprite, so binding the offhand would overwrite the
+		// mainhand's modelDef while the mainhand psprite is still pinned to
+		// modelPick1's anchor -- lookup misses and a raw sprite appears. One
+		// actor gets one model; the mainhand wins.
+		if (pi.OffhandWeapon && pi.OffhandWeapon != pi.ReadyWeapon)
+			mLastOff = ApplyHand(pi, pi.OffhandWeapon, PSP_OFFHANDWEAPON,
+				oi >= 0 ? mEntries[oi].modelPick2 : 0, mLastOff);
+		else
+			mLastOff = null;
+
+		mBound = (mLastMain != null || mLastOff != null);
+	}
+
+	// Release every weapon we bound. A_ChangeModel with an empty modeldef name
+	// is the documented clear (NAME_None), which drops modelData->modelDef and
+	// lets the weapon render its own sprite again.
+	void Unbind()
+	{
+		if (mLastMain) mLastMain.A_ChangeModel("");
+		if (mLastOff)  mLastOff.A_ChangeModel("");
+		mLastMain = null; mLastOff = null;
+		mBound    = false;
 	}
 
 	// ----- picker plumbing -----
@@ -610,35 +716,20 @@ class RS_ForeignModelHandler : EventHandler
 	{
 		// Re-run the scan without reloading the map. Pinned rows keep their
 		// player-chosen family and models; everything else re-guesses.
-		if (e.name == "rs-fm-rescan")
-		{
-			Array<RS_ForeignEntry> keep;
-			for (int i = 0; i < mEntries.Size(); ++i)
-				if (mEntries[i].pinned) keep.Push(mEntries[i]);
-
-			RS_ForeignScanner.Scan(mEntries);
-
-			for (int k = 0; k < keep.Size(); ++k)
-			{
-				int idx = FindEntry(keep[k].clsName);
-				if (idx < 0) continue;
-				mEntries[idx].archetype     = keep[k].archetype;
-				mEntries[idx].modelPick1    = keep[k].modelPick1;
-				mEntries[idx].modelPick2    = keep[k].modelPick2;
-				mEntries[idx].guessedBySlot = keep[k].guessedBySlot;
-				mEntries[idx].pinned        = true;
-			}
-			mScanned  = true;
-			mLastMain = null; mLastOff = null;
-			return;
-		}
+		if (e.name == "rs-fm-rescan") { Rescan(); return; }
 
 		if (e.name != "rs-fm-cycle") return;
+		if (multiplayer) return;   // row indices are per-client; see WorldTick
 
 		int row = e.args[0];
 		int sel = e.args[1];
 		int dir = e.args[2];
 		if (row < 0 || row >= mEntries.Size()) return;
+		// Netevent args are attacker-controlled in principle and unvalidated
+		// sel fell through to CyclePick, which treats anything != 2 as the
+		// mainhand.
+		if (sel < 0 || sel > 2) return;
+		if (dir != 1 && dir != -1) return;
 
 		if (sel == 0) CycleArchetype(row, dir);
 		else          CyclePick(row, sel, dir);
