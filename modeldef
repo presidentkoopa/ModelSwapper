@@ -141,6 +141,19 @@ Model MS_BFG9000
    FrameIndex BFGG A 0 6
 }
 
+// A distinct mesh from RS_GH_BFG9000/BFG.md3 above -- confirmed by hash, not
+// assumed. VanAlek had its own BFG the whole time and the shelf skipped
+// straight from Bv21 to MeatG without it.
+Model MS_VR_BFG9000
+{
+	Path "Models/Weapons/hud/RS_Weapon/VR_BFG9000_va"
+	Model 0 "BFG.md3"
+	Skin 0 "BFG.png"
+	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	FrameIndex BFGG A 0 6
+}
+
 Model MS_BFG10k
 {
 	Path "Models/Weapons/hud/RS_GH_Weapon/RS_GH_BFG10k"

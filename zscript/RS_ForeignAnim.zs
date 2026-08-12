@@ -97,6 +97,8 @@ class RS_ForeignClip
 
 			"MS_BFG10k|fire|7@1,8@2,9@2|0|-1|-1",
 			"MS_BFG9000|fire|11@1,12@2,13@2,6@1|0|-1|-1",
+			"MS_VR_BFG9000|ready|6@1|-1|-1|-1",
+			"MS_VR_BFG9000|fire|7@3,8@3,9@3,6@1|0|-1|-1",
 			"MS_Chaingun|fire|4@2,10@2|0|-1|-1",
 			"MS_Chainsaw|fire|5@2,7@2|0|-1|-1",
 			"MS_Flamethrower|fire|1@1,2@2,3@2|0|-1|-1",

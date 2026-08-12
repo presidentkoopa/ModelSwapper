@@ -137,6 +137,7 @@ class RS_ForeignShelf
 			"plasma|MS_PlasmaRifle|PLSG|0|4|30",
 			"flamethrower|MS_Flamethrower|PLSG|0|0|6",
 			"bfg|MS_BFG9000|BFGG|0|6|16",
+			"bfg|MS_VR_BFG9000|BFGG|0|6|16",
 			"bfg|MS_BFG10k|BFGG|0|6|21",
 			"melee|MS_Fist|PUNG|0|0|57",
 

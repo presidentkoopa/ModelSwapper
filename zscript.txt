@@ -14,6 +14,7 @@ version "4.14"
 
 class MS_BFG10k : Actor {}
 class MS_BFG9000 : Actor {}
+class MS_VR_BFG9000 : Actor {}
 class MS_BW_Colt : Actor {}
 class MS_BW_Flamethrower : Actor {}
 class MS_BW_Garand : Actor {}
