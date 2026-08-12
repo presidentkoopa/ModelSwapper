@@ -707,7 +707,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// only has to make FindModelFrame resolve; which frame actually
 			// draws is this. That is what lifts the 29-frame ceiling and makes
 			// a 75-frame reload reachable at all.
-			Animate(hs, w, psp, mcls, restFrame, frameCount);
+			Animate(hs, pi, w, psp, mcls, restFrame, frameCount,
+				layer == PSP_OFFHANDWEAPON ? WF_OFFHANDREADY : WF_WEAPONREADY);
 		}
 		return w;
 	}
@@ -766,25 +767,44 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// THE ANIMATION. Watch their sequence, learn its real length, replay
 	// ours across it.
 	// -----------------------------------------------------------------
-	void Animate(RS_ForeignHand hs, Weapon w, PSprite psp, string donor,
-	             int restFrame, int frameCount)
+	void Animate(RS_ForeignHand hs, PlayerInfo pi, Weapon w, PSprite psp, string donor,
+	             int restFrame, int frameCount, int readyMask)
 	{
 		State cur = psp.CurState;
 
-		// BOUNDARY. Their sequence changed if the weapon changed, or if the
-		// state moved somewhere we did not predict. Predicting the next state
-		// is what stops an ordinary state advance inside one sequence from
-		// looking like the start of a new one.
+		// A SEQUENCE IS "LEFT IDLE UNTIL BACK TO IDLE" -- not the gap between
+		// two state changes.
 		//
-		// Deliberately NOT psp.firstTic: it is set only when the caller
-		// changes (already covered) and is cleared by the weapon-bob code --
-		// which the model path bypasses, so it would pin true forever.
-		bool boundary = (psp.Caller != hs.lastCaller)
-		             || (cur != hs.lastState && cur != hs.predictedNext);
+		// Treating every unpredicted state change as a boundary looks right
+		// and is badly wrong on real mods. Ashes' revolver reload runs through
+		// 0-tic conditional jumps, so a single 68-tic reload shattered into a
+		// dozen 2-tic "sequences", each learned separately, each restarting
+		// the clip. The reload happened; the cylinder never swung out, because
+		// the clip never got past its first two frames before being reset.
+		//
+		// WF_WEAPONREADY is the exact signal. A_WeaponReady SETS it, and the
+		// engine clears it every tick before psprite processing -- so it is
+		// true exactly while the weapon is idle, in any mod, because calling
+		// A_WeaponReady is what makes a weapon usable at all. No naming, no
+		// state walking, no assumptions about how their reload is written.
+		bool idle = (pi.WeaponState & readyMask) != 0;
 
-		if (boundary)
+		if (psp.Caller != hs.lastCaller)
 		{
+			// Different weapon entirely; whatever was running is not ours.
+			hs.Reset();
+			hs.lastCaller = psp.Caller;
+		}
+		else if (idle && hs.entry)
+		{
+			// Came back to idle: the sequence just finished. Learn it.
 			Commit(hs, w);
+			hs.entry = null;
+		}
+		else if (!idle && !hs.entry)
+		{
+			// Left idle: a sequence begins here, and THIS state identifies it
+			// for as long as the mod exists.
 			hs.entry        = cur;
 			hs.elapsed      = 0;
 			hs.sawBrightAt  = -1;
@@ -792,21 +812,24 @@ class RS_ForeignModelHandler : StaticEventHandler
 			hs.ammo2AtEntry = (w.Ammo2 ? w.Ammo2.Amount : -1);
 		}
 
-		hs.elapsed++;
-		if (cur && cur.bFullbright && hs.sawBrightAt < 0) hs.sawBrightAt = hs.elapsed;
-
-		// A state with more than one tic left will still be current next tick;
-		// otherwise it advances to its NextState.
-		hs.predictedNext = (hs.lastTics > 1) ? cur : (cur ? cur.NextState : null);
-		hs.lastState     = cur;
-		hs.lastTics      = psp.Tics;
-		hs.lastCaller    = psp.Caller;
+		if (hs.entry)
+		{
+			hs.elapsed++;
+			if (cur && cur.bFullbright && hs.sawBrightAt < 0) hs.sawBrightAt = hs.elapsed;
+		}
+		hs.lastState  = cur;
+		hs.lastTics   = psp.Tics;
+		hs.lastCaller = psp.Caller;
 
 		// ---- pick the clip ----
 		string seq = "ready";
 		int D = 0;
-		int li = FindLearned(w.GetClassName(), hs.entry);
-		if (li >= 0) { seq = mLearned[li].seq; D = mLearned[li].observedTics; }
+		if (hs.entry)
+		{
+			int li = FindLearned(w.GetClassName(), hs.entry);
+			if (li >= 0) { seq = mLearned[li].seq; D = mLearned[li].observedTics; }
+			else          seq = "fire";   // unlearned: fire is the better bet than a frozen pose
+		}
 
 		Array<int> frames; int markFire;
 		if (!mClips.Get(donor, seq, frameCount, frames, markFire)
