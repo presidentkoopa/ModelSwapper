@@ -76,6 +76,19 @@ class RS_Menu_ForeignModels : OptionMenu
 			showAll = (sa && sa.GetBool());
 		}
 
+		// ...but only hide them if hiding leaves anything behind. Golden Souls
+		// binds its entire arsenal through Player.WeaponSlot on its own player
+		// class, so EVERY entry reports unbound -- and the list came up empty
+		// while the models were working perfectly. An empty picker for a mod
+		// the swapper is visibly running on is worse than a bit of clutter.
+		if (!showAll)
+		{
+			bool anyLocated = false;
+			for (int i = 0; i < n && !anyLocated; ++i)
+				if (h.EntryLocated(i)) anyLocated = true;
+			if (!anyLocated) showAll = true;
+		}
+
 		// UNSURE FIRST. The rows that fell through to the slot fallback are
 		// the ones the classifier is admitting it could not read; everything
 		// below them is a confident guess that probably needs no attention.
