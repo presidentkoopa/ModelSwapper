@@ -69,3 +69,4 @@ class MS_SuperShotgun : Actor {}
 #include "zscript/RS_ForeignModels.zs"
 #include "zscript/RS_ForeignModelsMenu.zs"
 #include "zscript/RS_ForeignBallistic.zs"
+#include "zscript/RS_ForeignBulletTime.zs"

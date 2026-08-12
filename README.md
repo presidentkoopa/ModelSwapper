@@ -219,6 +219,37 @@ half-instant would be worse than either — but only the first eight per tic dra
 cancellable, and `P_LineAttack` is the single funnel every hitscan in the game passes
 through.
 
+### Bullet Time X compensation
+
+On the same page, and inert unless [Bullet Time X](https://www.moddb.com/mods/bullet-time-x)
+is loaded alongside. Detection is by cvar, not by class — we never name one of its types.
+
+Every "multiplier" in that mod is a **divisor**: monsters get `vel /= bt_multiplier`, the
+player gets `speed /= bt_player_movement_multiplier`. A higher player multiplier means a
+*slower* player, and the player's advantage is however much smaller their divisor is than
+the world's. The slider interpolates between three anchors:
+
+| | |
+|---|---|
+| **0.0** | player divisor = world divisor — as slow as the monsters |
+| **1.0** | player divisor = the mod's own — passed through untouched |
+| **2.0** | player divisor = 1 — normal movement while the world crawls |
+
+All four of its slowdown profiles move together — normal, dodge, berserk, berserk-dodge —
+since compensating only the first would leave a dodge feeling nothing like the bullet time
+it interrupts. A profile whose world divisor is `0` (total freeze) is skipped: there is no
+honest "as slow as the monsters" when the monsters are stopped dead.
+
+Bullet Time X ships with `bt_multiplier = 4` and `bt_player_movement_multiplier = 4` — the
+player is *already* exactly as slow as the monsters out of the box. **On a stock config
+0.0 and 1.0 are therefore the same value** and only the upper half of the slider does
+anything. The lower half opens up only if the mod's own player-speed setting has been
+moved away from matching the world.
+
+The originals are captured into a cvar before anything is written, so quitting with
+compensation on can't strand their settings overwritten. Turn it off before editing Bullet
+Time X's own player-speed options, or this will overwrite them.
+
 ---
 
 ## Layout
@@ -230,6 +261,7 @@ zscript/
   RS_ForeignAnim.zs          clip table, expansion, per-hand state
   RS_ForeignModelsMenu.zs    picker + scan report
   RS_ForeignBallistic.zs     hitscan -> projectile, and the round itself
+  RS_ForeignBulletTime.zs    Bullet Time X compensation (inert without it)
 modeldef                     51 donor blocks
 models/                      the meshes and skins
 sprites/                     RSB0 — the ballistic round, and nothing else

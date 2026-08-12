@@ -3,5 +3,5 @@
 // it is loaded next to.
 GameInfo
 {
-    AddEventHandlers = "RS_ForeignModelHandler", "MS_HitscanHandler"
+    AddEventHandlers = "RS_ForeignModelHandler", "MS_HitscanHandler", "MS_BulletTimeHandler"
 }
