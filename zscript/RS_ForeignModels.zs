@@ -120,10 +120,7 @@ class RS_ForeignShelf
 			"bfg|RS_GH_BFG10k|HBBT|0|6|21",
 			"bfg|RS_PS_BFG|BFGN|0|0|11",
 			"melee|RS_GH_Fist|HBFS|0|0|75",
-			"melee|RS_GH_Chainsaw|HBCS|0|27|65",
-			"melee|VR_Chainsaw|SAWG|0|0|8",
 			"melee|RS_PS_Fist|FSTZ|0|0|9",
-			"melee|RS_PS_Chainsaw|SAWG|2|2|6",   // rests on SAWG C, not A
 
 			// ---- standalone ModelSwapper.pk3 donors (MS_ namespace) ----
 			// Present only when the standalone asset pk3 is loaded; dropped
@@ -142,7 +139,6 @@ class RS_ForeignShelf
 			"bfg|MS_BFG9000|BFGG|0|6|16",
 			"bfg|MS_BFG10k|BFGG|0|6|21",
 			"melee|MS_Fist|PUNG|0|0|57",
-			"melee|MS_Chainsaw|SAWG|0|0|8",
 
 			// ---- GoldHunter set. Fills the two families the VR set has no
 			// model for at all (smg, railgun) and gives every other family a
@@ -162,7 +158,14 @@ class RS_ForeignShelf
 			// ---- MeatGrinder set. Nine models in 6MB, and a grittier look
 			// than either of the others -- the cheapest breadth on offer.
 			"melee|MS_MG_Knife|PUNG|0|0|9",
-			"melee|MS_MG_Saw|SAWG|0|2|6",
+
+			// ---- saws, on their own shelf ----
+			"saw|MS_Chainsaw|SAWG|0|0|8",
+			"saw|MS_GH_Chainsaw|SAWG|0|27|65",
+			"saw|MS_MG_Saw|SAWG|0|2|6",
+			"saw|VR_Chainsaw|SAWG|0|0|8",
+			"saw|RS_GH_Chainsaw|HBCS|0|27|65",
+			"saw|RS_PS_Chainsaw|SAWG|2|2|6",
 			"smg|MS_MG_Tec9|CHGG|0|0|6",
 			"shotgun|MS_MG_Shotgun|SHTG|0|0|4",
 			"supershotgun|MS_MG_SSG|SHT2|0|0|12",
@@ -208,7 +211,6 @@ class RS_ForeignShelf
 			// ---- the rest of the GoldHunter set, and the VR SMG. All four
 			// donor sets are now complete: VR, GoldHunter, MeatGrinder and
 			// Brutal Wolfenstein.
-			"melee|MS_GH_Chainsaw|SAWG|0|27|65",
 			"supershotgun|MS_GH_SSG|SHT2|0|1|52",
 			"shotgun|MS_GH_PumpShotgun|SHTG|0|4|36",
 			"chaingun|MS_GH_Machinegun|CHGG|0|4|36",
@@ -242,6 +244,7 @@ class RS_ForeignShelf
 	// which is honest, rather than chaining to something absurd.
 	static string FallbackArchetype(string a)
 	{
+		if (a == "saw")          return "melee";
 		if (a == "smg")          return "pistol";
 		if (a == "railgun")      return "rifle";
 		if (a == "revolver")     return "pistol";
@@ -490,7 +493,17 @@ class RS_ForeignScanner
 		 || hay.IndexOf("9mm") >= 0 || hay.IndexOf("luger") >= 0
 		 || hay.IndexOf("beretta") >= 0 || hay.IndexOf("deagle") >= 0
 		 || hay.IndexOf("desert eagle") >= 0 || hay.IndexOf("sidearm") >= 0) return "pistol";
-		if (hay.IndexOf("chainsaw") >= 0 || hay.IndexOf("fist") >= 0
+		// SAWS ARE NOT FISTS. Both are melee, and a shared melee shelf leads
+		// with a fist, so every chainsaw in every mod came out as knuckles.
+		// A powered saw is as distinct from a punch as a shotgun is from a
+		// pistol and deserves its own shelf.
+		//
+		// Bare "saw" is deliberately not a token -- "sawed-off" would eat it,
+		// and that is a supershotgun. It is matched earlier anyway.
+		if (hay.IndexOf("chainsaw") >= 0 || hay.IndexOf("chain saw") >= 0
+		 || hay.IndexOf("buzzsaw")  >= 0 || hay.IndexOf("sawblade") >= 0
+		 || hay.IndexOf("ripper")   >= 0) return "saw";
+		if (hay.IndexOf("fist") >= 0
 		 || hay.IndexOf("punch") >= 0 || hay.IndexOf("knuckle") >= 0
 		 || hay.IndexOf("machete") >= 0 || hay.IndexOf("knife") >= 0
 		 || hay.IndexOf("crowbar") >= 0 || hay.IndexOf("whip") >= 0
@@ -1317,7 +1330,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		static const string ARCHE[] = {
 			"pistol", "revolver", "smg", "rifle", "shotgun", "supershotgun",
 			"chaingun", "rocket", "plasma", "railgun", "flamethrower",
-			"bfg", "melee",
+			"bfg", "melee", "saw",
 			// Last, so cycling forward through the sensible families reaches
 			// it only after they are exhausted -- but it is one step BACK
 			// from "pistol", which is where most weapons start.
