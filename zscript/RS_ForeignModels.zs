@@ -610,12 +610,6 @@ class RS_ForeignModelHandler : StaticEventHandler
 		if (!Enabled()) return;
 		Rescan();
 
-		// One line, always. If the filter is not working you can see it
-		// immediately instead of counting rows in a menu.
-		Console.Printf("\cd[ModelSwapper]\c- mod declares %d classes; %d weapons listed%s.",
-			mSource ? mSource.Count() : 0, mEntries.Size(),
-			(mSource && mSource.Usable()) ? "" : " \c[Brick](no mod source found -- listing everything)\c-");
-
 		CVar d = CVar.FindCVar("rs_foreignmodels_dump");
 		if (d && d.GetBool()) Dump();
 	}
