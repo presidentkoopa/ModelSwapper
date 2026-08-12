@@ -43,6 +43,7 @@ class RS_ForeignEntry
 	int    slot;          // runtime slot, -1 = none
 	string archetype;     // guessed archetype (our vocabulary)
 	bool   guessedBySlot; // true = name/ammo told us nothing
+	bool   located;       // player has a slot binding for it (see Scan)
 	int    modelPick1;    // MAINHAND  model: index into the archetype's shelf
 	int    modelPick2;    // OFFHAND   model: independent pick, same shelf
 	bool   pinned;        // player chose this; don't re-guess
@@ -163,9 +164,20 @@ class RS_ForeignShelf
 	// pick N off the shelf -> modeldefClass / anchorSprite / restLetter
 	bool Get(string arche, int pick, out string cls, out string anchor, out int frame) const
 	{
+		cls = ""; anchor = ""; frame = 0;
+
+		// Wrap the pick into what this shelf actually HAS. Rows are dropped at
+		// build time when their donor class is absent, so a shelf is shorter in
+		// a standalone load than in a full RS_Main one -- and the slot-8
+		// fallback asks for index 2 of the bfg shelf, which only has two
+		// entries standalone. Without this every slot-8 weapon silently got no
+		// model at all.
+		int have = Count(arche);
+		if (have <= 0) return false;
+		if (pick < 0 || pick >= have) pick = ((pick % have) + have) % have;
+
 		string pfx = arche .. "|";
 		int seen = 0;
-		cls = ""; anchor = ""; frame = 0;
 		for (int i = 0; i < mRows.Size(); ++i)
 		{
 			if (mRows[i].IndexOf(pfx) != 0) continue;
@@ -403,17 +415,24 @@ class RS_ForeignScanner
 				if (located) e.slot = sl;
 			}
 
-			// GZDoom compiles Heretic, Hexen and Strife weapons into EVERY
-			// session, so AllActorClasses hands us Gauntlets, PhoenixRod,
-			// FWeapAxe, Mauler and friends on top of the mod's real arsenal.
-			// A weapon the player has no slot binding for cannot be selected,
-			// so painting it is pointless and it would bury the picker under
-			// 40+ unreachable rows. rs_foreignmodels_showall keeps them.
-			if (!located)
-			{
-				CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
-				if (!sa || !sa.GetBool()) continue;
-			}
+			// DO NOT REJECT ON !located. It looks like a clean way to keep the
+			// Heretic/Hexen/Strife weapons GZDoom compiles into every session
+			// out of the picker -- and it silently returns an EMPTY LIST on
+			// Golden Souls.
+			//
+			// GS binds its whole arsenal through Player.WeaponSlot on its own
+			// player class and sets no Weapon.SlotNumber anywhere. Load RS_Main
+			// too and its MAPINFO PlayerClasses key CLEARS the class list
+			// before adding its own, so GS's player class never spawns, the
+			// slot table is read from RS_GH_Weaponset instead, AddExtraWeapons
+			// never picks the GS weapons up either, and LocateWeapon comes back
+			// false for every single one. Every weapon gets skipped and the
+			// feature does nothing at all, with no error.
+			//
+			// So keep it as INFORMATION, not a filter: the picker dims unbound
+			// rows and sorts them last. (Ashes is unaffected either way -- it
+			// puts weapon.slotnumber on each weapon.)
+			e.located = located;
 
 			string ammo1 = "", ammo2 = "";
 			if (def.AmmoType1 != null) ammo1 = "" .. def.AmmoType1.GetClassName();
@@ -500,10 +519,15 @@ class RS_ForeignModelHandler : EventHandler
 
 		// STEP 2 -- every tick: their states re-set the psprite each frame,
 		// so re-pin it to our anchor at the resting pose.
-		let psp = pi.GetPSprite(layer);
+		let psp = pi.FindPSprite(layer);
 		if (psp)
 		{
-			psp.Sprite = Actor.GetSpriteIndex(anchor);
+			// GetSpriteIndex returns -1 for a name that was never registered,
+			// and FindModelFrameRaw indexes sprites[] with it unchecked --
+			// (unsigned)-1 is an out-of-bounds read, not a missing model.
+			int si = Actor.GetSpriteIndex(anchor);
+			if (si < 0) return w;
+			psp.Sprite = si;
 			psp.Frame  = heldFrame;
 		}
 		return w;
@@ -517,8 +541,10 @@ class RS_ForeignModelHandler : EventHandler
 		if (!playeringame[consolePlayer] || !players[consolePlayer].mo) return;
 		let pi = players[consolePlayer];
 
-		int mi = FindEntry(pi.ReadyWeapon   ? pi.ReadyWeapon.GetClassName()   : "");
-		int oi = FindEntry(pi.OffhandWeapon ? pi.OffhandWeapon.GetClassName() : "");
+		// GetClassName() is a Name, not a String, and ?: will not unify the
+		// two arms -- so the null test has to be outside the call.
+		int mi = pi.ReadyWeapon   ? FindEntry("" .. pi.ReadyWeapon.GetClassName())   : -1;
+		int oi = pi.OffhandWeapon ? FindEntry("" .. pi.OffhandWeapon.GetClassName()) : -1;
 
 		mLastMain = ApplyHand(pi, pi.ReadyWeapon, PSP_WEAPON,
 			mi >= 0 ? mEntries[mi].modelPick1 : 0, mLastMain);
@@ -554,6 +580,7 @@ class RS_ForeignModelHandler : EventHandler
 	string EntryArchetype(int i) const { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].archetype : ""; }
 	bool   EntryUnsure(int i) const    { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].guessedBySlot : false; }
 	bool   EntryPinned(int i) const    { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].pinned : false; }
+	bool   EntryLocated(int i) const   { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].located : false; }
 	int    EntrySlot(int i) const      { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].slot : -1; }
 
 	// hand: 1 = mainhand (Model_1), 2 = offhand (Model_2)
@@ -666,7 +693,7 @@ class RS_ForeignModelHandler : EventHandler
 		{
 			let en = mEntries[i];
 			string mcls, anchor; int hf;
-			mShelf.Get(en.archetype, en.modelPick, mcls, anchor, hf);
+			mShelf.Get(en.archetype, en.modelPick1, mcls, anchor, hf);
 			Console.Printf("  %s%-24s\c-  slot %d  -> \cf%-14s\c- %s [%s %d]",
 				en.guessedBySlot ? "\cj?\c- " : "  ",
 				en.clsName, en.slot, en.archetype,

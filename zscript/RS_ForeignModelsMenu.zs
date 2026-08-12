@@ -62,17 +62,42 @@ class RS_Menu_ForeignModels : OptionMenu
 
 		int n = h.EntryCount();
 
+		// Weapons the player has no slot binding for are usually the
+		// Heretic/Hexen/Strife arsenals GZDoom compiles into every session --
+		// 40-odd rows nobody can ever hold. Hidden unless asked for.
+		//
+		// They are HIDDEN here rather than dropped at scan time, because some
+		// mods (Golden Souls) bind their whole arsenal on their own player
+		// class and legitimately report unbound. Dropping them made the
+		// feature do nothing at all on those mods.
+		bool showAll = false;
+		{
+			CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
+			showAll = (sa && sa.GetBool());
+		}
+
 		// UNSURE FIRST. The rows that fell through to the slot fallback are
 		// the ones the classifier is admitting it could not read; everything
 		// below them is a confident guess that probably needs no attention.
+		int shown = 0;
 		for (int pass = 0; pass < 2; ++pass)
 		{
 			bool wantUnsure = (pass == 0);
 			for (int i = 0; i < n; ++i)
 			{
 				if (h.EntryUnsure(i) != wantUnsure) continue;
+				if (!showAll && !h.EntryLocated(i)) continue;
 				desc.mItems.Push(new("OptionMenuItemRS_ForeignRow").InitRow(i));
+				shown++;
 			}
+		}
+
+		if (shown == 0)
+		{
+			desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
+				"Nothing bound to a weapon slot.", Font.CR_BRICK));
+			desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
+				"Switch on 'List Unbound Weapons' to see all " .. n .. ".", Font.CR_DARKGRAY));
 		}
 	}
 }
