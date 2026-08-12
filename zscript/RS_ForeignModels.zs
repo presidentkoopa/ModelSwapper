@@ -517,6 +517,12 @@ class RS_ForeignModelHandler : StaticEventHandler
 	bool   mBound;        // something is currently wearing one of our models
 
 	RS_ForeignShelf mShelf;   // built once at world-load
+	RS_ForeignClip  mClips;   // our animation clips, per donor
+
+	// Live per-hand animation state, and what watching has taught us.
+	RS_ForeignHand  mHandMain;
+	RS_ForeignHand  mHandOff;
+	Array<RS_ForeignLearned> mLearned;
 
 	static bool Enabled()
 	{
@@ -552,6 +558,15 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mShelf = new("RS_ForeignShelf");
 			mShelf.Build();
 		}
+		if (!mClips)
+		{
+			mClips = new("RS_ForeignClip");
+			mClips.Build();
+		}
+		if (!mHandMain) mHandMain = new("RS_ForeignHand");
+		if (!mHandOff)  mHandOff  = new("RS_ForeignHand");
+		mHandMain.Reset();
+		mHandOff.Reset();
 
 		Array<RS_ForeignEntry> keep;
 		for (int i = 0; i < mEntries.Size(); ++i)
@@ -586,7 +601,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// same weapon class can wear a different model in each hand.
 	// Returns the bound class name (or "") so the caller can track whether
 	// a re-bind is needed.
-	Weapon ApplyHand(PlayerInfo pi, Weapon w, int layer, int pick, Weapon lastBound)
+	Weapon ApplyHand(PlayerInfo pi, Weapon w, int layer, int pick, Weapon lastBound, RS_ForeignHand hs)
 	{
 		if (!w) return null;
 
@@ -620,23 +635,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// only has to make FindModelFrame resolve; which frame actually
 			// draws is this. That is what lifts the 29-frame ceiling and makes
 			// a 75-frame reload reachable at all.
-			//
-			// The engine does not bounds-check: an out-of-range ModelFrame
-			// draws NOTHING, so the weapon vanishes rather than glitching.
-			// Clamp here, where the donor's real frame count is known.
-			int mf = restFrame;
-			if (frameCount > 0 && mf >= frameCount) mf = frameCount - 1;
-			if (mf < 0) mf = 0;
-
-			psp.ModelFrame     = mf;
-			psp.ModelFrameNext = mf;
-			// Lerp 0 with next == current forces nextFrame false: a hard,
-			// exact frame with no tween. This is also the kill-switch for the
-			// donors whose MODELDEF lacks NoInterpolation (Fist, every
-			// RS_PS_*) -- their vanilla-adjacent anchors (PUNG, SHTG, SAWG,
-			// PLSC, MGNG, MGUG, BFGN, RLNC, SSGG) can otherwise catch a
-			// foreign mod's nextState->sprite and lerp toward garbage.
-			psp.ModelFrameLerp = 0;
+			Animate(hs, w, psp, mcls, restFrame, frameCount);
 		}
 		return w;
 	}
@@ -675,7 +674,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int oi = pi.OffhandWeapon ? FindEntry("" .. pi.OffhandWeapon.GetClassName()) : -1;
 
 		mLastMain = ApplyHand(pi, pi.ReadyWeapon, PSP_WEAPON,
-			mi >= 0 ? mEntries[mi].modelPick1 : 0, mLastMain);
+			mi >= 0 ? mEntries[mi].modelPick1 : 0, mLastMain, mHandMain);
 
 		// SAME ACTOR IN BOTH HANDS: A_ChangeModel writes modelData on the
 		// actor, not the psprite, so binding the offhand would overwrite the
@@ -684,11 +683,150 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// actor gets one model; the mainhand wins.
 		if (pi.OffhandWeapon && pi.OffhandWeapon != pi.ReadyWeapon)
 			mLastOff = ApplyHand(pi, pi.OffhandWeapon, PSP_OFFHANDWEAPON,
-				oi >= 0 ? mEntries[oi].modelPick2 : 0, mLastOff);
+				oi >= 0 ? mEntries[oi].modelPick2 : 0, mLastOff, mHandOff);
 		else
 			mLastOff = null;
 
 		mBound = (mLastMain != null || mLastOff != null);
+	}
+
+	// -----------------------------------------------------------------
+	// THE ANIMATION. Watch their sequence, learn its real length, replay
+	// ours across it.
+	// -----------------------------------------------------------------
+	void Animate(RS_ForeignHand hs, Weapon w, PSprite psp, string donor,
+	             int restFrame, int frameCount)
+	{
+		State cur = psp.CurState;
+
+		// BOUNDARY. Their sequence changed if the weapon changed, or if the
+		// state moved somewhere we did not predict. Predicting the next state
+		// is what stops an ordinary state advance inside one sequence from
+		// looking like the start of a new one.
+		//
+		// Deliberately NOT psp.firstTic: it is set only when the caller
+		// changes (already covered) and is cleared by the weapon-bob code --
+		// which the model path bypasses, so it would pin true forever.
+		bool boundary = (psp.Caller != hs.lastCaller)
+		             || (cur != hs.lastState && cur != hs.predictedNext);
+
+		if (boundary)
+		{
+			Commit(hs, w);
+			hs.entry        = cur;
+			hs.elapsed      = 0;
+			hs.sawBrightAt  = -1;
+			hs.ammoAtEntry  = (w.Ammo1 ? w.Ammo1.Amount : -1);
+			hs.ammo2AtEntry = (w.Ammo2 ? w.Ammo2.Amount : -1);
+		}
+
+		hs.elapsed++;
+		if (cur && cur.bFullbright && hs.sawBrightAt < 0) hs.sawBrightAt = hs.elapsed;
+
+		// A state with more than one tic left will still be current next tick;
+		// otherwise it advances to its NextState.
+		hs.predictedNext = (hs.lastTics > 1) ? cur : (cur ? cur.NextState : null);
+		hs.lastState     = cur;
+		hs.lastTics      = psp.Tics;
+		hs.lastCaller    = psp.Caller;
+
+		// ---- pick the clip ----
+		string seq = "ready";
+		int D = 0;
+		int li = FindLearned(w.GetClassName(), hs.entry);
+		if (li >= 0) { seq = mLearned[li].seq; D = mLearned[li].observedTics; }
+
+		Array<int> frames; int markFire;
+		if (!mClips.Get(donor, seq, frameCount, frames, markFire)
+		 || frames.Size() == 0)
+		{
+			// No clip for this sequence on this donor: hold the rest pose.
+			int rf = restFrame;
+			if (frameCount > 0 && rf >= frameCount) rf = frameCount - 1;
+			if (rf < 0) rf = 0;
+			psp.ModelFrame     = rf;
+			psp.ModelFrameNext = rf;
+			psp.ModelFrameLerp = 0;
+			return;
+		}
+
+		int N = frames.Size();
+		double ct;
+		if (D <= 0)
+		{
+			// FIRST time we have seen this sequence -- its real duration is
+			// not known yet, and it cannot be predicted from state tics. Play
+			// at our natural rate and hold the last frame. Next time round it
+			// warps properly.
+			ct = hs.elapsed - 1;
+		}
+		else
+		{
+			// Stretch or compress our clip across the duration THEY actually
+			// took last time.
+			ct = double(hs.elapsed - 1) * double(N) / double(D);
+		}
+
+		// Past the end -- held triggers and A_ReFire both do this -- hold.
+		if (ct > N - 1) ct = N - 1;
+		if (ct < 0) ct = 0;
+
+		int i0 = int(ct);
+		int i1 = (i0 + 1 < N) ? i0 + 1 : i0;
+
+		psp.ModelFrame     = frames[i0];
+		psp.ModelFrameNext = frames[i1];
+		// Sub-tic blend: the model moves at display rate instead of stepping
+		// at 35Hz. Lerp 0 with next == current is also the hard-frame case,
+		// which is what a 1-frame clip (every `ready`) resolves to.
+		psp.ModelFrameLerp = (frames[i0] == frames[i1]) ? 0 : (ct - i0);
+	}
+
+	// Learn from the sequence that just ended.
+	void Commit(RS_ForeignHand hs, Weapon w)
+	{
+		if (!hs.entry || hs.elapsed <= 0) return;
+
+		int li = FindLearned(w.GetClassName(), hs.entry);
+		if (li < 0)
+		{
+			let L = new("RS_ForeignLearned");
+			L.clsName = w.GetClassName();
+			L.entry   = hs.entry;
+			L.seq     = GuessSeq(hs, w);
+			L.plays   = 0;
+			mLearned.Push(L);
+			li = mLearned.Size() - 1;
+		}
+		mLearned[li].observedTics = hs.elapsed;
+		mLearned[li].brightTic    = hs.sawBrightAt;
+		mLearned[li].plays++;
+	}
+
+	// The PRIOR. Behaviour, not names -- what the weapon DID over the
+	// sequence, because what it is called is unreliable across mods.
+	//   ammo went DOWN -> they shot
+	//   clip went UP    -> they reloaded
+	//   a bright frame appeared and it was short -> they shot
+	// It is allowed to be wrong. The picker is the correction path.
+	string GuessSeq(RS_ForeignHand hs, Weapon w)
+	{
+		int a1 = (w.Ammo1 ? w.Ammo1.Amount : -1);
+		int a2 = (w.Ammo2 ? w.Ammo2.Amount : -1);
+
+		if (hs.ammoAtEntry >= 0 && a1 > hs.ammoAtEntry)  return "reload";
+		if (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry) return "reload";
+		if (hs.ammoAtEntry >= 0 && a1 < hs.ammoAtEntry)  return "fire";
+		if (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry) return "fire";
+		if (hs.sawBrightAt >= 0) return "fire";
+		return "ready";
+	}
+
+	int FindLearned(string cls, State entry) const
+	{
+		for (int i = 0; i < mLearned.Size(); ++i)
+			if (mLearned[i].entry == entry && mLearned[i].clsName == cls) return i;
+		return -1;
 	}
 
 	// Release every weapon we bound. A_ChangeModel with an empty modeldef name
