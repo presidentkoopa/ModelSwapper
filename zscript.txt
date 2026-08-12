@@ -9,22 +9,42 @@ version "4.14"
 // subclassed by anything (FindModelFrameRaw is an exact class-pointer test).
 //
 // MS_ prefix so this pk3 can load alongside RS_Main without duplicate-class
-// errors on VR_* / RS_GH_*.
+// errors. MS_GH_ are the GoldHunter set, MS_MG_ the MeatGrinder set.
 // ============================================================================
 
-class MS_BFG10k : Actor {}
-class MS_BFG9000 : Actor {}
-class MS_Chaingun : Actor {}
-class MS_Chainsaw : Actor {}
-class MS_Fist : Actor {}
-class MS_Flamethrower : Actor {}
 class MS_Pistol : Actor {}
-class MS_PlasmaRifle : Actor {}
 class MS_Revolver : Actor {}
 class MS_Rifle : Actor {}
-class MS_RocketLauncher : Actor {}
 class MS_Shotgun : Actor {}
 class MS_SuperShotgun : Actor {}
+class MS_Chaingun : Actor {}
+class MS_RocketLauncher : Actor {}
+class MS_PlasmaRifle : Actor {}
+class MS_Chainsaw : Actor {}
+class MS_Fist : Actor {}
+class MS_BFG9000 : Actor {}
+class MS_BFG10k : Actor {}
+class MS_Flamethrower : Actor {}
+class MS_GH_Fist : Actor {}
+class MS_GH_Pistol : Actor {}
+class MS_GH_Revolver : Actor {}
+class MS_GH_AutoShotgun : Actor {}
+class MS_GH_Minigun : Actor {}
+class MS_GH_Rifle : Actor {}
+class MS_GH_SMG : Actor {}
+class MS_GH_MP40 : Actor {}
+class MS_GH_GrenadeLauncher : Actor {}
+class MS_GH_Plasma : Actor {}
+class MS_GH_Railgun : Actor {}
+class MS_MG_Knife : Actor {}
+class MS_MG_Saw : Actor {}
+class MS_MG_Tec9 : Actor {}
+class MS_MG_Shotgun : Actor {}
+class MS_MG_SSG : Actor {}
+class MS_MG_Chaingun : Actor {}
+class MS_MG_RPG : Actor {}
+class MS_MG_Bolter : Actor {}
+class MS_MG_BFG : Actor {}
 
 #include "zscript/RS_ForeignAnim.zs"
 #include "zscript/RS_ForeignModels.zs"

@@ -142,7 +142,41 @@ class RS_ForeignShelf
 			"bfg|MS_BFG9000|BFGG|0|6|16",
 			"bfg|MS_BFG10k|BFGG|0|6|21",
 			"melee|MS_Fist|PUNG|0|0|57",
-			"melee|MS_Chainsaw|SAWG|0|0|8"
+			"melee|MS_Chainsaw|SAWG|0|0|8",
+
+			// ---- GoldHunter set. Fills the two families the VR set has no
+			// model for at all (smg, railgun) and gives every other family a
+			// second and third option.
+			"pistol|MS_GH_Pistol|PISG|0|2|38",
+			"revolver|MS_GH_Revolver|PISG|0|0|33",
+			"rifle|MS_GH_Rifle|CHGG|0|3|32",
+			"smg|MS_GH_SMG|CHGG|0|3|27",
+			"smg|MS_GH_MP40|CHGG|0|2|14",
+			"chaingun|MS_GH_Minigun|CHGG|0|4|16",
+			"shotgun|MS_GH_AutoShotgun|SHTG|0|4|32",
+			"rocket|MS_GH_GrenadeLauncher|MISG|0|3|33",
+			"plasma|MS_GH_Plasma|PLSG|0|4|30",
+			"railgun|MS_GH_Railgun|PLSG|0|3|37",
+			"melee|MS_GH_Fist|PUNG|0|0|75",
+
+			// ---- MeatGrinder set. Nine models in 6MB, and a grittier look
+			// than either of the others -- the cheapest breadth on offer.
+			"melee|MS_MG_Knife|PUNG|0|0|9",
+			"melee|MS_MG_Saw|SAWG|0|2|6",
+			"smg|MS_MG_Tec9|CHGG|0|0|6",
+			"shotgun|MS_MG_Shotgun|SHTG|0|0|4",
+			"supershotgun|MS_MG_SSG|SHT2|0|0|12",
+			"chaingun|MS_MG_Chaingun|CHGG|0|0|6",
+			"rocket|MS_MG_RPG|MISG|0|0|7",
+			"plasma|MS_MG_Bolter|PLSG|0|0|5",
+			"bfg|MS_MG_BFG|BFGG|0|0|11",
+
+			// The Bolter is a handheld -- it reads as a high-power sidearm or
+			// a compact rifle just as well as an energy weapon, so it sits on
+			// three shelves. Nothing stops a donor appearing under more than
+			// one archetype; the row is the same, only the shelf differs.
+			"pistol|MS_MG_Bolter|PLSG|0|0|5",
+			"rifle|MS_MG_Bolter|PLSG|0|0|5"
 		};
 		mRows.Clear();
 		for (int i = 0; i < SHELF.Size(); ++i)

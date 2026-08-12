@@ -96,6 +96,83 @@ class RS_ForeignClip
 			"MS_Chainsaw|fire|1@1,2@1,3@1,0@1|0|-1|-1",
 			"MS_Chainsaw|altfire|4@1,5@1,6@1,7@1,0@1|0|-1|-1",
 
+			// ---- GoldHunter set ----
+			"MS_GH_Pistol|ready|2@1|-1|-1|-1",
+			"MS_GH_Pistol|fire|3@1,4@2,5@2,2@1|0|-1|-1",
+			"MS_GH_Pistol|altfire|3@1,4@1,3@1,4@1,3@1,4@3,2@1|0|-1|-1",
+			"MS_GH_Pistol|reload|8-25@1|-1|0|10",
+
+			"MS_GH_Revolver|ready|0@1|-1|-1|-1",
+			"MS_GH_Revolver|fire|1@1,2@2,3@2,0@1|0|-1|-1",
+			"MS_GH_Revolver|reload|18-30@2|-1|0|13",
+
+			"MS_GH_Rifle|ready|3@1|-1|-1|-1",
+			"MS_GH_Rifle|fire|4@1,5@1,6@1,3@1|0|-1|-1",
+			"MS_GH_Rifle|reload|7-26@1|-1|0|10",
+
+			"MS_GH_SMG|ready|3@1|-1|-1|-1",
+			"MS_GH_SMG|fire|4@1,5@1,6@1,3@1|0|-1|-1",
+			"MS_GH_SMG|reload|7-26@1|-1|0|10",
+
+			"MS_GH_MP40|ready|2@1|-1|-1|-1",
+			"MS_GH_MP40|fire|3@1,4@1,5@1,2@1|0|-1|-1",
+			"MS_GH_MP40|reload|7-13@2|-1|0|7",
+
+			"MS_GH_Minigun|ready|4@1|-1|-1|-1",
+			"MS_GH_Minigun|fire|5@1,6@1,7@1,4@1|0|-1|-1",
+			"MS_GH_Minigun|reload|11-15@2|-1|0|-1",
+
+			"MS_GH_AutoShotgun|ready|4@1|-1|-1|-1",
+			"MS_GH_AutoShotgun|fire|5@1,6@1,7@1,4@1|0|-1|-1",
+			"MS_GH_AutoShotgun|reload|11-31@1|-1|0|11",
+
+			"MS_GH_GrenadeLauncher|ready|3@1|-1|-1|-1",
+			"MS_GH_GrenadeLauncher|fire|4@1,5@2,6@2,3@1|0|-1|-1",
+			"MS_GH_GrenadeLauncher|reload|7-32@1|-1|0|13",
+
+			"MS_GH_Plasma|ready|4@1|-1|-1|-1",
+			"MS_GH_Plasma|fire|5@1,6@1,7@1,4@1|0|-1|-1",
+
+			"MS_GH_Railgun|ready|3@1|-1|-1|-1",
+			"MS_GH_Railgun|fire|4@1,5@2,6@2,3@1|0|-1|-1",
+
+			"MS_GH_Fist|ready|0@1|-1|-1|-1",
+			"MS_GH_Fist|fire|1-18@1,0@1|8|-1|-1",
+
+			// ---- MeatGrinder set. Short meshes: 4 to 12 frames, so the
+			// clips are terse and the warp does most of the work.
+			"MS_MG_Knife|ready|0@1|-1|-1|-1",
+			"MS_MG_Knife|fire|1-8@1,0@1|3|-1|-1",
+
+			"MS_MG_Saw|ready|2@1|-1|-1|-1",
+			"MS_MG_Saw|fire|2@1,3@1,4@1,5@1|0|-1|-1",
+
+			"MS_MG_Tec9|ready|0@1|-1|-1|-1",
+			"MS_MG_Tec9|fire|1@1,2@1,3@1,0@1|0|-1|-1",
+			"MS_MG_Tec9|flash|4@1,5@1|0|-1|-1",
+
+			"MS_MG_Shotgun|ready|0@1|-1|-1|-1",
+			"MS_MG_Shotgun|fire|1@2,2@2,3@2,0@1|0|-1|-1",
+
+			"MS_MG_SSG|ready|0@1|-1|-1|-1",
+			"MS_MG_SSG|fire|1@2,2@2,3@2,4@2,5@2,6@2,0@1|0|-1|-1",
+			"MS_MG_SSG|reload|7-11@2|-1|0|-1",
+
+			"MS_MG_Chaingun|ready|0@1|-1|-1|-1",
+			"MS_MG_Chaingun|fire|1@1,2@1,3@1,0@1|0|-1|-1",
+			"MS_MG_Chaingun|flash|4@1,5@1|0|-1|-1",
+
+			"MS_MG_RPG|ready|0@1|-1|-1|-1",
+			"MS_MG_RPG|fire|1@2,2@2,3@2,0@1|0|-1|-1",
+			"MS_MG_RPG|flash|4@1,5@1,6@1|0|-1|-1",
+
+			"MS_MG_Bolter|ready|0@1|-1|-1|-1",
+			"MS_MG_Bolter|fire|1@1,2@1,0@1|0|-1|-1",
+			"MS_MG_Bolter|flash|3@1,4@1|0|-1|-1",
+
+			"MS_MG_BFG|ready|0@1|-1|-1|-1",
+			"MS_MG_BFG|fire|1@3,2@3,3@3,4@3,0@1|0|-1|-1",
+
 			// ---- RS_Main donors (present when RS_Main is loaded) ----
 			"VR_Pistol|ready|0@1|-1|-1|-1",
 			"VR_Pistol|fire|1@2,2@2,0@1|0|-1|-1",
