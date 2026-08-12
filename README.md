@@ -54,8 +54,29 @@ weapon instance's `modelData->modelDef`. The HUD render path resolves models aga
 — carrying its `Path`, `Skin`, `Scale`, `Offset` and `ZOffset` along with it.
 
 **2. Pin the psprite.** Frame lookup still keys on sprite+frame, so each tick the
-psprite is pinned to our donor's anchor sprite at its resting letter. This has to run
-per tick because the foreign weapon's own states re-set the sprite every frame.
+psprite is pinned to our donor's anchor sprite. That only has to *resolve* — every
+donor anchors on a stock Doom sprite name, which is why this ships no sprite lumps.
+Runs per tick because the foreign weapon's own states re-set the sprite every frame.
+
+**3. Drive the frame.** `psp.ModelFrame` picks which mesh frame actually draws,
+bypassing the sprite encoding and its 29-frame ceiling, with `ModelFrameNext` and
+`ModelFrameLerp` blending between frames at display rate.
+
+### Animation
+
+A sequence is **everything from leaving idle until returning to it** — not the gap
+between two state changes. `WF_WEAPONREADY` marks the boundary exactly: `A_WeaponReady`
+sets it and the engine clears it every tick, so it is true precisely while a weapon is
+idle, in any mod, because calling `A_WeaponReady` is what makes a weapon usable at all.
+
+The state you land on when you leave idle is the sequence's identity —
+`(foreignClass, entryState)` — and it never has to be *named*, only recognised again.
+Watch it once to learn how long it really ran and where its bright frame fell, then
+play our matching clip across that duration on later runs.
+
+Which clip to play is a **prior**, read from behaviour rather than names: ammo down
+means they fired, clip up means they reloaded, a bright frame on a short sequence means
+they fired. It is allowed to be wrong, because the picker is the correction path.
 
 ### Classification
 
@@ -81,23 +102,35 @@ They are the only ones worth your attention.
 
 ## Known limits
 
-**Static pose.** The model holds one resting frame. It does not animate on fire or
-reload yet.
+**Animation timing converges rather than being right immediately.** The models do
+animate — fire and reload both play, driven by the foreign weapon's own timing. But a
+sequence's real duration cannot be predicted from its state machine (a weapon's reload
+can hide its entire body behind a zero-tic conditional jump: one tic predicted, sixty-
+eight actual). So the first play of each sequence runs at our clip's natural rate, and
+subsequent plays fit the shortest run observed. Expect the first shot and first reload
+of each weapon to be approximate.
 
-This is not a bug, it's a wall: `psp.Frame` is a sprite *letter* index, and
-`MAX_SPRITE_FRAMES` is **29** — a limit inherited from Doom's 8-character lump names,
-where the frame is a single character and Boom pushed it as far as `]`. Every donor
-model here has more frames than that (the fist has 75), so most of the animation is
-literally unaddressable through the sprite path.
+**Eighteen of the fifty donors have no reload animation.** Knives, chainsaws, fists,
+the shorter MeatGrinder meshes — the mesh simply has no such frames. Bound to a weapon
+that reloads, they hold the rest pose while the ammo count changes. The picker marks
+them with `*`, and every family has other donors that do reload.
 
-The fix is an engine change: an `int ModelFrame` on `DPSprite` that the HUD path reads
-directly, skipping the sprite encoding entirely. Then 75 is no different from 5.
-Frame-accurate animation — mapping our sequences onto the foreign weapon's own
-Raise/Ready/Lower/Fire/AltFire/Reload timings — depends on it.
+**Five reloads are inferred rather than derived.** Only 18 of the 43 source weapons
+have a `Reload:` state, so for the rocket launcher, plasma rifle, GH machinegun,
+MeatGrinder SSG and BFG10k the reload range is read off the unused tail of the mesh's
+frame budget instead of off a state machine. They are the one place in the clip table
+a range could be wrong.
+
+**Frame-accurate animation requires the fork.** `psp.Frame` is a sprite *letter* index
+and `MAX_SPRITE_FRAMES` is 29 — inherited from Doom's 8-character lump names. Every
+donor here has more frames than that (the fist has 75, the MG42 has 97), so most
+animation is unaddressable through the sprite path. The fork adds `int ModelFrame` on
+`DPSprite`, read directly by the HUD path, which skips the encoding entirely. On stock
+GZDoom the binding still works but the animation is limited to what 29 letters reach.
 
 **Mods that already ship 3D weapons get painted over.** The engine's own test is
-`actorDefaults->hasmodel`, which isn't exported to ZScript. Two lines in a fork fixes
-it; on stock GZDoom it can't be detected.
+`actorDefaults->hasmodel`, which stock GZDoom does not export to ZScript. The fork
+exports it; on stock it can't be detected.
 
 **No offhand-specific tuning.** The offhand is bound and pickable, but grip points and
 two-handed placement are not modelled — every donor MD3 here has zero tags.
