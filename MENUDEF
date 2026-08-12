@@ -63,6 +63,13 @@ OptionMenu "RSFM_Ballistic"
     StaticText "Map units per tic. Lower is easier to see and easier to", "DarkGray"
     StaticText "dodge; higher plays closer to the original hitscan.", "DarkGray"
     StaticText " "
+
+    Slider "Muzzle Trim", "rs_fm_muzzle", -20, 80, 1, 0
+    StaticText "The engine fires from your hand -- it has no idea where a", "DarkGray"
+    StaticText "barrel ends. Each weapon family already gets its own guess;", "DarkGray"
+    StaticText "nudge this if rounds still leave from the grip, or from out", "DarkGray"
+    StaticText "in front of the gun.", "DarkGray"
+    StaticText " "
     StaticText "---------------------------------------------", "DarkGray"
     StaticText " "
 

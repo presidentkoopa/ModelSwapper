@@ -205,7 +205,24 @@ and ricochet sounds all still happen. Only the instantaneous part is gone.
 | Zero-damage traces | `P_LineAttack` is also how the engine and half of ZScript answer *"what am I pointing at"* — autoaim, target readouts, tracer setup. Cancelling one of those returns `nullptr` and the caller silently loses its answer. |
 
 In VR the round is spawned from `AttackPos`/`AttackDir` — the controller, not the eye —
-so it leaves the muzzle of the model in your hand rather than your face.
+rather than from your face.
+
+**The muzzle.** The engine has no concept of one. `AttackPos` is the raw controller
+transform origin ([hw_vrmodes.cpp](https://github.com/) `GetWeaponTransform`) — the grip,
+in your fist. Every hitscan in the game has always started there; it just never showed,
+because an instant shot has no visible origin. Give the shot a travelling round and it is
+suddenly, obviously coming out of the handle.
+
+Nothing exposes the real barrel length — MD3 geometry isn't reachable from ZScript, and
+MODELDEF carries scale and offset but no extent. What *is* available is the classifier:
+every bound weapon already has an archetype, and barrel length tracks family closely
+enough that a per-family figure lands far better than one global number. **Muzzle Trim**
+adjusts whatever's left.
+
+The offset is walked forward along the *aim*, not along facing, so it stays right with the
+gun pointed up or down — and it's traced first, so standing against a wall or with a
+Pinky's face in the barrel clips it short instead of spawning the round on the far side of
+what you're shooting at.
 
 **The honest cost:** a mod's balance assumes its hitscan lands instantly and always.
 Travel time means shots miss movers that instant ones would have hit, and a weapon's feel

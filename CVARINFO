@@ -26,3 +26,7 @@ server float  rs_fm_bt_scale = 1.0;
 // packed "normal:dodge:berserk:berserkdodge". Kept in a cvar so quitting
 // with compensation on cannot strand their settings overwritten.
 server string rs_fm_bt_base  = "";
+
+// Extra distance from the grip to the muzzle, on top of the per-family
+// figure. The engine has no muzzle concept -- shots start at the hand.
+server int rs_fm_muzzle = 0;   // map units, clamped -20..80

@@ -1412,6 +1412,16 @@ class RS_ForeignModelHandler : StaticEventHandler
 		for (int i = 0; i < ARCHE.Size(); ++i) a.Push(ARCHE[i]);
 	}
 
+	// Archetype for a live weapon class, by name. The ballistics muzzle
+	// offset needs it -- a pistol's barrel ends a lot closer to the grip
+	// than a rifle's -- and it is the only thing outside the binder that
+	// asks a question about a specific weapon rather than a row index.
+	string ArchetypeForClass(string cls)
+	{
+		int i = FindEntry(cls);
+		return (i >= 0) ? mEntries[i].archetype : "";
+	}
+
 	int EntryCount() const             { return mScanned ? mEntries.Size() : 0; }
 	string EntryName(int i) const      { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].clsName : ""; }
 	string EntryTag(int i) const       { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].tag : ""; }

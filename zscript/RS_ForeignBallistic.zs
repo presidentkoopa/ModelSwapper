@@ -193,6 +193,58 @@ class MS_HitscanHandler : StaticEventHandler
 
 	int mTrailsThisTic;
 
+	// ---------------------------------------------------------------------
+	// MUZZLE OFFSET.
+	//
+	// The engine has no concept of a muzzle. AttackPos is the raw controller
+	// transform origin (hw_vrmodes.cpp, GetWeaponTransform) -- the grip, in
+	// your fist. Every hitscan in the game has always started there; it just
+	// never showed, because an instant shot has no visible origin. Give the
+	// shot a travelling round and suddenly it is obviously coming out of the
+	// handle.
+	//
+	// There is nothing to read the real barrel length from. The MD3 geometry
+	// is not reachable from ZScript, and MODELDEF carries scale and offset
+	// but no extent. What we do have is the classifier: every bound weapon
+	// already has an archetype, and barrel length tracks family closely
+	// enough that a per-family figure lands far better than one global
+	// number. The slider trims whatever is left.
+	// ---------------------------------------------------------------------
+	static double FamilyMuzzle(string arch)
+	{
+		switch (arch)
+		{
+		case "pistol":       return 13;
+		case "revolver":     return 15;
+		case "smg":          return 17;
+		case "grenade":      return 20;
+		case "supershotgun": return 21;
+		case "flamethrower": return 22;
+		case "plasma":       return 23;
+		case "unmaker":      return 23;
+		case "bfg":          return 24;
+		case "shotgun":      return 25;
+		case "rocket":       return 26;
+		case "launcher":     return 26;
+		case "machinegun":   return 26;
+		case "chaingun":     return 27;
+		case "rifle":        return 28;
+		case "railgun":      return 30;
+		case "sniper":       return 31;
+		// melee, saw, axe never reach here -- melee shots are not converted.
+		default:             return 20;
+		}
+	}
+
+	static double MuzzleTrim()
+	{
+		CVar c = CVar.FindCVar("rs_fm_muzzle");
+		double t = c ? double(c.GetInt()) : 0.0;
+		if (t < -20) t = -20;
+		if (t >  80) t =  80;
+		return t;
+	}
+
 	override void WorldTick()
 	{
 		mTrailsThisTic = 0;
@@ -266,6 +318,35 @@ class MS_HitscanHandler : StaticEventHandler
 			origin = (shooter.pos.x, shooter.pos.y, shootz);
 			origin.xy += (cos(ang), sin(ang)) * e.AttackOffsetForward;
 			origin.xy += (cos(ang - 90), sin(ang - 90)) * e.AttackOffsetSide;
+		}
+
+		// Walk the spawn point forward from the grip to roughly where the
+		// barrel ends, along the aim rather than along facing, so it stays
+		// right when the gun is pointed up or down.
+		double reach = 0;
+		Weapon fired = offhand ? shooter.player.OffhandWeapon : shooter.player.ReadyWeapon;
+		if (fired)
+		{
+			let h = RS_ForeignModelHandler.Get();
+			if (h) reach = FamilyMuzzle(h.ArchetypeForClass("" .. fired.GetClassName()));
+		}
+		reach += MuzzleTrim();
+
+		if (reach > 0)
+		{
+			// Standing against a wall, or with a Pinky's face in the muzzle,
+			// the offset would otherwise put the round on the far side of
+			// what you are shooting at and the shot would simply miss. Trace
+			// the gap first and stop short of whatever is in it. Absolute
+			// start position, because the grip is nowhere near the player's
+			// centre in VR.
+			FLineTraceData d;
+			bool blocked = shooter.LineTrace(ang, reach, pit,
+				TRF_ABSPOSITION | TRF_SOLIDACTORS,
+				origin.z, origin.x, origin.y, d);
+			if (blocked) reach = max(0.0, d.Distance - 2.0);
+
+			origin += (cos(ang) * cos(pit), sin(ang) * cos(pit), -sin(pit)) * reach;
 		}
 
 		let b = MS_Ballistic(Actor.Spawn("MS_Ballistic", origin, ALLOW_REPLACE));
