@@ -56,12 +56,6 @@ class MS_BW_Kar98 : Actor {}
 class MS_BW_STG44 : Actor {}
 class MS_BW_Thompson : Actor {}
 class MS_BW_Trenchgun : Actor {}
-class MS_SMG : Actor {}
-class MS_GH_Chainsaw : Actor {}
-class MS_GH_PumpShotgun : Actor {}
-class MS_GH_SSG : Actor {}
-class MS_GH_Unmaker : Actor {}
-class MS_GH_Machinegun : Actor {}
 
 #include "zscript/RS_ForeignAnim.zs"
 #include "zscript/RS_ForeignModels.zs"

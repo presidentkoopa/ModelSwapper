@@ -218,30 +218,6 @@ class RS_ForeignClip
 			"MS_BW_Flamethrower|ready|0@1|-1|-1|-1",
 			"MS_BW_Flamethrower|fire|14@1|0|-1|-1",
 
-			// ---- remainder of the GoldHunter set, and the VR SMG ----
-			"MS_GH_Chainsaw|ready|27@1|-1|-1|-1",
-			"MS_GH_Chainsaw|fire|28-40@1,27@1|0|-1|-1",
-
-			"MS_GH_SSG|ready|1@1|-1|-1|-1",
-			"MS_GH_SSG|fire|2@1,3@2,4@2,1@1|0|-1|-1",
-			"MS_GH_SSG|altfire|2@1,3@2,1@1|0|-1|-1",
-			"MS_GH_SSG|reload|12-37@1|-1|0|14",
-
-			"MS_GH_PumpShotgun|ready|4@1|-1|-1|-1",
-			"MS_GH_PumpShotgun|fire|5-21@1,4@1|0|3|11",
-			"MS_GH_PumpShotgun|reload|23-31@2|-1|0|9",
-
-			"MS_GH_Machinegun|ready|4@1|-1|-1|-1",
-			"MS_GH_Machinegun|fire|5@1,6@1,7@1,4@1|0|-1|-1",
-			"MS_GH_Machinegun|reload|8-35@1|-1|0|14",
-
-			"MS_GH_Unmaker|ready|0@1|-1|-1|-1",
-			"MS_GH_Unmaker|fire|1@1,2@1,3@1,0@1|0|-1|-1",
-
-			"MS_SMG|ready|3@1|-1|-1|-1",
-			"MS_SMG|fire|4@1,5@1,6@1,3@1|0|-1|-1",
-			"MS_SMG|reload|7-26@1|-1|0|10",
-
 			// ---- RS_Main donors (present when RS_Main is loaded) ----
 			"VR_Pistol|ready|0@1|-1|-1|-1",
 			"VR_Pistol|fire|1@2,2@2,0@1|0|-1|-1",

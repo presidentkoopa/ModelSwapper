@@ -1,0 +1,4 @@
+// ModelSwapper cvars.
+server bool rs_foreignmodels         = true;   // master switch
+server bool rs_foreignmodels_dump    = false;  // dump the scan to console
+server bool rs_foreignmodels_showall = false;  // include weapons with no slot binding

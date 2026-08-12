@@ -203,18 +203,7 @@ class RS_ForeignShelf
 			// The Kar98 is a bolt-action rifle -- it reads as a marksman
 			// weapon as well as a battle rifle, so it also sits on railgun,
 			// which otherwise has one model.
-			"railgun|MS_BW_Kar98|CHGG|0|1|44",
-
-			// ---- the rest of the GoldHunter set, and the VR SMG. All four
-			// donor sets are now complete: VR, GoldHunter, MeatGrinder and
-			// Brutal Wolfenstein.
-			"melee|MS_GH_Chainsaw|SAWG|0|27|65",
-			"supershotgun|MS_GH_SSG|SHT2|0|1|52",
-			"shotgun|MS_GH_PumpShotgun|SHTG|0|4|36",
-			"chaingun|MS_GH_Machinegun|CHGG|0|4|36",
-			"bfg|MS_GH_Unmaker|BFGG|0|0|16",
-			"plasma|MS_GH_Unmaker|BFGG|0|0|16",
-			"smg|MS_SMG|CHGG|0|3|27"
+			"railgun|MS_BW_Kar98|CHGG|0|1|44"
 		};
 		mRows.Clear();
 		for (int i = 0; i < SHELF.Size(); ++i)
