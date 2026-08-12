@@ -298,10 +298,17 @@ class RS_ForeignHand
 	int    ammoAtEntry;
 	int    ammo2AtEntry;
 
+	// What this sequence has PROVEN itself to be, mid-run. Empty until the
+	// weapon does something that settles it. Ammo going up is a reload
+	// whatever the sequence is called and whatever we guessed last time --
+	// and knowing that DURING the run is what lets the very first reload of
+	// a weapon play the reload animation instead of the fire one.
+	string liveSeq;
+
 	void Reset()
 	{
 		lastCaller = null; lastState = null; predictedNext = null;
 		entry = null; lastTics = 0; elapsed = 0; sawBrightAt = -1;
-		ammoAtEntry = -1; ammo2AtEntry = -1;
+		ammoAtEntry = -1; ammo2AtEntry = -1; liveSeq = "";
 	}
 }

@@ -834,6 +834,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			hs.entry        = cur;
 			hs.elapsed      = 0;
 			hs.sawBrightAt  = -1;
+			hs.liveSeq      = "";
 			hs.ammoAtEntry  = (w.Ammo1 ? w.Ammo1.Amount : -1);
 			hs.ammo2AtEntry = (w.Ammo2 ? w.Ammo2.Amount : -1);
 		}
@@ -842,6 +843,28 @@ class RS_ForeignModelHandler : StaticEventHandler
 		{
 			hs.elapsed++;
 			if (cur && cur.bFullbright && hs.sawBrightAt < 0) hs.sawBrightAt = hs.elapsed;
+
+			// SETTLE THE SEQUENCE WHILE IT IS STILL RUNNING.
+			//
+			// The prior used to be read only at the END, which meant the very
+			// FIRST reload of every weapon played the fire animation -- there
+			// was nothing learned yet, so it fell back to a guess, and by the
+			// time we knew better the reload was over.
+			//
+			// Ammo rising is a reload no matter what the sequence is called,
+			// and it is observable the tic it happens. Reading it live means
+			// the first reload looks right too.
+			if (hs.liveSeq.Length() == 0)
+			{
+				int a1 = (w.Ammo1 ? w.Ammo1.Amount : -1);
+				int a2 = (w.Ammo2 ? w.Ammo2.Amount : -1);
+				if ((hs.ammoAtEntry  >= 0 && a1 > hs.ammoAtEntry)
+				 || (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry))
+					hs.liveSeq = "reload";
+				else if ((hs.ammoAtEntry  >= 0 && a1 < hs.ammoAtEntry)
+				      || (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry))
+					hs.liveSeq = "fire";
+			}
 		}
 		hs.lastState  = cur;
 		hs.lastTics   = psp.Tics;
@@ -855,6 +878,19 @@ class RS_ForeignModelHandler : StaticEventHandler
 			int li = FindLearned(w.GetClassName(), hs.entry);
 			if (li >= 0) { seq = mLearned[li].seq; D = mLearned[li].observedTics; }
 			else          seq = "fire";   // unlearned: fire is the better bet than a frozen pose
+
+			// What the weapon has actually DONE this run outranks anything
+			// remembered from a previous one. A weapon whose fire and reload
+			// share an entry state -- common where reload is reached by a
+			// conditional jump out of Fire -- would otherwise be stuck with
+			// whichever one it did first, forever.
+			if (hs.liveSeq.Length() > 0 && hs.liveSeq != seq)
+			{
+				seq = hs.liveSeq;
+				D   = 0;               // learned duration was for the other sequence
+				int lj = FindLearned(w.GetClassName(), hs.entry);
+				if (lj >= 0 && mLearned[lj].seq == seq) D = mLearned[lj].observedTics;
+			}
 		}
 
 		Array<int> frames; int markFire;
@@ -883,9 +919,22 @@ class RS_ForeignModelHandler : StaticEventHandler
 		}
 		else
 		{
-			// Stretch or compress our clip across the duration THEY actually
-			// took last time.
-			ct = double(hs.elapsed - 1) * double(N) / double(D);
+			// Stretch or compress our clip across the duration they took.
+			//
+			// RUNNING LONGER THAN EXPECTED IS NORMAL, NOT AN ERROR. A reload
+			// takes longer when more rounds are missing -- a six-shell tube
+			// reload can be several times a one-shell top-up, off the same
+			// entry state. Fitting a fixed duration meant the animation
+			// finished in a fraction of the time and then FROZE, in full view,
+			// for the rest of it. That is the "off" reload.
+			//
+			// So the target stretches as the run outlives the estimate. The
+			// clip keeps moving and approaches its end without arriving,
+			// however long they take. A gun still in motion reads as
+			// reloading; a gun stopped dead reads as broken.
+			double dEff = D;
+			if (hs.elapsed > D) dEff = double(hs.elapsed) * 1.15;
+			ct = double(hs.elapsed - 1) * double(N) / dEff;
 		}
 
 		// Past the end -- held triggers and A_ReFire both do this -- hold.
@@ -918,6 +967,16 @@ class RS_ForeignModelHandler : StaticEventHandler
 			L.plays   = 0;
 			mLearned.Push(L);
 			li = mLearned.Size() - 1;
+		}
+		else if (hs.liveSeq.Length() > 0 && mLearned[li].seq != hs.liveSeq)
+		{
+			// The run proved itself something other than what we had recorded.
+			// Believe the run. The old label was a guess from an earlier one,
+			// and a duration learned under the wrong label is meaningless, so
+			// it starts over.
+			mLearned[li].seq          = hs.liveSeq;
+			mLearned[li].observedTics = 0;
+			mLearned[li].brightTic    = -1;
 		}
 		// KEEP THE SHORTEST RUN, not the latest.
 		//
