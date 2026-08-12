@@ -919,8 +919,22 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mLearned.Push(L);
 			li = mLearned.Size() - 1;
 		}
-		mLearned[li].observedTics = hs.elapsed;
-		mLearned[li].brightTic    = hs.sawBrightAt;
+		// KEEP THE SHORTEST RUN, not the latest.
+		//
+		// A sequence's real length varies: a reload takes longer when more
+		// rounds are missing, a fire loop runs as long as the trigger is held.
+		// Warping our clip across last time's duration means that when this
+		// run is SHORTER, the animation is cut off partway and the gun snaps
+		// back to rest -- which reads as broken even though every frame of it
+		// was right.
+		//
+		// Fitting the shortest run seen means the clip always completes and
+		// then holds its final pose while their sequence finishes. Finishing
+		// early and waiting is invisible; being interrupted is not.
+		if (mLearned[li].observedTics <= 0 || hs.elapsed < mLearned[li].observedTics)
+			mLearned[li].observedTics = hs.elapsed;
+
+		if (hs.sawBrightAt >= 0) mLearned[li].brightTic = hs.sawBrightAt;
 		mLearned[li].plays++;
 	}
 
