@@ -44,7 +44,7 @@ so cycling is a style choice rather than a shape hunt.
 | Set | Models | Character |
 |---|---|---|
 | **VanAlek** | 14 | Doom's own arsenal, cleanly modelled |
-| **Bv21** | 16 | GoldHunter — broader, includes railgun and flamethrower |
+| **Bv21** | 16 | BrutalDoomV21 — broader, includes railgun and flamethrower |
 | **MeatG** | 9 | MeatGrinder — grittier, short meshes |
 | **BWolf** | 11 | Brutal Wolfenstein — real WW2 small arms |
 
