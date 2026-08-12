@@ -38,9 +38,9 @@ class RS_ForeignSource
 	// Containers the engine itself provides. Everything else in the load is
 	// either the mod or us. Matched case-insensitively on a substring so
 	// version suffixes and paths do not matter.
-	static bool IsEngineContainer(string name)
+	static bool IsEngineContainer(string cname)
 	{
-		string n = name; n = n.MakeLower();
+		string n = cname; n = n.MakeLower();
 		return (n.IndexOf("gzdoom.pk3")         >= 0
 		     || n.IndexOf("doomxr.pk3")         >= 0
 		     || n.IndexOf("game_support.pk3")   >= 0
@@ -71,7 +71,6 @@ class RS_ForeignSource
 
 			string low = ln; low = low.MakeLower();
 			int p = -1;
-			int skip = 0;
 
 			// "#include "DEC_WEPS"" -- DECORATE and ZScript both use it.
 			int inc = low.IndexOf("#include");
@@ -134,8 +133,8 @@ class RS_ForeignSource
 			nm = nm.MakeLower();
 
 			// strip an extension if the lump name kept one
-			int dot = nm.IndexOf(".");
-			if (dot > 0) nm = nm.Left(dot);
+			int dotPos = nm.IndexOf(".");
+			if (dotPos > 0) nm = nm.Left(dotPos);
 
 			if (nm != "decorate" && nm != "zscript") continue;
 
