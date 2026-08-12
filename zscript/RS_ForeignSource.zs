@@ -156,6 +156,13 @@ class RS_ForeignSource
 
 	int Count() const { return mDeclared.Size(); }
 
+	// The i'th class the mod declared. The scan walks THIS, not the engine's
+	// class table.
+	string Name(int i) const
+	{
+		return (i >= 0 && i < mDeclared.Size()) ? mDeclared[i] : "";
+	}
+
 	// If we found no mod files at all -- someone is running us against a bare
 	// IWAD, or a mod ships neither lump under a name we looked for -- then
 	// filtering on this would hide everything. Callers check this and fall

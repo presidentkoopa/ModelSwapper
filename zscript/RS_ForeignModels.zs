@@ -500,16 +500,28 @@ class RS_ForeignScanner
 	{
 		outList.Clear();
 
-		// Only the weapons the loaded mod actually DECLARED. Read out of its
-		// own DECORATE/ZSCRIPT lumps -- see RS_ForeignSource. Without this the
-		// list is four hundred rows of Heretic, Hexen, Strife and Chex weapons
-		// that GZDoom compiles into every session and nobody can obtain.
+		// ITERATE THE MOD'S DECLARATIONS, NOT AllActorClasses.
+		//
+		// This used to walk every class the engine compiled -- Heretic, Hexen,
+		// Strife, Chex, hundreds of them -- and filter back down. That is
+		// backwards: the default was five hundred rows and correctness
+		// depended on a filter working. Every time the filter broke, and it
+		// broke three times, the menu filled with weapons from games nobody
+		// was playing.
+		//
+		// Read the mod's own DECORATE/ZSCRIPT declarations and look up only
+		// those. A failure now yields an EMPTY list, which is obvious and
+		// harmless, rather than the engine's entire back catalogue.
 		bool useSrc = (src && src.Usable());
-
-		int n = AllActorClasses.Size();
+		int n = useSrc ? src.Count() : AllActorClasses.Size();
 		for (int i = 0; i < n; ++i)
 		{
-			let type = (class<Weapon>)(AllActorClasses[i]);
+			// The candidate comes from the MOD'S OWN declaration list when we
+			// have one. AllActorClasses is only the fallback for a bare IWAD.
+			class<Weapon> type;
+			if (useSrc) type = (class<Weapon>)(src.Name(i));
+			else        type = (class<Weapon>)(AllActorClasses[i]);
+
 			if (type == null || type == "Weapon") continue;
 
 			readonly<Weapon> def = GetDefaultByType(type);
@@ -520,14 +532,6 @@ class RS_ForeignScanner
 
 			string lcn = cn; lcn = lcn.MakeLower();
 			if (lcn.IndexOf("random") == 0) continue;   // RandomSpawner-style
-
-			// Not declared by the mod we are loaded with -- it belongs to some
-			// other game the engine happens to compile in. showall overrides.
-			if (useSrc && !src.Declares(cn))
-			{
-				CVar sa = CVar.FindCVar("rs_foreignmodels_showall");
-				if (!sa || !sa.GetBool()) continue;
-			}
 
 			// A mod that already ships its own 3D weapon models is not asking
 			// for ours. Leave it alone.
