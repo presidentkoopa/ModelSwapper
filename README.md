@@ -125,6 +125,36 @@ takes your models down with it.
 
 ---
 
+## Compatibility targets
+
+These are the mods this is meant to work with. They were chosen because between
+them they cover the ways a Doom weapon can be built — vanilla-ish arsenals,
+magazine reloads, scavenged small arms, whimsical weapons with no archetype at
+all, assembly systems, and ZScript weapons rather than DECORATE ones.
+
+| Mod | Style | Status |
+|---|---|---|
+| **Golden Souls 2 / Remastered** | Whimsical, custom ammo, weapons with no Doom archetype | Tested — binds, classifies, animates |
+| **Ashes 2063 / Afterglow** | Post-apocalyptic, magazine reloads, realistic small arms | Tested — binds, classifies, animates |
+| **Brutal Doom v22** | Heavy state machines, reload system | Under audit |
+| **DoomRL Arsenal** | Assembly weapons, many variants per gun | Under audit |
+| **Guncaster** | ZScript weapons rather than DECORATE | Under audit |
+| **MetaDoom** | Weapons evolve and upgrade mid-game | Under audit |
+| **Trailblazer** | Elaborate reload and alt-fire animations | Under audit |
+
+"Binds" means the models attach and are pickable. "Animates" means fire and
+reload play against that weapon's own timing.
+
+The audit is reading each mod's weapon definitions to test the five assumptions
+the animation rests on: that idle calls `A_WeaponReady`, that it isn't called
+mid-action, that ammo changes observably during a reload, that fire uses bright
+frames, and that one action is one sequence. Any mod that breaks the third one
+breaks silently — the reload plays as an idle pose and nothing errors.
+
+Results and per-mod fixes will be recorded here as they land.
+
+---
+
 ## Known limits
 
 **Timing is fixed, not fitted.** Clips play at their authored rate. If a weapon's reload
