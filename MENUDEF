@@ -1,16 +1,14 @@
-// AddOptionMenu APPENDS, so neither the RS options page nor the base game's
-// options page gets replaced -- whatever we load next to keeps its own menus.
-// The RS entry is used when RS_Main is loaded; the Options entry is the
-// standalone door. Both point at the same page.
-
-AddOptionMenu "RS_MainOptions"
-{
-    StaticText " "
-    Submenu "Weapon Model Swap Program", "RSFM_Main"
-}
+// TOP LEVEL, not nested. This sits directly in Options as a peer of
+// "Radiant Silvergun Options" rather than inside it -- the swapper works
+// standalone next to any mod, so burying it under one particular mod's
+// page would be wrong even when that mod is loaded.
+//
+// AddOptionMenu APPENDS rather than replaces, so whatever we are loaded
+// next to keeps its own options page intact.
 
 AddOptionMenu "OptionsMenu"
 {
+    StaticText " "
     Submenu "Weapon Model Swap Program", "RSFM_Main"
 }
 

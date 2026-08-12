@@ -69,65 +69,80 @@ class RS_ForeignShelf
 		// 2), and that mapping comes along for free with the modelDef
 		// override. Verified against every RS_ weapon's Ready: state: they
 		// all rest on letter A except RS_PS_Chainsaw, which rests on SAWG C.
+		// FIELDS: archetype | donorClass | anchorSprite | restLetter | restFrame | frameCount
+		//
+		//   restLetter -- sprite letter index for psp.Frame (A=0). Only has to
+		//                 resolve so FindModelFrame returns an smf; everything
+		//                 geometric (scale, offsets, skin, flags) comes from it.
+		//   restFrame  -- the MODEL frame of the resting pose, for psp.ModelFrame.
+		//                 Extracted from each donor's own MODELDEF FrameIndex
+		//                 table. This is where the numbers that took two builds
+		//                 to find by noticing tilted guns actually live:
+		//                 chainsaw 27, BFG 6, rocket 5, SSG 1.
+		//   frameCount -- MD3 header frame count. The engine deliberately does
+		//                 NOT clamp an out-of-range ModelFrame -- RenderFrame
+		//                 rejects it and the weapon becomes INVISIBLE -- so the
+		//                 bound is ours to enforce. It is also the ceiling for
+		//                 every animation clip on this donor.
 		static const string SHELF[] = {
-			"pistol|RS_GH_Pistol|HBPS|0",
-			"pistol|VR_Pistol|PISG|0",
-			"revolver|RS_GH_Revolver|HBRV|0",
-			"revolver|VR_Revolver|REVL|0",
-			"smg|RS_GH_SMG|HBSM|0",
-			"smg|RS_GH_MP40|HBMP|0",
-			"smg|VR_SMG|SMGG|0",
-			"smg|RS_PS_Machinegun|MGNG|0",
-			"rifle|RS_GH_Rifle|HBRI|0",
-			"rifle|VR_Rifle|RIFL|0",
-			"shotgun|RS_GH_PumpShotgun|HBSG|0",
-			"shotgun|VR_Shotgun|SHTG|0",
-			"shotgun|RS_GH_AssaultShotgun|HBAG|0",
-			"shotgun|RS_PS_AutoShotgun|SHTG|0",
-			"supershotgun|RS_GH_SSG|HBSS|0",
-			"supershotgun|VR_SuperShotgun|SHT2|0",
-			"supershotgun|RS_PS_SSG|SSGG|0",
-			"chaingun|RS_GH_Machinegun|HBMG|0",
-			"chaingun|RS_GH_Minigun|HBMN|0",
-			"chaingun|VR_Chaingun|CHGG|0",
-			"chaingun|RS_PS_Chaingun|MGUG|0",
-			"rocket|RS_GH_RocketLauncher|HBRL|0",
-			"rocket|VR_RocketLauncher|MISG|0",
-			"rocket|RS_GH_GrenadeLauncher|HBGL|0",
-			"rocket|RS_PS_RocketLauncher|RLNC|0",
-			"plasma|RS_GH_Plasma|HBPL|0",
-			"plasma|VR_PlasmaRifle|PLSG|0",
-			"plasma|RS_PS_Plasma|PLSC|0",
-			"railgun|RS_GH_Railgun|HBRA|0",
-			"flamethrower|RS_GH_Flamethrower|HBFT|0",
-			"bfg|RS_GH_BFG9000|HBBF|0",
-			"bfg|VR_BFG9000|BFGG|0",
-			"bfg|RS_GH_BFG10k|HBBT|0",
-			"bfg|RS_PS_BFG|BFGN|0",
-			"melee|RS_GH_Fist|HBFS|0",
-			"melee|RS_GH_Chainsaw|HBCS|0",
-			"melee|VR_Chainsaw|SAWG|0",
-			"melee|RS_PS_Fist|FSTZ|0",
-			"melee|RS_PS_Chainsaw|SAWG|2",     // rests on SAWG C, not A
+			"pistol|RS_GH_Pistol|HBPS|0|2|38",
+			"pistol|VR_Pistol|PISG|0|0|32",
+			"revolver|RS_GH_Revolver|HBRV|0|0|33",
+			"revolver|VR_Revolver|REVL|0|0|41",
+			"smg|RS_GH_SMG|HBSM|0|3|27",
+			"smg|RS_GH_MP40|HBMP|0|2|14",
+			"smg|VR_SMG|SMGG|0|3|27",
+			"smg|RS_PS_Machinegun|MGNG|0|0|6",
+			"rifle|RS_GH_Rifle|HBRI|0|3|32",
+			"rifle|VR_Rifle|RIFL|0|0|41",
+			"shotgun|RS_GH_PumpShotgun|HBSG|0|4|36",
+			"shotgun|VR_Shotgun|SHTG|0|0|32",
+			"shotgun|RS_GH_AssaultShotgun|HBAG|0|4|32",
+			"shotgun|RS_PS_AutoShotgun|SHTG|0|0|4",
+			"supershotgun|RS_GH_SSG|HBSS|0|1|52",
+			"supershotgun|VR_SuperShotgun|SHT2|0|0|26",
+			"supershotgun|RS_PS_SSG|SSGG|0|0|12",
+			"chaingun|RS_GH_Machinegun|HBMG|0|4|36",
+			"chaingun|RS_GH_Minigun|HBMN|0|4|16",
+			"chaingun|VR_Chaingun|CHGG|0|4|16",
+			"chaingun|RS_PS_Chaingun|MGUG|0|0|6",
+			"rocket|RS_GH_RocketLauncher|HBRL|0|5|39",
+			"rocket|VR_RocketLauncher|MISG|0|5|39",
+			"rocket|RS_GH_GrenadeLauncher|HBGL|0|3|33",
+			"rocket|RS_PS_RocketLauncher|RLNC|0|0|7",
+			"plasma|RS_GH_Plasma|HBPL|0|4|30",
+			"plasma|VR_PlasmaRifle|PLSG|0|4|30",
+			"plasma|RS_PS_Plasma|PLSC|0|0|5",
+			"railgun|RS_GH_Railgun|HBRA|0|3|37",
+			"flamethrower|RS_GH_Flamethrower|HBFT|0|0|6",
+			"bfg|RS_GH_BFG9000|HBBF|0|6|16",
+			"bfg|VR_BFG9000|BFGG|0|6|16",
+			"bfg|RS_GH_BFG10k|HBBT|0|6|21",
+			"bfg|RS_PS_BFG|BFGN|0|0|11",
+			"melee|RS_GH_Fist|HBFS|0|0|75",
+			"melee|RS_GH_Chainsaw|HBCS|0|27|65",
+			"melee|VR_Chainsaw|SAWG|0|0|8",
+			"melee|RS_PS_Fist|FSTZ|0|0|9",
+			"melee|RS_PS_Chainsaw|SAWG|2|2|6",   // rests on SAWG C, not A
 
 			// ---- standalone ModelSwapper.pk3 donors (MS_ namespace) ----
 			// Present only when the standalone asset pk3 is loaded; dropped
 			// automatically otherwise. Listing both sets means ONE build of
 			// this file works whether the donors come from RS_Main or from
 			// the standalone pk3.
-			"pistol|MS_Pistol|PISG|0",
-			"revolver|MS_Revolver|REVL|0",
-			"rifle|MS_Rifle|RIFL|0",
-			"shotgun|MS_Shotgun|SHTG|0",
-			"supershotgun|MS_SuperShotgun|SHT2|0",
-			"chaingun|MS_Chaingun|CHGG|0",
-			"rocket|MS_RocketLauncher|MISG|0",
-			"plasma|MS_PlasmaRifle|PLSG|0",
-			"flamethrower|MS_Flamethrower|HBFT|0",
-			"bfg|MS_BFG9000|HBBF|0",
-			"bfg|MS_BFG10k|HBBT|0",
-			"melee|MS_Fist|PUNG|0",
-			"melee|MS_Chainsaw|SAWG|0"
+			"pistol|MS_Pistol|PISG|0|0|32",
+			"revolver|MS_Revolver|REVL|0|0|41",
+			"rifle|MS_Rifle|RIFL|0|0|41",
+			"shotgun|MS_Shotgun|SHTG|0|0|32",
+			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
+			"chaingun|MS_Chaingun|CHGG|0|4|16",
+			"rocket|MS_RocketLauncher|MISG|0|5|39",
+			"plasma|MS_PlasmaRifle|PLSG|0|4|30",
+			"flamethrower|MS_Flamethrower|HBFT|0|0|6",
+			"bfg|MS_BFG9000|HBBF|0|6|16",
+			"bfg|MS_BFG10k|HBBT|0|6|21",
+			"melee|MS_Fist|PUNG|0|0|57",
+			"melee|MS_Chainsaw|SAWG|0|0|8"
 		};
 		mRows.Clear();
 		for (int i = 0; i < SHELF.Size(); ++i)
@@ -138,7 +153,7 @@ class RS_ForeignShelf
 			// weapon select if pointed at nothing.
 			Array<string> f;
 			SHELF[i].Split(f, "|");
-			if (f.Size() < 4) continue;
+			if (f.Size() < 6) continue;
 			if (!DonorExists(f[1])) continue;
 			mRows.Push(SHELF[i]);
 		}
@@ -173,10 +188,12 @@ class RS_ForeignShelf
 		return n;
 	}
 
-	// pick N off the shelf -> modeldefClass / anchorSprite / restLetter
-	bool Get(string arche, int pick, out string cls, out string anchor, out int frame) const
+	// pick N off the shelf -> donor class, anchor sprite, rest letter,
+	// rest MODEL frame, and the donor's total frame count.
+	bool Get(string arche, int pick, out string cls, out string anchor,
+	         out int frame, out int restFrame, out int frameCount) const
 	{
-		cls = ""; anchor = ""; frame = 0;
+		cls = ""; anchor = ""; frame = 0; restFrame = 0; frameCount = 0;
 
 		// Wrap the pick into what this shelf actually HAS. Rows are dropped at
 		// build time when their donor class is absent, so a shelf is shorter in
@@ -209,8 +226,12 @@ class RS_ForeignShelf
 			{
 				Array<string> f;
 				mRows[i].Split(f, "|");
-				if (f.Size() < 4) return false;
-				cls = f[1]; anchor = f[2]; frame = f[3].ToInt();
+				if (f.Size() < 6) return false;
+				cls        = f[1];
+				anchor     = f[2];
+				frame      = f[3].ToInt();
+				restFrame  = f[4].ToInt();
+				frameCount = f[5].ToInt();
 				return true;
 			}
 			seen++;
@@ -573,8 +594,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 		if (idx < 0) return null;
 		let en = mEntries[idx];
 
-		string mcls, anchor; int heldFrame;
-		if (!mShelf.Get(en.archetype, pick, mcls, anchor, heldFrame))
+		string mcls, anchor; int heldFrame, restFrame, frameCount;
+		if (!mShelf.Get(en.archetype, pick, mcls, anchor, heldFrame, restFrame, frameCount))
 			return null;
 
 		// STEP 1 -- once per INSTANCE: point this actor's model lookup at
@@ -594,6 +615,28 @@ class RS_ForeignModelHandler : StaticEventHandler
 			if (si < 0) return w;
 			psp.Sprite = si;
 			psp.Frame  = heldFrame;
+
+			// STEP 3 -- address the model frame DIRECTLY. The sprite pin above
+			// only has to make FindModelFrame resolve; which frame actually
+			// draws is this. That is what lifts the 29-frame ceiling and makes
+			// a 75-frame reload reachable at all.
+			//
+			// The engine does not bounds-check: an out-of-range ModelFrame
+			// draws NOTHING, so the weapon vanishes rather than glitching.
+			// Clamp here, where the donor's real frame count is known.
+			int mf = restFrame;
+			if (frameCount > 0 && mf >= frameCount) mf = frameCount - 1;
+			if (mf < 0) mf = 0;
+
+			psp.ModelFrame     = mf;
+			psp.ModelFrameNext = mf;
+			// Lerp 0 with next == current forces nextFrame false: a hard,
+			// exact frame with no tween. This is also the kill-switch for the
+			// donors whose MODELDEF lacks NoInterpolation (Fist, every
+			// RS_PS_*) -- their vanilla-adjacent anchors (PUNG, SHTG, SAWG,
+			// PLSC, MGNG, MGUG, BFGN, RLNC, SSGG) can otherwise catch a
+			// foreign mod's nextState->sprite and lerp toward garbage.
+			psp.ModelFrameLerp = 0;
 		}
 		return w;
 	}
@@ -655,6 +698,23 @@ class RS_ForeignModelHandler : StaticEventHandler
 	{
 		if (mLastMain) mLastMain.A_ChangeModel("");
 		if (mLastOff)  mLastOff.A_ChangeModel("");
+
+		// Hand the psprites back too. ModelFrame persists on the layer and is
+		// serialised, so leaving it set would keep forcing a frame number onto
+		// whatever the weapon renders next.
+		if (playeringame[consolePlayer] && players[consolePlayer].mo)
+		{
+			let pi = players[consolePlayer];
+			for (int lay = 0; lay < 2; ++lay)
+			{
+				let psp = pi.FindPSprite(lay == 0 ? PSP_WEAPON : PSP_OFFHANDWEAPON);
+				if (!psp) continue;
+				psp.ModelFrame     = -1;
+				psp.ModelFrameNext = -1;
+				psp.ModelFrameLerp = -1;
+			}
+		}
+
 		mLastMain = null; mLastOff = null;
 		mBound    = false;
 	}
@@ -701,8 +761,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 	{
 		if (i < 0 || i >= mEntries.Size() || !mShelf) return "";
 		int pick = (hand == 2) ? mEntries[i].modelPick2 : mEntries[i].modelPick1;
-		string mcls, anchor; int hf;
-		if (!mShelf.Get(mEntries[i].archetype, pick, mcls, anchor, hf))
+		string mcls, anchor; int hf, rf, fc;
+		if (!mShelf.Get(mEntries[i].archetype, pick, mcls, anchor, hf, rf, fc))
 			return "(none)";
 		return mcls;
 	}
@@ -783,8 +843,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 		for (int i = 0; i < mEntries.Size(); ++i)
 		{
 			let en = mEntries[i];
-			string mcls, anchor; int hf;
-			mShelf.Get(en.archetype, en.modelPick1, mcls, anchor, hf);
+			string mcls, anchor; int hf, rf, fc;
+			mShelf.Get(en.archetype, en.modelPick1, mcls, anchor, hf, rf, fc);
 			Console.Printf("  %s%-24s\c-  slot %d  -> \cf%-14s\c- %s [%s %d]",
 				en.guessedBySlot ? "\cj?\c- " : "  ",
 				en.clsName, en.slot, en.archetype,
