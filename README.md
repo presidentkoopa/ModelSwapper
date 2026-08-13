@@ -366,8 +366,9 @@ GZDoom 4.11+ for `A_ChangeModel`. The DoomXR fork for animation.
 
 ## Asset licensing
 
-The code here is ours. **The models are not** — they come from several weapon packs
-(a GoldHunter-derived set, a VR weapons set, models credited in the source modeldef to
-`BR_VR_MeatGrinder`, and the Brutal Wolfenstein VR weapons). Their licenses have not
-been established. Sort that out before making this repository public or redistributing
-the pk3.
+The code here is ours. **The models are not** — they come from several weapon packs:
+Brutal Doom v21 (the Bv21/`MS_GH_` set), MeatGrinder (credited in the source modeldef to
+`BR_VR_MeatGrinder`), Alek's Doom Guns and Ermac's Vanilla Doom Guns (together, the
+VanAlek set), and the Brutal Wolfenstein VR weapons. Their licenses have not been
+established. Sort that out before making this repository public or redistributing the
+pk3.
