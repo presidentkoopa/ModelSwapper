@@ -27,9 +27,12 @@ server int  rs_fm_ballistic_speed = 90;     // map units per tic, clamped 10-400
 // Bullet Time X compensation. Inert unless that mod is loaded alongside.
 // 0.0 = player as slow as the monsters, 1.0 = normal player movement speed
 // -- their own player-divisor cvar has no faster setting than that, so 1.0
-// is the true ceiling, not a compromise.
+// is the true ceiling, not a compromise. Default 0.0 because Bullet Time X
+// itself ships with the player divisor equal to the world divisor -- 0.0 IS
+// their own out-of-the-box behavior, so enabling this changes nothing until
+// the slider actually moves.
 server bool   rs_fm_bt       = false;
-server float  rs_fm_bt_scale = 1.0;
+server float  rs_fm_bt_scale = 0.0;
 // Their player-movement divisors as they were before we touched them,
 // packed "normal:dodge:berserk:berserkdodge". Kept in a cvar so quitting
 // with compensation on cannot strand their settings overwritten.

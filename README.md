@@ -295,6 +295,12 @@ live, which never degenerates that way.
 player divisor to `1..20`, and `1` *is* normal speed, there's no faster setting to reach
 for a true double-speed player. This isn't a compromise; it's their own ceiling.
 
+**The slider defaults to `0.0`** — Bullet Time X's own out-of-the-box behavior, since
+their shipped defaults already put the player divisor equal to the world divisor. That
+means flipping **Enable** on by itself changes nothing; the slider has to actually move
+above `0.0` before this does anything different from what Bullet Time X would have done
+anyway.
+
 All four of its slowdown profiles move together — normal, dodge, berserk, berserk-dodge —
 since compensating only the first would leave a dodge feeling nothing like the bullet time
 it interrupts. A profile whose world divisor is `0` (total freeze) is skipped: there is no
