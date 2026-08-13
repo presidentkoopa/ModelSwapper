@@ -27,12 +27,24 @@ Built for VR, where a flat sprite welded to your view is the thing you notice mo
 | **Choose Models** | One row per weapon in the loaded mod. Three fields: family, mainhand model, offhand model. Left/Right cycles the highlighted one, Enter moves the highlight. |
 | **Scan Report** | Everything found, and why it was classified the way it was. |
 | **Rescan Now** | Re-reads the loaded mod without a map reload. Your picks are kept. |
+| **Randomize — One-Handed** | Slaps a random pistol, revolver or smg model on every weapon in the list in one press — a varied loadout instead of dialling in each one by hand. |
+| **Forget Learned Timing** | Clears measured animation timing. Use it if a mod update changed how a weapon moves. |
+| **Forget Saved Models** | Clears saved model choices, back to auto-picked everywhere. |
 | **List Unbound Weapons** | Shows weapons with no slot binding — normally the Heretic, Hexen, Strife and Chex arsenals the engine compiles into every session. |
 
 Models swap in your hands as you cycle, so choosing is looking rather than guessing.
 
 Set the family to **`any`** to pick from all fifty models regardless of archetype. A
 chainsaw on a rocket launcher is a legitimate thing to want.
+
+**Picks are remembered between sessions, per mod, with no profile system to manage.**
+Every choice — yours or Randomize's — is saved keyed on the foreign weapon's class name.
+Since only one mod's weapon classes exist in the world at a time, that name is already
+scoped to whichever mod is loaded: load Ashes, pick models, quit; load Golden Souls, pick
+different ones; go back to Ashes next week and its picks are still there, because Golden
+Souls never wrote an entry under Ashes' class names. (Two different mods reusing an
+identical class name would collide — the same tradeoff the learned-timing archive already
+makes, and for the same reason: rare enough in practice that neither guards against it.)
 
 ---
 
@@ -237,6 +249,15 @@ opt-in and why the speed is a slider.
 
 A twenty-pellet shotgun blast converts all twenty pellets — half-travelling and
 half-instant would be worse than either — but only the first eight per tic draw a trail.
+
+**The round carries a small moving light**, not just a sprite. `RSB0`, vendored from
+RS_Main, is a genuinely tiny source image — 5×5 to 15×15px, no soft radial falloff baked
+in — which reads fine at ordinary Doom viewing distance but reads as a small hard-edged
+square up close in VR with nothing behind it to soften the edges. One `PointLight` per
+round (not per trail bit — that would multiply with pellet count) fixes the *glow* without
+new art, since the light comes from real illumination rather than the sprite's own pixels.
+It doesn't fix the sprite's shape at point-blank range; that needs a proper glow texture,
+which is an asset change, not a code one.
 
 **No engine change is needed for this.** `WorldHitscanPreFired` is stock, it is
 cancellable, and `P_LineAttack` is the single funnel every hitscan in the game passes

@@ -79,9 +79,30 @@ class MS_Ballistic : FastProjectile
 		Height 2;
 		Speed 100;   // overridden on spawn from the shot being replaced
 		Damage 5;    // likewise
+		Scale 0.55;  // RSB0's source art is a 5-15px blob -- see PostBeginPlay
 		Projectile;
 		+THRUSPECIES
 		Species "Player";
+	}
+
+	// RSB0 is a genuinely tiny sprite (5x5 to 15x15px, no soft radial
+	// falloff baked in) borrowed as-is from RS_Main, where it is used the
+	// same way. At ordinary Doom viewing distance that reads as a spark;
+	// up close in VR, with nothing behind it to soften the edges, it reads
+	// as a small hard-edged square instead of a glowing tracer.
+	//
+	// A moving light fixes that without new art: the glow comes from real
+	// illumination, not from the pixels of the sprite, so it reads as a
+	// bright travelling point regardless of how few of those pixels there
+	// are. One light per round, not per trail bit -- a light attached to
+	// every trail spawn would multiply with pellet count and get
+	// expensive on a shotgun blast for a glow the round's own moving
+	// light already mostly covers.
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		A_AttachLight('mstrail', DynamicLight.PointLight,
+			Color(255, 204, 102), 48, 0, DynamicLight.LF_ADDITIVE);
 	}
 
 	override void Tick()

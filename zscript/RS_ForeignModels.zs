@@ -731,6 +731,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 	RS_ForeignShelf mShelf;   // built once at world-load
 	RS_ForeignClip  mClips;   // our animation clips, per donor
 	RS_ForeignPersist mPersist; // learned timings that survive a restart
+	RS_ForeignPickPersist mPicks; // player's model choices, keyed by class -- de facto per-mod profiles
 
 	// Live per-hand animation state, and what watching has taught us.
 	RS_ForeignHand  mHandMain;
@@ -777,6 +778,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mClips.Build();
 		}
 		if (!mPersist) { mPersist = new("RS_ForeignPersist"); mPersist.Load(); }
+		if (!mPicks)   { mPicks   = new("RS_ForeignPickPersist"); mPicks.Load(); }
 		if (!mHandMain) mHandMain = new("RS_ForeignHand");
 		if (!mHandOff)  mHandOff  = new("RS_ForeignHand");
 		mHandMain.Reset();
@@ -797,6 +799,22 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mEntries[idx].modelPick2    = keep[k].modelPick2;
 			mEntries[idx].guessedBySlot = keep[k].guessedBySlot;
 			mEntries[idx].pinned        = true;
+		}
+
+		// Anything still unpinned after the in-session carry is either the
+		// very first scan this session, or a weapon the player never
+		// touched -- either way, check the archive before settling for the
+		// auto-guess. This is the only place a saved pick is ever applied,
+		// same as `keep` is the only place a live one is.
+		for (int i = 0; i < mEntries.Size(); ++i)
+		{
+			if (mEntries[i].pinned) continue;
+			string arch; int p1, p2;
+			if (!mPicks.Get(mEntries[i].clsName, arch, p1, p2)) continue;
+			mEntries[i].archetype  = arch;
+			mEntries[i].modelPick1 = p1;
+			mEntries[i].modelPick2 = p2;
+			mEntries[i].pinned     = true;
 		}
 
 		mScanned  = true;
@@ -1476,6 +1494,13 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// player-chosen family and models; everything else re-guesses.
 		if (e.name == "rs-fm-rescan") { Rescan(); return; }
 
+		if (e.name == "rs-fm-random-onehand")
+		{
+			if (multiplayer) return;   // per-client row indices; see WorldTick
+			RandomizeOneHanded();
+			return;
+		}
+
 		// Throw away every learned timing, this session's and the archive's.
 		// For when a mod is updated and its weapons no longer behave the way
 		// they did when this was measured.
@@ -1485,6 +1510,17 @@ class RS_ForeignModelHandler : StaticEventHandler
 			if (mPersist) mPersist.Forget();
 			if (mHandMain) mHandMain.Reset();
 			if (mHandOff)  mHandOff.Reset();
+			return;
+		}
+
+		// Separate from the above on purpose -- timing is a measured fact,
+		// picks are a deliberate choice, and clearing one should never
+		// silently take the other with it.
+		if (e.name == "rs-fm-forget-picks")
+		{
+			if (mPicks) mPicks.Forget();
+			for (int i = 0; i < mEntries.Size(); ++i) mEntries[i].pinned = false;
+			Rescan();
 			return;
 		}
 
@@ -1527,6 +1563,17 @@ class RS_ForeignModelHandler : StaticEventHandler
 		mEntries[i].modelPick2 = 0;
 		mEntries[i].pinned     = true;
 		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
+		SavePick(i);
+	}
+
+	// The one place a pick reaches the archive. Called after every write to
+	// archetype/modelPick1/modelPick2, so the saved copy can never drift
+	// from what is actually bound.
+	void SavePick(int i)
+	{
+		if (!mPicks || i < 0 || i >= mEntries.Size()) return;
+		mPicks.Store(mEntries[i].clsName, mEntries[i].archetype,
+			mEntries[i].modelPick1, mEntries[i].modelPick2);
 	}
 
 	void CyclePick(int i, int hand, int dir)
@@ -1545,6 +1592,38 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		mEntries[i].pinned = true;
 		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
+		SavePick(i);
+	}
+
+	// One-button "give everything a one-handed model" -- pistol, revolver or
+	// smg, chosen per weapon rather than picking one family for the whole
+	// list, so the result actually looks like a varied loadout instead of
+	// fifteen copies of the same gun. Every entry ends up pinned and saved,
+	// same as if the player had dialled in each one by hand.
+	void RandomizeOneHanded()
+	{
+		if (!mShelf) return;
+
+		for (int i = 0; i < mEntries.Size(); ++i)
+		{
+			string arch;
+			switch (random[MSRandomize](0, 2))
+			{
+			case 0:  arch = "pistol";   break;
+			case 1:  arch = "revolver"; break;
+			default: arch = "smg";      break;
+			}
+			int n = mShelf.Count(arch);
+			if (n <= 0) continue;   // standalone build dropped every donor for this row
+
+			mEntries[i].archetype  = arch;
+			mEntries[i].modelPick1 = random[MSRandomize](0, n - 1);
+			mEntries[i].modelPick2 = random[MSRandomize](0, n - 1);
+			mEntries[i].pinned     = true;
+			SavePick(i);
+		}
+
+		mLastMain = null; mLastOff = null;
 	}
 
 	void Dump()

@@ -32,9 +32,21 @@ OptionMenu "RSFM_Main"
     StaticText "Re-reads the loaded mod. Models you picked are kept.", "DarkGray"
     StaticText " "
 
+    Command  "Randomize -- One-Handed", "netevent rs-fm-random-onehand"
+    StaticText "Slaps a random pistol, revolver or smg model on every weapon", "DarkGray"
+    StaticText "in the list -- a mixed, varied loadout in one press. Overwrites", "DarkGray"
+    StaticText "any models you already picked.", "DarkGray"
+    StaticText " "
+
     Command  "Forget Learned Timing", "netevent rs-fm-forget"
     StaticText "Animation timings are measured by watching, then kept between", "DarkGray"
     StaticText "sessions. Clear them if a mod update changed how a weapon moves.", "DarkGray"
+    StaticText " "
+
+    Command  "Forget Saved Models", "netevent rs-fm-forget-picks"
+    StaticText "Model choices are remembered per weapon, kept between sessions --", "DarkGray"
+    StaticText "one archive shared across every mod you load. Clear it to go back", "DarkGray"
+    StaticText "to auto-picked models everywhere.", "DarkGray"
     StaticText " "
 
     Option "List Unbound Weapons", "rs_foreignmodels_showall", "OnOff"

@@ -12,6 +12,13 @@ server bool rs_foreignmodels_natural = false;
 // Written once per sequence when its timing locks. Clear it with the menu.
 server string rs_fm_learned = "";
 
+// The player's own model choices, packed as class:archetype:pick1:pick2;...
+// Written every time a pick changes. Keyed on class name only -- no notion
+// of "which mod" anywhere -- which is what makes this work as a per-mod
+// profile with nothing tracking which mod is loaded: only one mod's classes
+// exist in the world at a time. Clear it with the menu.
+server string rs_fm_picks = "";
+
 // Hitscan -> projectile conversion. Off by default, and the only setting
 // here that changes how the loaded mod plays rather than how it looks.
 server bool rs_fm_ballistic       = false;  // player hitscans become travelling rounds

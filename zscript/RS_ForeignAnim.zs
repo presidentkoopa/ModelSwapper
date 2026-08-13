@@ -101,6 +101,14 @@ class RS_ForeignClip
 			"MS_VR_BFG9000|fire|7@3,8@3,9@3,6@1|0|-1|-1",
 			"MS_Chaingun|fire|4@2,10@2|0|-1|-1",
 			"MS_Chainsaw|fire|5@2,7@2|0|-1|-1",
+			// Derived the same way as every other row: the donor's own
+			// source weapon (RS_Fist.zs, Fire state) is PUNG B 4 / C 4
+			// (fires) / D 5 / C 4 / B 5 (refire), and VR_Fist's own
+			// MODELDEF maps those letters straight to frames 1/2/3 -- so
+			// this is that weapon's real punch, not an invented one. It was
+			// simply never written down; every OTHER fist/knife/saw donor
+			// already has a fire clip.
+			"MS_Fist|fire|1@4,2@4,3@5,2@4,1@5,0@1|0|-1|-1",
 			"MS_Flamethrower|fire|1@1,2@2,3@2|0|-1|-1",
 			"MS_GH_AutoShotgun|fire|5@1,6@2,7@2|0|-1|-1",
 			"MS_GH_AutoShotgun|reload|11-31@1|0|-1|-1",
