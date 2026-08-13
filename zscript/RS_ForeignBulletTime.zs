@@ -19,23 +19,26 @@
 // them entirely; setting it equal to the world's makes them exactly as
 // slow as everything they are shooting at.
 //
-// THE SLIDER maps onto that, with three anchors:
+// THE SLIDER runs 0.0 to 1.0, both ends load-bearing, no dead zone:
 //
 //     0.0  player divisor = world divisor   -- as slow as the monsters
-//     1.0  player divisor = the mod's own   -- untouched, whatever it is
-//     2.0  player divisor = 1               -- normal movement
+//     1.0  player divisor = 1               -- normal movement
 //
-// 1.0 passes their configuration through unchanged, so the default
-// setting of this feature is "change nothing" even while it is switched
-// on. Between anchors it interpolates linearly.
+// Linear in between. There used to be a third anchor at 1.0 for "the
+// mod's own configured value, untouched" with a normal-speed anchor
+// pushed out to 2.0 -- dropped, because Bullet Time X ships with both
+// divisors at 4 (bt_multiplier and bt_player_movement_multiplier), so
+// on a STOCK CONFIG that middle anchor and the 0.0 anchor were the same
+// number and the entire bottom half of the slider did nothing. This
+// version has no anchor that can degenerate like that: it only ever
+// depends on the world's OWN divisor, read live, which is never 0 here
+// (see below) and never equal to 1 -- their default is 4, and no target
+// mod ships it at 1, because a world divisor of 1 is no slowdown at all.
 //
-// WORTH KNOWING: Bullet Time X ships with bt_multiplier = 4 and
-// bt_player_movement_multiplier = 4 -- the player is already exactly as
-// slow as the monsters out of the box. On a stock config 0.0 and 1.0 are
-// therefore the same value and the bottom half of the slider does
-// nothing. The half above 1.0 is where the range lives. The lower half
-// only opens up if the mod's own player-speed setting has been changed
-// away from matching the world.
+// WORTH KNOWING: Bullet Time X clamps its own player divisor to 1..20
+// (BulletTime.zs:359) -- 1 IS their fastest, "normal speed," there is no
+// faster setting to reach for a true 2x. 1.0 on this slider is already
+// the ceiling of what their own cvar can express, not a compromise.
 //
 // HOW IT APPLIES. Bullet Time X re-reads its cvars in initCvarVariables()
 // every time bullet time starts (BulletTime.zs, doSlowTime). So the cvar
@@ -75,14 +78,14 @@ class MS_BulletTime
 		}
 	}
 
-	// Their clamp range for a player divisor is 1..20 (BulletTime.zs:359).
-	// Producing anything outside it would just be silently clamped by them
-	// into a value we did not intend, so clamp it here where it is visible.
-	static int Target(double s, int base, int world)
+	// s=0 -> world (as slow as everything else), s=1 -> 1 (normal speed).
+	// Their own clamp range for a player divisor is 1..20 (BulletTime.zs:
+	// 359); producing anything outside it would just be silently clamped
+	// by them into a value we did not intend, so clamp it here too, where
+	// it is visible.
+	static int Target(double s, int world)
 	{
-		double v;
-		if (s <= 1.0) v = world + (base - world) * s;
-		else          v = base  + (1.0  - base)  * (s - 1.0);
+		double v = world + (1.0 - world) * s;
 
 		int r = int(round(v));
 		if (r < 1)  r = 1;
@@ -117,7 +120,7 @@ class MS_BulletTimeHandler : StaticEventHandler
 		CVar c = CVar.FindCVar("rs_fm_bt_scale");
 		if (c) s = c.GetFloat();
 		if (s < 0.0) s = 0.0;
-		if (s > 2.0) s = 2.0;
+		if (s > 1.0) s = 1.0;
 		return s;
 	}
 
@@ -142,15 +145,11 @@ class MS_BulletTimeHandler : StaticEventHandler
 
 		if (!CompEnabled()) { Restore(); return; }
 
+		// Captured only so Restore() has something to give back when this
+		// is switched off -- the slider's own math (Target, below) depends
+		// on nothing but the world's live divisor, not on what the player's
+		// divisor used to be.
 		Capture();
-
-		CVar bc = CVar.FindCVar("rs_fm_bt_base");
-		if (!bc) return;
-
-		Array<String> saved;
-		String packed = bc.GetString();
-		packed.Split(saved, ":");
-		if (saved.Size() < MS_BulletTime.GROUPS) return;
 
 		double s = Scale();
 
@@ -169,7 +168,7 @@ class MS_BulletTimeHandler : StaticEventHandler
 			// than invent a number for it.
 			if (world <= 0) continue;
 
-			int want = MS_BulletTime.Target(s, saved[i].ToInt(), world);
+			int want = MS_BulletTime.Target(s, world);
 			if (pc.GetInt() != want) pc.SetInt(want);
 		}
 	}

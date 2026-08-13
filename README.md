@@ -276,24 +276,29 @@ is loaded alongside. Detection is by cvar, not by class — we never name one of
 Every "multiplier" in that mod is a **divisor**: monsters get `vel /= bt_multiplier`, the
 player gets `speed /= bt_player_movement_multiplier`. A higher player multiplier means a
 *slower* player, and the player's advantage is however much smaller their divisor is than
-the world's. The slider interpolates between three anchors:
+the world's. The slider runs edge to edge, no dead zone:
 
 | | |
 |---|---|
 | **0.0** | player divisor = world divisor — as slow as the monsters |
-| **1.0** | player divisor = the mod's own — passed through untouched |
-| **2.0** | player divisor = 1 — normal movement while the world crawls |
+| **1.0** | player divisor = `1` — normal movement while the world crawls |
+
+Linear in between, and both ends load-bearing. There used to be a third anchor at `1.0`
+for "the mod's own configured value, untouched," with the normal-speed anchor pushed out
+to `2.0` — dropped, because Bullet Time X ships with both divisors at `4`
+(`bt_multiplier` and `bt_player_movement_multiplier`), so on a stock config that middle
+anchor and the `0.0` anchor were the same number and the *entire bottom half of the
+slider did nothing.* This version only ever depends on the world's own divisor, read
+live, which never degenerates that way.
+
+**`1.0` is already the fastest their own cvar can express** — Bullet Time X clamps its
+player divisor to `1..20`, and `1` *is* normal speed, there's no faster setting to reach
+for a true double-speed player. This isn't a compromise; it's their own ceiling.
 
 All four of its slowdown profiles move together — normal, dodge, berserk, berserk-dodge —
 since compensating only the first would leave a dodge feeling nothing like the bullet time
 it interrupts. A profile whose world divisor is `0` (total freeze) is skipped: there is no
 honest "as slow as the monsters" when the monsters are stopped dead.
-
-Bullet Time X ships with `bt_multiplier = 4` and `bt_player_movement_multiplier = 4` — the
-player is *already* exactly as slow as the monsters out of the box. **On a stock config
-0.0 and 1.0 are therefore the same value** and only the upper half of the slider does
-anything. The lower half opens up only if the mod's own player-speed setting has been
-moved away from matching the world.
 
 The originals are captured into a cvar before anything is written, so quitting with
 compensation on can't strand their settings overwritten. Turn it off before editing Bullet
