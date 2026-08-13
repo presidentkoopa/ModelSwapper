@@ -984,6 +984,42 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// state walking, no assumptions about how their reload is written.
 		bool idle = (pi.WeaponState & readyMask) != 0;
 
+		// A RELOAD PROVING ITSELF THROUGH A STALE FIRE SEQUENCE.
+		//
+		// The gap glue below exists to bridge SHORT idle blips inside ONE
+		// continuing action -- but on its own it cannot tell "still the
+		// same action" apart from "a different action started right after
+		// this one, close enough in time to land inside the glue window."
+		// A voluntary reload pressed within a few tics of the last shot is
+		// exactly that: hs.entry is still the FIRE sequence's, un-reset (it
+		// only resets when hs.entry is already null), so the reload runs
+		// entirely under a stale liveSeq=="fire" -- elapsed and ammoAtEntry
+		// both still belong to the shot that already happened. The model
+		// sits wherever the fire clip's last frame was while the mod's own
+		// reload timer and sound run underneath it, which is indistinguishable
+		// from no animation at all. Reloading from empty dodges this only by
+		// accident: there is naturally more than a glue window's worth of
+		// pause between running dry and pressing reload.
+		//
+		// Ammo direction is the tell, and it needs no state-walking to read.
+		// A continuing fire session can only hold ammoAtEntry's baseline or
+		// fall further below it -- every shot is a decrement, and
+		// ammoAtEntry is fixed at whatever the count was BEFORE the first
+		// shot of the session, refires included. Ammo rising back above
+		// that baseline is proof a reload started, on whatever tic that
+		// happens to be, glue window or not.
+		if (hs.entry && (hs.liveSeq == "fire" || hs.liveSeq == "altfire"))
+		{
+			int a1n = (w.Ammo1 ? w.Ammo1.Amount : -1);
+			int a2n = (w.Ammo2 ? w.Ammo2.Amount : -1);
+			if ((hs.ammoAtEntry  >= 0 && a1n > hs.ammoAtEntry)
+			 || (hs.ammo2AtEntry >= 0 && a2n > hs.ammo2AtEntry))
+			{
+				Commit(hs, w);
+				hs.entry = null;
+			}
+		}
+
 		if (psp.Caller != hs.lastCaller)
 		{
 			// Different weapon entirely; whatever was running is not ours.
