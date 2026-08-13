@@ -297,10 +297,25 @@ class RS_ForeignLearned
 
 	// Ammo actually restored during the SAME run observedTics was taken
 	// from -- the pairing is what makes it a rate. <=0 means either this
-	// isn't a reload (fire's ammo delta is a decrease, not a restore) or it
-	// predates rate learning; either way, duration stays flat instead of
-	// being scaled by a ratio that was never measured.
+	// isn't a reload (fire's ammo delta is a decrease, not a restore), it
+	// predates rate learning, or scaling was tried and REJECTED for lack of
+	// evidence (see minRestore/maxRestore, and Commit()'s lock branch) --
+	// either way, duration stays flat instead of being scaled by a ratio
+	// that was never actually measured to hold.
 	int    restoreUnits;
+
+	// EVIDENCE, not the rate itself -- the smallest and largest restored
+	// amounts seen across the plays before lock, and how long each took.
+	// A single (duration, restored) pair cannot tell "this reload scales
+	// with ammo missing" apart from "this reload always takes the same
+	// time and happened to restore that much" -- a fixed magazine swap
+	// (most pistols, SMGs, rifles: eject whatever's left, load a fresh
+	// mag, same motion either way) looks exactly like a scaling reload
+	// until a SECOND run with a different amount either confirms it
+	// (duration moved too) or refutes it (duration didn't move). Discarded
+	// once the lock decision is made; not persisted.
+	int    minRestore, minRestoreTics;
+	int    maxRestore, maxRestoreTics;
 }
 
 // ---------------------------------------------------------------------

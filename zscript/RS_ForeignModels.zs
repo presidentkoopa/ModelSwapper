@@ -1387,14 +1387,12 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// forever: time-matched to how that weapon actually behaves, and
 		// identical on the hundredth reload as on the fourth.
 		//
-		// PAIRED WITH A RATE, NOT JUST A NUMBER, for reloads. The locked
-		// duration alone was the entire reason "some reloads look right and
-		// others don't" -- a fixed tic count fits exactly one amount of
-		// missing ammo. What ammo THIS run actually restored, read now while
-		// it is still fresh, turns that fixed number into tics-per-unit
-		// (Animate(), above, does the multiplying). A fire/altfire run has
-		// ammo going DOWN, so restored stays 0 and the rate is skipped --
-		// exactly the old flat-duration behavior, unchanged.
+		// PAIRED WITH A RATE, NOT JUST A NUMBER, for reloads that actually
+		// scale with how much ammo is missing. What ammo THIS run restored,
+		// read now while it is still fresh, is recorded alongside the run's
+		// duration below. A fire/altfire run has ammo going DOWN, so
+		// restored stays 0 and nothing here applies -- exactly the old
+		// flat-duration behavior, unchanged.
 		int restored = 0;
 		int a1now = (w.Ammo1 ? w.Ammo1.Amount : -1);
 		int a2now = (w.Ammo2 ? w.Ammo2.Amount : -1);
@@ -1411,9 +1409,48 @@ class RS_ForeignModelHandler : StaticEventHandler
 				mLearned[li].observedTics = hs.elapsed;
 				mLearned[li].restoreUnits = restored;   // paired with the run above
 			}
+
+			// EVIDENCE FOR THE LOCK DECISION, tracked separately from which
+			// run anchors the rate. A single (duration, restored) pair can't
+			// tell a reload that scales with ammo missing apart from one
+			// that always takes the same time and happened to restore that
+			// much -- most fixed-magazine weapons (pistols, SMGs, rifles:
+			// eject whatever's left, load a fresh mag, same motion either
+			// way) are the second kind, and scaling THEM would predict a
+			// short partial reload's duration from a long full one, rushing
+			// the clip through early and then freezing for what's left --
+			// worse than the flat duration this is meant to improve on.
+			// Two runs that actually restored different amounts, with
+			// duration moving the same direction, is the bar for evidence.
+			if (restored > 0)
+			{
+				if (mLearned[li].minRestore <= 0 || restored < mLearned[li].minRestore)
+				{
+					mLearned[li].minRestore     = restored;
+					mLearned[li].minRestoreTics = hs.elapsed;
+				}
+				if (restored > mLearned[li].maxRestore)
+				{
+					mLearned[li].maxRestore     = restored;
+					mLearned[li].maxRestoreTics = hs.elapsed;
+				}
+			}
 		}
 		else if (mLearned[li].plays == LOCK_AFTER && mPersist)
 		{
+			// Reject the rate at the moment of locking unless the evidence
+			// actually supports it: a real difference in restored amount
+			// (2, not 1 -- filters a single stray round from counting as
+			// "variation") whose duration moved the same direction. Anything
+			// less -- every observed reload restored about the same amount,
+			// or duration didn't track the amount that did vary -- and this
+			// entry keeps the flat duration it would have had before rate
+			// learning existed, permanently, same as a weapon whose ammo
+			// never went up at all.
+			bool scales = (mLearned[li].maxRestore - mLearned[li].minRestore >= 2)
+			           && (mLearned[li].maxRestoreTics > mLearned[li].minRestoreTics);
+			if (!scales) mLearned[li].restoreUnits = 0;
+
 			// Just locked: archive it, keyed by something that survives a
 			// restart. Written once per sequence, ever.
 			mPersist.Store(mLearned[li].clsName, mLearned[li].seq,

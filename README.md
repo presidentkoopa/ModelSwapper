@@ -180,12 +180,19 @@ first is the one that matched. Reload durations now carry the ammo the locked ru
 actually restored alongside the tic count, so a future reload scales that duration by how
 much *it* is missing rather than replaying a fixed length regardless.
 
-This assumes a reload's length scales with how much ammo is gone, which is true of
-shell-by-shell and magazine-top-up reloads (most of them) but not of a fixed-time
-magazine swap that takes the same duration whether one round or the whole mag was
-missing — the rare case, and the reason this is a limit and not a solved problem.
-Fire and altfire never scale this way; ammo drops there, it doesn't rise, so nothing about
-this touches them.
+Not every reload scales with how much ammo is gone. Most fixed-magazine weapons —
+pistols, SMGs, rifles — eject whatever's left and load a fresh mag either way, same
+motion, same duration, whether one round or the whole mag was missing. Scaling *those*
+would predict a short partial reload from a long full one and rush the model through the
+clip early, then leave it frozen for what's left — worse than not scaling at all. So the
+rate is never assumed from one observed reload; it has to be **earned**, across the
+learning window, by two runs that actually restored different amounts *and* took
+different amounts of time to do it. No such evidence, on a fixed-mag weapon or a
+shotgun-style one the player just always ran dry before reloading — and that entry keeps
+flat-duration timing permanently, same as before rate scaling existed. This is derived
+from behavior alone, never from what kind of weapon it is; nothing here knows or asks
+whether something is a shotgun. Fire and altfire never scale this way regardless — ammo
+drops there, it doesn't rise, so nothing about this touches them.
 
 **Eighteen of the fifty donors have no reload animation.** Knives, chainsaws, fists, the
 shorter MeatGrinder meshes: the mesh has no such frames. Bound to a weapon that reloads
