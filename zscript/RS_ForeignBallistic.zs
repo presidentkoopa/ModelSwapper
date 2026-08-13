@@ -73,42 +73,34 @@ class MS_Ballistic : FastProjectile
 	int    age;
 	const  MAX_LIFETIME = 350;
 
+	// Rides along at the same position, one per round -- not a light, a
+	// second, bigger, fainter copy of the same sprite. See MS_BallisticGlow.
+	MS_BallisticGlow glow;
+
 	Default
 	{
 		Radius 2;
 		Height 2;
 		Speed 100;   // overridden on spawn from the shot being replaced
 		Damage 5;    // likewise
-		Scale 0.55;  // RSB0's source art is a 5-15px blob -- see PostBeginPlay
+		Scale 0.55;  // RSB0's source art is a 5-15px blob, too small at Scale 1
 		Projectile;
 		+THRUSPECIES
 		Species "Player";
 	}
 
-	// RSB0 is a genuinely tiny sprite (5x5 to 15x15px, no soft radial
-	// falloff baked in) borrowed as-is from RS_Main, where it is used the
-	// same way. At ordinary Doom viewing distance that reads as a spark;
-	// up close in VR, with nothing behind it to soften the edges, it reads
-	// as a small hard-edged square instead of a glowing tracer.
-	//
-	// A moving light fixes that without new art: the glow comes from real
-	// illumination, not from the pixels of the sprite, so it reads as a
-	// bright travelling point regardless of how few of those pixels there
-	// are. One light per round, not per trail bit -- a light attached to
-	// every trail spawn would multiply with pellet count and get
-	// expensive on a shotgun blast for a glow the round's own moving
-	// light already mostly covers.
 	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
-		A_AttachLight('mstrail', DynamicLight.PointLight,
-			Color(255, 204, 102), 48, 0, DynamicLight.LF_ADDITIVE);
+		glow = MS_BallisticGlow(Spawn("MS_BallisticGlow", Pos, ALLOW_REPLACE));
 	}
 
 	override void Tick()
 	{
 		Super.Tick();
-		if (++age > MAX_LIFETIME) { Destroy(); return; }
+		if (glow) glow.SetOrigin(Pos, true);
+
+		if (++age > MAX_LIFETIME) { KillGlow(); Destroy(); return; }
 		if (!hasPrevPos) { prevPos = Pos; hasPrevPos = true; return; }
 
 		Vector3 here = Pos;
@@ -120,7 +112,7 @@ class MS_Ballistic : FastProjectile
 		// Out of range. A hitscan that reaches its limit without hitting
 		// anything spawns no puff, so neither do we -- just stop existing.
 		travelled += dist;
-		if (maxRange > 0 && travelled > maxRange) { Destroy(); return; }
+		if (maxRange > 0 && travelled > maxRange) { KillGlow(); Destroy(); return; }
 
 		if (noTrail) return;
 
@@ -135,14 +127,32 @@ class MS_Ballistic : FastProjectile
 			Vector3 p = prevPos - seg + seg * f;
 
 			let t = Spawn("MS_BallisticTrail", p, ALLOW_REPLACE);
-			if (!t) continue;
+			if (t)
+			{
+				// Newest bit is biggest and brightest, older ones dimmer and
+				// smaller. That taper is what gives the streak a readable
+				// direction instead of a uniform line of dots.
+				t.A_SetScale(0.16 + 0.20 * f);
+				t.alpha = 0.35 + 0.55 * f;
+			}
 
-			// Newest bit is biggest and brightest, older ones dimmer and
-			// smaller. That taper is what gives the streak a readable
-			// direction instead of a uniform line of dots.
-			t.A_SetScale(0.16 + 0.20 * f);
-			t.alpha = 0.35 + 0.55 * f;
+			// Paired with every trail bit: the same soft, big, faint look
+			// the round's own MS_BallisticGlow rides with -- but transient
+			// like MS_BallisticTrail, not persistent, since nothing owns
+			// it to clean it up when the round dies.
+			let g = Spawn("MS_BallisticGlowTrail", p, ALLOW_REPLACE);
+			if (g) g.A_SetScale(0.9 + 0.5 * f);
 		}
+	}
+
+	// Thinker exposes no OnDestroy virtual to ZScript, so every place this
+	// round stops existing has to remember to take the glow companion with
+	// it explicitly -- otherwise it's an orphaned actor sitting wherever
+	// the round stopped, quietly outliving it.
+	void KillGlow()
+	{
+		if (glow) glow.Destroy();
+		glow = null;
 	}
 
 	// Hand the impact back to whatever the mod was going to spawn. Pulled
@@ -166,7 +176,64 @@ class MS_Ballistic : FastProjectile
 		RSB0 E 2 Bright;
 		Loop;
 	Death:
-		TNT1 A 1 { SpawnStoredPuff(); }
+		TNT1 A 1 { SpawnStoredPuff(); KillGlow(); }
+		Stop;
+	}
+}
+
+// ---------------------------------------------------------------------
+// A GLOW WITHOUT A LIGHT. `A_AttachLight` was tried here and pulled --
+// this mod carries no dynamic lights. This is the texture-only
+// alternative: the same tiny RSB0 sprite, just bigger and much fainter,
+// additively stacked behind the sharp one. One hard-edged small texture
+// still has hard edges; several overlapping copies at different sizes
+// and low alpha blur that edge out through sheer accumulation, the same
+// trick behind most halo/flare sprites predating dynamic lighting
+// entirely. No lighting engine involvement, no cost to nearby geometry.
+//
+// Two classes, same look, different lifetimes. This one is persistent --
+// one spawned per round, ridden along every tic by MS_Ballistic.Tick(),
+// destroyed explicitly by MS_Ballistic.OnDestroy(). It has no fade or
+// Stop of its own because something else owns its lifetime.
+// ---------------------------------------------------------------------
+class MS_BallisticGlow : Actor
+{
+	Default
+	{
+		+NOINTERACTION +CLIENTSIDEONLY +FORCEXYBILLBOARD +NOGRAVITY +NOTIMEFREEZE
+		RenderStyle "Add";
+		Scale 1.1;
+		Alpha 0.22;
+	}
+	States
+	{
+	Spawn:
+		RSB0 A 2 Bright;
+		RSB0 B 2 Bright;
+		RSB0 C 2 Bright;
+		RSB0 D 2 Bright;
+		RSB0 E 2 Bright;
+		Loop;
+	}
+}
+
+// The transient twin, one spawned per trail bit alongside
+// MS_BallisticTrail. Nothing owns it, so it has to end itself the same
+// way MS_BallisticTrail does -- a short fade, then Stop.
+class MS_BallisticGlowTrail : Actor
+{
+	Default
+	{
+		+NOINTERACTION +CLIENTSIDEONLY +FORCEXYBILLBOARD +NOGRAVITY +NOTIMEFREEZE
+		RenderStyle "Add";
+		Scale 1.1;
+		Alpha 0.22;
+	}
+	States
+	{
+	Spawn:
+		RSB0 B 2 Bright A_FadeOut(0.06);
+		RSB0 C 2 Bright A_FadeOut(0.07);
 		Stop;
 	}
 }
