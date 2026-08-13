@@ -489,6 +489,17 @@ class RS_ForeignScanner
 		 || hay.IndexOf("mac10") >= 0 || hay.IndexOf("mac-10") >= 0
 		 || hay.IndexOf("uzi") >= 0 || hay.IndexOf("mp40") >= 0
 		 || hay.IndexOf("tec9") >= 0 || hay.IndexOf("sten") >= 0) return "smg";
+		// PLASMA before every generic shape word below it. id Software's own
+		// canonical weapon name is "Plasma Rifle" -- it contains "rifle", and
+		// the rifle check used to run first, so the single most standard
+		// energy weapon in the genre was coming out as an assault rifle.
+		// "plasma" is specific enough that it should win over any of the
+		// generic shape tokens (rifle, launcher, rocket...) it might
+		// legitimately co-occur with, the same reasoning as SNIPER before
+		// RIFLE below -- just generalised, since rifle isn't the only word
+		// a plasma weapon could be named alongside.
+		if (hay.IndexOf("plasma") >= 0 || hay.IndexOf("energy") >= 0
+		 || hay.IndexOf("beam") >= 0) return "plasma";
 		// MACHINEGUN before CHAINGUN. A fixed single barrel on a bipod (an
 		// MG42, a GH machinegun) is a different weapon from a rotating
 		// barrel cluster (a minigun, a Vulcan/gatling chaingun) -- neither
@@ -550,8 +561,6 @@ class RS_ForeignScanner
 		 || hay.IndexOf("dynamite") >= 0 || hay.IndexOf("molotov") >= 0
 		 || hay.IndexOf("satchel") >= 0 || hay.IndexOf("throwable") >= 0
 		 || hay.IndexOf("cocktail") >= 0) return "grenade";
-		if (hay.IndexOf("plasma") >= 0 || hay.IndexOf("energy") >= 0
-		 || hay.IndexOf("beam") >= 0)  return "plasma";
 		if (hay.IndexOf("pistol") >= 0 || hay.IndexOf("handgun") >= 0
 		 || hay.IndexOf("glock") >= 0 || hay.IndexOf("autoloader") >= 0
 		 || hay.IndexOf("9mm") >= 0 || hay.IndexOf("luger") >= 0
