@@ -25,6 +25,15 @@
 // and unique enough in practice because a weapon has one fire and one
 // reload. The pointer stays the runtime key; this is only the archive.
 //
+// Duration alone was never enough for a reload: a six-shell tube reload
+// and a one-shell top-up can be the same entry state and wildly different
+// lengths, and locking one fixed number meant every reload but the kind
+// that got observed first looked compressed or smeared. restoreUnits is
+// how much ammo the SAME locked run actually restored, saved alongside
+// the duration it took -- together they're a rate (tics per unit), so a
+// future reload can be timed to how much IT is short, not to whatever the
+// first three runs happened to be.
+//
 // THE PICK ARCHIVE. `pinned` -- a player's manual model choice -- used to
 // survive a map change (RS_ForeignModelHandler.Rescan carries it in
 // memory) but not a restart: quit and relaunch the same mod and every
@@ -49,6 +58,7 @@ class RS_ForeignPersist
 	Array<string> mKeys;    // "WeaponClass|seq"
 	Array<int>    mDur;
 	Array<int>    mBright;
+	Array<int>    mRestore; // ammo restored during the SAME run mDur was taken from; 0 = no rate
 	bool          mDirty;
 
 	static string MakeKey(string cls, string seq)
@@ -58,7 +68,7 @@ class RS_ForeignPersist
 
 	void Load()
 	{
-		mKeys.Clear(); mDur.Clear(); mBright.Clear();
+		mKeys.Clear(); mDur.Clear(); mBright.Clear(); mRestore.Clear();
 		mDirty = false;
 
 		CVar c = CVar.FindCVar("rs_fm_learned");
@@ -77,6 +87,10 @@ class RS_ForeignPersist
 			mKeys.Push(MakeKey(f[0], f[1]));
 			mDur.Push(f[2].ToInt());
 			mBright.Push(f[3].ToInt());
+			// 5th field is newer than the format's first release -- a record
+			// saved before rate-learning existed simply has none, and reads
+			// back as 0 ("no rate known"), same as if it had never applied.
+			mRestore.Push((f.Size() >= 5) ? f[4].ToInt() : 0);
 		}
 	}
 
@@ -93,7 +107,7 @@ class RS_ForeignPersist
 			mKeys[i].Split(k, "|");
 			if (k.Size() < 2) continue;
 			blob = blob .. k[0] .. ":" .. k[1] .. ":"
-			            .. mDur[i] .. ":" .. mBright[i] .. ";";
+			            .. mDur[i] .. ":" .. mBright[i] .. ":" .. mRestore[i] .. ";";
 		}
 		c.SetString(blob);
 		mDirty = false;
@@ -107,16 +121,16 @@ class RS_ForeignPersist
 		return -1;
 	}
 
-	bool Get(string cls, string seq, out int dur, out int bright) const
+	bool Get(string cls, string seq, out int dur, out int bright, out int restoreUnits) const
 	{
-		dur = 0; bright = -1;
+		dur = 0; bright = -1; restoreUnits = 0;
 		int i = Find(cls, seq);
 		if (i < 0) return false;
-		dur = mDur[i]; bright = mBright[i];
+		dur = mDur[i]; bright = mBright[i]; restoreUnits = mRestore[i];
 		return (dur > 0);
 	}
 
-	void Store(string cls, string seq, int dur, int bright)
+	void Store(string cls, string seq, int dur, int bright, int restoreUnits)
 	{
 		if (dur <= 0) return;
 		int i = Find(cls, seq);
@@ -125,12 +139,15 @@ class RS_ForeignPersist
 			mKeys.Push(MakeKey(cls, seq));
 			mDur.Push(dur);
 			mBright.Push(bright);
+			mRestore.Push(restoreUnits);
 		}
 		else
 		{
-			if (mDur[i] == dur && mBright[i] == bright) return;   // no change
-			mDur[i]    = dur;
-			mBright[i] = bright;
+			if (mDur[i] == dur && mBright[i] == bright
+			 && mRestore[i] == restoreUnits) return;   // no change
+			mDur[i]     = dur;
+			mBright[i]  = bright;
+			mRestore[i] = restoreUnits;
 		}
 		mDirty = true;
 		Save();
@@ -138,7 +155,7 @@ class RS_ForeignPersist
 
 	void Forget()
 	{
-		mKeys.Clear(); mDur.Clear(); mBright.Clear();
+		mKeys.Clear(); mDur.Clear(); mBright.Clear(); mRestore.Clear();
 		mDirty = true;
 		Save();
 	}

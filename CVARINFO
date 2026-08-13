@@ -8,7 +8,12 @@ server bool rs_foreignmodels_showall = false;  // include weapons with no slot b
 // deterministic -- this one just prefers the animation's own pacing.
 server bool rs_foreignmodels_natural = false;
 
-// Learned sequence timings, packed as class:seq:duration:brightTic;...
+// Learned sequence timings, packed as
+// class:seq:duration:brightTic:restoreUnits;... -- the last field is ammo
+// restored during the same run duration was measured on, which is what
+// lets a reload's timing scale to how much THIS reload is missing instead
+// of playing back a fixed length every time. Absent or 0 on older saves,
+// which just means that entry has no rate yet, not that it's invalid.
 // Written once per sequence when its timing locks. Clear it with the menu.
 server string rs_fm_learned = "";
 

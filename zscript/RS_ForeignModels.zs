@@ -1008,14 +1008,21 @@ class RS_ForeignModelHandler : StaticEventHandler
 		{
 			// Left idle: a sequence begins here, and THIS state identifies it
 			// for as long as the mod exists.
-			hs.entry        = cur;
-			hs.elapsed      = 0;
-			hs.sawBrightAt  = -1;
-			hs.liveSeq      = "";
-			hs.idleRun      = 0;
-			hs.ammoAtEntry  = (w.Ammo1 ? w.Ammo1.Amount : -1);
-			hs.ammo2AtEntry = (w.Ammo2 ? w.Ammo2.Amount : -1);
-			hs.ammoMark     = hs.ammoAtEntry;
+			hs.entry         = cur;
+			hs.elapsed       = 0;
+			hs.sawBrightAt   = -1;
+			hs.liveSeq       = "";
+			hs.idleRun       = 0;
+			hs.ammoAtEntry   = (w.Ammo1 ? w.Ammo1.Amount : -1);
+			hs.ammo2AtEntry  = (w.Ammo2 ? w.Ammo2.Amount : -1);
+			hs.ammoMark      = hs.ammoAtEntry;
+
+			// Cleared, not carried over. liveSeq takes a few tics to resolve,
+			// and until it does, a stale expectedUnits left over from the
+			// PREVIOUS reload (a full reload's "8", say) would rate-scale
+			// this new sequence's duration before its own amount is known --
+			// wrong for exactly the tics it takes liveSeq to catch up.
+			hs.expectedUnits = 0;
 
 			// Alt-fire held at the start is the only thing that separates an
 			// alt-fire from a primary when both leave idle identically. The
@@ -1069,7 +1076,20 @@ class RS_ForeignModelHandler : StaticEventHandler
 				int a2 = (w.Ammo2 ? w.Ammo2.Amount : -1);
 				if ((hs.ammoAtEntry  >= 0 && a1 > hs.ammoAtEntry)
 				 || (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry))
+				{
 					hs.liveSeq = "reload";
+
+					// Predict THIS run's total restore now, while it is still
+					// knowable -- capacity minus what the weapon had when the
+					// reload began. Ammo1 preferred, matching the precedence
+					// the rest of the classifier already uses; falls back to
+					// Ammo2 only when Ammo1 is the one that did not rise.
+					if (hs.ammoAtEntry >= 0 && a1 > hs.ammoAtEntry && w.Ammo1)
+						hs.expectedUnits = w.Ammo1.MaxAmount - hs.ammoAtEntry;
+					else if (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry && w.Ammo2)
+						hs.expectedUnits = w.Ammo2.MaxAmount - hs.ammo2AtEntry;
+					if (hs.expectedUnits < 1) hs.expectedUnits = 1;
+				}
 				else if ((hs.ammoAtEntry  >= 0 && a1 < hs.ammoAtEntry)
 				      || (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry))
 					hs.liveSeq = hs.altHeld ? "altfire" : "fire";
@@ -1083,10 +1103,15 @@ class RS_ForeignModelHandler : StaticEventHandler
 		string seq = "ready";
 		int D = 0;
 		int shotTic = -1;
+		int restoreUnits = 0;   // paired with D -- see rate scaling, below
 		if (hs.entry)
 		{
 			int li = FindLearned(w.GetClassName(), hs.entry);
-			if (li >= 0) { seq = mLearned[li].seq; D = mLearned[li].observedTics; shotTic = mLearned[li].brightTic; }
+			if (li >= 0)
+			{
+				seq = mLearned[li].seq; D = mLearned[li].observedTics;
+				shotTic = mLearned[li].brightTic; restoreUnits = mLearned[li].restoreUnits;
+			}
 			else
 			{
 				// UNLEARNED AND NOTHING PROVEN YET -- hold the rest pose.
@@ -1114,10 +1139,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// any pointer has been associated with anything.
 			if (li < 0 && D <= 0 && mPersist && hs.liveSeq.Length() > 0)
 			{
-				int pd, pb;
-				if (mPersist.Get(w.GetClassName(), hs.liveSeq, pd, pb))
+				int pd, pb, pr;
+				if (mPersist.Get(w.GetClassName(), hs.liveSeq, pd, pb, pr))
 				{
-					seq = hs.liveSeq; D = pd; shotTic = pb;
+					seq = hs.liveSeq; D = pd; shotTic = pb; restoreUnits = pr;
 				}
 			}
 
@@ -1128,16 +1153,43 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// whichever one it did first, forever.
 			if (hs.liveSeq.Length() > 0 && hs.liveSeq != seq)
 			{
-				seq     = hs.liveSeq;
-				D       = 0;           // learned duration was for the other sequence
-				shotTic = -1;
+				seq          = hs.liveSeq;
+				D            = 0;           // learned duration was for the other sequence
+				shotTic      = -1;
+				restoreUnits = 0;
 				int lj = FindLearned(w.GetClassName(), hs.entry);
 				if (lj >= 0 && mLearned[lj].seq == seq)
 				{
-					D       = mLearned[lj].observedTics;
-					shotTic = mLearned[lj].brightTic;
+					D            = mLearned[lj].observedTics;
+					shotTic      = mLearned[lj].brightTic;
+					restoreUnits = mLearned[lj].restoreUnits;
 				}
 			}
+
+			// RATE-SCALE A RELOAD TO HOW MUCH IT IS ACTUALLY RESTORING.
+			//
+			// D above is a duration measured on ONE past run. Locking that
+			// number for every future reload of the weapon was the original
+			// design and it is exactly what makes reload timing inconsistent:
+			// a six-shell tube reload and a one-shell top-up can share an
+			// entry state and be wildly different lengths, and only one of
+			// them can match a fixed D. The other either finishes early and
+			// holds, or overruns into the 1.15x stretch below.
+			//
+			// restoreUnits is how much ammo THAT locked run restored --
+			// paired with D, that is a rate (tics per unit). hs.expectedUnits
+			// is how much THIS run is predicted to restore, known from the
+			// moment liveSeq resolves to "reload" (see Animate(), above).
+			// D * expectedUnits / restoreUnits times the duration to how much
+			// THIS reload is actually missing, instead of to whatever the
+			// first three observed runs happened to be.
+			//
+			// restoreUnits <= 0 means no rate was ever learned for this
+			// entry -- predates rate learning, or it is not a reload at all
+			// (fire's ammo delta is a decrease) -- and D is used exactly as
+			// measured, same as before this existed.
+			if (D > 0 && restoreUnits > 0 && hs.expectedUnits > 0)
+				D = max(1, D * hs.expectedUnits / restoreUnits);
 		}
 
 		Array<int> frames; int markFire;
@@ -1193,10 +1245,14 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// finished in a fraction of the time and then FROZE, in full view,
 			// for the rest of it. That is the "off" reload.
 			//
-			// So the target stretches as the run outlives the estimate. The
-			// clip keeps moving and approaches its end without arriving,
-			// however long they take. A gun still in motion reads as
-			// reloading; a gun stopped dead reads as broken.
+			// D has already been rate-scaled to how much THIS reload is
+			// predicted to restore, above -- that is the primary fix for the
+			// six-shell-vs-one-shell case, not this. What is left here is the
+			// residual: a prediction that undershoots (ammo capacity read
+			// wrong, a top-up that keeps going further than expected) or a
+			// weapon with no rate learned yet. So the target still stretches
+			// as the run outlives the estimate, same as before rate-scaling
+			// existed -- a safety net now, not the whole mechanism.
 			double dEff = D;
 			if (hs.elapsed > D) dEff = double(hs.elapsed) * 1.15;
 
@@ -1265,12 +1321,13 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// reloads at the wrong pace.
 			if (mPersist)
 			{
-				int pd, pb;
-				if (mPersist.Get(L.clsName, L.seq, pd, pb))
+				int pd, pb, pr;
+				if (mPersist.Get(L.clsName, L.seq, pd, pb, pr))
 				{
-					L.observedTics = pd;
-					L.brightTic    = pb;
-					L.plays        = 3;   // already locked
+					L.observedTics  = pd;
+					L.brightTic     = pb;
+					L.restoreUnits  = pr;
+					L.plays         = 3;   // already locked
 				}
 			}
 
@@ -1286,6 +1343,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mLearned[li].seq          = hs.liveSeq;
 			mLearned[li].observedTics = 0;
 			mLearned[li].brightTic    = -1;
+			mLearned[li].restoreUnits = 0;
 		}
 		// REJECT RUNS THAT WERE NOT REAL.
 		//
@@ -1328,18 +1386,39 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// After LOCK_AFTER plays the animation for that sequence is fixed
 		// forever: time-matched to how that weapon actually behaves, and
 		// identical on the hundredth reload as on the fourth.
+		//
+		// PAIRED WITH A RATE, NOT JUST A NUMBER, for reloads. The locked
+		// duration alone was the entire reason "some reloads look right and
+		// others don't" -- a fixed tic count fits exactly one amount of
+		// missing ammo. What ammo THIS run actually restored, read now while
+		// it is still fresh, turns that fixed number into tics-per-unit
+		// (Animate(), above, does the multiplying). A fire/altfire run has
+		// ammo going DOWN, so restored stays 0 and the rate is skipped --
+		// exactly the old flat-duration behavior, unchanged.
+		int restored = 0;
+		int a1now = (w.Ammo1 ? w.Ammo1.Amount : -1);
+		int a2now = (w.Ammo2 ? w.Ammo2.Amount : -1);
+		if (hs.ammoAtEntry >= 0 && a1now > hs.ammoAtEntry)
+			restored = a1now - hs.ammoAtEntry;
+		else if (hs.ammo2AtEntry >= 0 && a2now > hs.ammo2AtEntry)
+			restored = a2now - hs.ammo2AtEntry;
+
 		int LOCK_AFTER = 3;
 		if (mLearned[li].plays < LOCK_AFTER)
 		{
 			if (mLearned[li].observedTics <= 0 || hs.elapsed < mLearned[li].observedTics)
+			{
 				mLearned[li].observedTics = hs.elapsed;
+				mLearned[li].restoreUnits = restored;   // paired with the run above
+			}
 		}
 		else if (mLearned[li].plays == LOCK_AFTER && mPersist)
 		{
 			// Just locked: archive it, keyed by something that survives a
 			// restart. Written once per sequence, ever.
 			mPersist.Store(mLearned[li].clsName, mLearned[li].seq,
-			               mLearned[li].observedTics, mLearned[li].brightTic);
+			               mLearned[li].observedTics, mLearned[li].brightTic,
+			               mLearned[li].restoreUnits);
 		}
 
 		if (hs.sawBrightAt >= 0) mLearned[li].brightTic = hs.sawBrightAt;

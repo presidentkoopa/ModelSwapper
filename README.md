@@ -173,9 +173,19 @@ Results and per-mod fixes will be recorded here as they land.
 
 ## Known limits
 
-**Timing is fixed, not fitted.** Clips play at their authored rate. If a weapon's reload
-runs longer than ours, the model finishes and holds — a gun that has finished reloading
-and is waiting.
+**Reload timing is rate-scaled, not just fitted.** A single locked duration used to mean
+a six-shell tube reload and a one-shell top-up — the same entry state, wildly different
+real lengths — couldn't both look right off one number; whichever kind got observed
+first is the one that matched. Reload durations now carry the ammo the locked run
+actually restored alongside the tic count, so a future reload scales that duration by how
+much *it* is missing rather than replaying a fixed length regardless.
+
+This assumes a reload's length scales with how much ammo is gone, which is true of
+shell-by-shell and magazine-top-up reloads (most of them) but not of a fixed-time
+magazine swap that takes the same duration whether one round or the whole mag was
+missing — the rare case, and the reason this is a limit and not a solved problem.
+Fire and altfire never scale this way; ammo drops there, it doesn't rise, so nothing about
+this touches them.
 
 **Eighteen of the fifty donors have no reload animation.** Knives, chainsaws, fists, the
 shorter MeatGrinder meshes: the mesh has no such frames. Bound to a weapon that reloads

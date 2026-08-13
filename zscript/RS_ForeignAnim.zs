@@ -294,6 +294,13 @@ class RS_ForeignLearned
 	int    observedTics; // <=0 until it has run once
 	int    brightTic;    // when bFullbright first appeared, -1 = never
 	int    plays;
+
+	// Ammo actually restored during the SAME run observedTics was taken
+	// from -- the pairing is what makes it a rate. <=0 means either this
+	// isn't a reload (fire's ammo delta is a decrease, not a restore) or it
+	// predates rate learning; either way, duration stays flat instead of
+	// being scaled by a ratio that was never measured.
+	int    restoreUnits;
 }
 
 // ---------------------------------------------------------------------
@@ -335,11 +342,19 @@ class RS_ForeignHand
 	// idle the same way.
 	bool altHeld;
 
+	// THIS run's predicted total restore, for scaling duration to how much
+	// is actually missing rather than to a flat number every reload shares.
+	// Set once, the tic liveSeq resolves to a reload, from ammo capacity
+	// minus what the weapon had at entry -- known early, unlike the real
+	// final ammo, which isn't known until the run is already over. <=0
+	// means no prediction was possible (no ammo type, or full already).
+	int expectedUnits;
+
 	void Reset()
 	{
 		lastCaller = null; lastState = null; predictedNext = null;
 		entry = null; lastTics = 0; elapsed = 0; sawBrightAt = -1;
 		ammoAtEntry = -1; ammo2AtEntry = -1; liveSeq = "";
-		idleRun = 0; ammoMark = -1; altHeld = false;
+		idleRun = 0; ammoMark = -1; altHeld = false; expectedUnits = 0;
 	}
 }
