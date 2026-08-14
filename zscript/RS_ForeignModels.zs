@@ -1318,9 +1318,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 	// ----- the ONE write path -----
 	//   netevent: rs-fm-cycle <row> <selector> <dir>
-	//   selector 0 = family, 1 = mainhand model, 2 = offhand model
-	// Three int args is exactly what SendNetworkEvent carries, so a row's
-	// three selectors need no packing.
+	//   selector 0 = family, 1 = model (one model, both hands)
+	// Three int args is exactly what SendNetworkEvent carries.
 	override void NetworkProcess(ConsoleEvent e)
 	{
 		// Re-run the scan without reloading the map. Pinned rows keep their
@@ -1351,14 +1350,12 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int sel = e.args[1];
 		int dir = e.args[2];
 		if (row < 0 || row >= mEntries.Size()) return;
-		// Netevent args are attacker-controlled in principle and unvalidated
-		// sel fell through to CyclePick, which treats anything != 2 as the
-		// mainhand.
-		if (sel < 0 || sel > 2) return;
+		// Netevent args are attacker-controlled in principle; validate.
+		if (sel < 0 || sel > 1) return;
 		if (dir != 1 && dir != -1) return;
 
 		if (sel == 0) CycleArchetype(row, dir);
-		else          CyclePick(row, sel, dir);
+		else          CyclePick(row, dir);
 	}
 
 	void CycleArchetype(int i, int dir)
@@ -1396,19 +1393,23 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mEntries[i].modelPick1, mEntries[i].modelPick2);
 	}
 
-	void CyclePick(int i, int hand, int dir)
+	// ONE MODEL PER WEAPON, not per hand. Whichever hand is holding it, it
+	// wears the same donor -- modelPick1 and modelPick2 are kept mirrored
+	// rather than removing the second field outright, so the persistence
+	// format (class:archetype:pick1:pick2) and ApplyHand's per-hand reads
+	// need no changes; they simply always agree now.
+	void CyclePick(int i, int dir)
 	{
 		if (i < 0 || i >= mEntries.Size()) return;
 		if (!mShelf) return;
 		int n = mShelf.Count(mEntries[i].archetype);
 		if (n <= 0) return;
 
-		int cur = (hand == 2) ? mEntries[i].modelPick2 : mEntries[i].modelPick1;
-		int v = (cur + dir) % n;
+		int v = (mEntries[i].modelPick1 + dir) % n;
 		if (v < 0) v += n;
 
-		if (hand == 2) mEntries[i].modelPick2 = v;
-		else           mEntries[i].modelPick1 = v;
+		mEntries[i].modelPick1 = v;
+		mEntries[i].modelPick2 = v;
 
 		mEntries[i].pinned = true;
 		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
@@ -1436,9 +1437,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 			int n = mShelf.Count(arch);
 			if (n <= 0) continue;   // standalone build dropped every donor for this row
 
+			int pick = random[MSRandomize](0, n - 1);
 			mEntries[i].archetype  = arch;
-			mEntries[i].modelPick1 = random[MSRandomize](0, n - 1);
-			mEntries[i].modelPick2 = random[MSRandomize](0, n - 1);
+			mEntries[i].modelPick1 = pick;
+			mEntries[i].modelPick2 = pick;   // one model per weapon, both hands
 			mEntries[i].pinned     = true;
 			SavePick(i);
 		}
