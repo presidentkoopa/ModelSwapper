@@ -293,9 +293,19 @@ class RS_ForeignHand
 	Actor lastCaller;
 	int   lastMesh;    // last mapped mesh frame; held on unmapped states
 
+	// Health telemetry: tics this hand spent on states the table resolved
+	// vs. missed, printed and reset periodically by the handler so every
+	// session's log answers "did it animate, and where are the holes"
+	// without anyone being asked anything. The last missed state's
+	// sprite/frame is kept so a hole names itself.
+	int hits, misses;
+	int missSprite, missFrame, missTics;
+
 	void Reset()
 	{
 		lastCaller = null;
 		lastMesh   = -1;
+		hits = 0; misses = 0;
+		missSprite = -1; missFrame = -1; missTics = -1;
 	}
 }

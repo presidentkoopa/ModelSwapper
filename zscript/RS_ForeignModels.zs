@@ -1051,8 +1051,57 @@ class RS_ForeignModelHandler : StaticEventHandler
 			psp.ModelFrame     = -1;
 			psp.ModelFrameNext = -1;
 			psp.ModelFrameLerp = -1;
+
+			// HEALTH TELEMETRY. Same lookup the renderer performs, against
+			// the same table, counted per tic and reported by WorldTick so
+			// the session log says whether the table covered what the
+			// weapon actually did -- and names the biggest hole when not.
+			State cur = psp.CurState;
+			if (cur != null)
+			{
+				let map = MapFor(w, mcls, frameCount, restFrame);
+				int mf, mn;
+				if (map != null && map.Lookup(cur, mf, mn))
+				{
+					hs.hits++;
+					hs.lastMesh = mf;
+				}
+				else if (cur.Tics != 0)   // 0-tic states never display; not a hole
+				{
+					hs.misses++;
+					hs.missSprite = cur.sprite;
+					hs.missFrame  = cur.Frame;
+					hs.missTics   = cur.Tics;
+				}
+			}
 		}
 		return w;
+	}
+
+	// Print and reset both hands' telemetry. Ten-second cadence: coarse
+	// enough to stay readable, fine enough that a session log shows every
+	// stretch of play.
+	void ReportHealth()
+	{
+		PlayerInfo pi = players[consolePlayer];
+		for (int hand = 0; hand < 2; ++hand)
+		{
+			RS_ForeignHand hs = (hand == 1) ? mHandOff : mHandMain;
+			if (hs == null || (hs.hits == 0 && hs.misses == 0)) continue;
+
+			Weapon w = (hand == 1) ? pi.OffhandWeapon : pi.ReadyWeapon;
+			string wn = w ? "" .. w.GetClassName() : "?";
+			int total = hs.hits + hs.misses;
+			if (hs.misses > 0)
+				Console.Printf("[RSRM] health %s %s: %d/%d tics mapped -- top hole spr=%d fr=%d tics=%d",
+					hand == 1 ? "offhand" : "mainhand", wn, hs.hits, total,
+					hs.missSprite, hs.missFrame, hs.missTics);
+			else
+				Console.Printf("[RSRM] health %s %s: %d/%d tics mapped",
+					hand == 1 ? "offhand" : "mainhand", wn, hs.hits, total);
+			hs.hits = 0; hs.misses = 0;
+			hs.missSprite = -1; hs.missFrame = -1; hs.missTics = -1;
+		}
 	}
 
 	override void WorldTick()
@@ -1103,6 +1152,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mLastOff = null;
 
 		mBound = (mLastMain != null || mLastOff != null);
+
+		// Every ten seconds, say how the table did. See ReportHealth.
+		if (mBound && level.maptime > 0 && level.maptime % 350 == 0)
+			ReportHealth();
 
 		// REFRESH THE SLOT FLAGS, LATE.
 		//
