@@ -1119,6 +1119,23 @@ class RS_ForeignModelHandler : StaticEventHandler
 		}
 	}
 
+	// Is `to` on `parked`'s natural path? Natural progression -- including
+	// Goto loops, which the state table encodes as NextState -- is a walk;
+	// a button-initiated jump is not on it. Bounded: a parked ready-ish
+	// state reaches its successors within a few hops or not at all.
+	static bool ReachableFrom(State parked, State to, int cap)
+	{
+		State s = parked;
+		for (int i = 0; i <= cap && s != null; ++i)
+		{
+			if (s == to) return true;
+			State nxt = s.NextState;
+			if (nxt == s) return false;   // self-loop (Ready's Loop) ends the walk
+			s = nxt;
+		}
+		return false;
+	}
+
 	// -----------------------------------------------------------------
 	// THE ANIMATION. Watch their sequence, learn its real length, replay
 	// ours across it.
@@ -1179,6 +1196,43 @@ class RS_ForeignModelHandler : StaticEventHandler
 				Commit(hs, w);
 				hs.entry = null;
 			}
+		}
+
+		// A JUMP OUT OF GLUE IS A NEW ACTION, and the glue must not eat it.
+		//
+		// The glue exists to bridge idle blips INSIDE one action. But any
+		// button pressed within the glue window landed in the same bridge:
+		// fire, then reload half a second later, and the reload ran as a
+		// continuation of the dead fire sequence -- its animation never
+		// selected, the model parked on the fire clip's last frame. Hence
+		// "I have to wait a beat and press deliberately or nothing plays":
+		// waiting let the glue expire; fight-paced input never did. Running
+		// dry made it a certainty, because an empty-mag reload is always
+		// pressed tics after the shot that emptied it.
+		//
+		// The state table itself is the tell. Natural progression --
+		// including Goto loops, which are encoded as NextState -- walks
+		// forward from the parked state. A button-initiated action is a
+		// JUMP the table does not predict: the engine sets the psprite to
+		// the Fire/Reload/Zoom label directly. So on the tic the weapon
+		// leaves idle-glue, walk the parked state's NextState chain; if the
+		// current state is not on it, something redirected the weapon --
+		// that is a boundary, on exactly the tic it happened. The old
+		// sequence commits, and the fresh one lands on its own (usually
+		// already-learned) entry, so the right clip plays from tic one.
+		//
+		// Runtime A_Jump* side-effects are also invisible to NextState, but
+		// they cannot false-positive here: this test only runs on the
+		// glue-exit tic, and a state parked in glue is parked precisely
+		// because it is calling A_WeaponReady and waiting -- the jumps such
+		// states take are button-driven by design. (BD's fire-to-cancel
+		// mid-reload is a jump AND a genuinely new action: ending the
+		// sequence there is correct, not collateral.)
+		if (hs.entry && !idle && hs.idleRun > 0 && cur != null && hs.lastState != null
+		 && !ReachableFrom(hs.lastState, cur, 24))
+		{
+			Commit(hs, w);
+			hs.entry = null;
 		}
 
 		if (psp.Caller != hs.lastCaller)
