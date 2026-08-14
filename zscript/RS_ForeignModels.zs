@@ -903,6 +903,11 @@ class RS_ForeignModelHandler : StaticEventHandler
 	RS_ForeignHand  mHandOff;
 	Array<RS_ForeignLearned> mLearned;
 
+	// Plays before a sequence's timing locks. Shared by Commit (which
+	// counts against it) and Animate (which must not trust a rate that
+	// has not survived it -- see the rate block there).
+	const LOCK_AFTER = 3;
+
 	static bool Enabled()
 	{
 		CVar c = CVar.FindCVar("rs_foreignmodels");
@@ -1305,6 +1310,18 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int D = 0;
 		int shotTic = -1;
 		int restoreUnits = 0;   // paired with D -- see rate scaling, below
+
+		// The rate is EVIDENCE-GATED, and the gate runs at lock -- so a
+		// rate read off an entry that has not locked yet is an unproven
+		// guess, and applying it was the bug that looked like "it has to
+		// learn every fill level separately": play 1 records duration and
+		// restored-amount, plays 2 and 3 scaled by that ratio before the
+		// gate ever ran, so a fixed-length mag swap at any OTHER fill got
+		// stretched or crushed by a correlation nobody had checked.
+		// Trust the rate only from a locked entry (the gate has run) or
+		// from the archive (only ever written at lock).
+		bool rateTrusted = false;
+
 		if (hs.entry)
 		{
 			int li = FindLearned(w.GetClassName(), hs.entry);
@@ -1312,6 +1329,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			{
 				seq = mLearned[li].seq; D = mLearned[li].observedTics;
 				shotTic = mLearned[li].brightTic; restoreUnits = mLearned[li].restoreUnits;
+				rateTrusted = (mLearned[li].plays >= LOCK_AFTER);
 			}
 			else
 			{
@@ -1344,6 +1362,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 				if (mPersist.Get(w.GetClassName(), hs.liveSeq, pd, pb, pr))
 				{
 					seq = hs.liveSeq; D = pd; shotTic = pb; restoreUnits = pr;
+					rateTrusted = true;   // archive rows are written at lock, post-gate
 				}
 			}
 
@@ -1358,12 +1377,14 @@ class RS_ForeignModelHandler : StaticEventHandler
 				D            = 0;           // learned duration was for the other sequence
 				shotTic      = -1;
 				restoreUnits = 0;
+				rateTrusted  = false;
 				int lj = FindLearned(w.GetClassName(), hs.entry);
 				if (lj >= 0 && mLearned[lj].seq == seq)
 				{
 					D            = mLearned[lj].observedTics;
 					shotTic      = mLearned[lj].brightTic;
 					restoreUnits = mLearned[lj].restoreUnits;
+					rateTrusted  = (mLearned[lj].plays >= LOCK_AFTER);
 				}
 			}
 
@@ -1389,7 +1410,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// entry -- predates rate learning, or it is not a reload at all
 			// (fire's ammo delta is a decrease) -- and D is used exactly as
 			// measured, same as before this existed.
-			if (D > 0 && restoreUnits > 0 && hs.expectedUnits > 0)
+			if (D > 0 && rateTrusted && restoreUnits > 0 && hs.expectedUnits > 0)
 				D = max(1, D * hs.expectedUnits / restoreUnits);
 		}
 
@@ -1602,7 +1623,6 @@ class RS_ForeignModelHandler : StaticEventHandler
 		else if (hs.ammo2AtEntry >= 0 && a2now > hs.ammo2AtEntry)
 			restored = a2now - hs.ammo2AtEntry;
 
-		int LOCK_AFTER = 3;
 		if (mLearned[li].plays < LOCK_AFTER)
 		{
 			if (mLearned[li].observedTics <= 0 || hs.elapsed < mLearned[li].observedTics)
@@ -1648,8 +1668,18 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// entry keeps the flat duration it would have had before rate
 			// learning existed, permanently, same as a weapon whose ammo
 			// never went up at all.
+			// The direction check alone was too easy to pass: durations are
+			// measured with a tic or two of jitter (glue timing, branch
+			// differences inside the mod's own reload), so two runs that
+			// restored different amounts and happened to differ by ONE tic
+			// read as correlation. Demand a difference that noise can't
+			// fake: at least 4 tics AND at least a fifth of the shorter
+			// run. A real per-shell reload clears both bars trivially; a
+			// mag swap's jitter clears neither.
+			int td = mLearned[li].maxRestoreTics - mLearned[li].minRestoreTics;
 			bool scales = (mLearned[li].maxRestore - mLearned[li].minRestore >= 2)
-			           && (mLearned[li].maxRestoreTics > mLearned[li].minRestoreTics);
+			           && (td >= 4)
+			           && (td * 5 >= mLearned[li].minRestoreTics);
 			if (!scales) mLearned[li].restoreUnits = 0;
 
 			// Just locked: archive it, keyed by something that survives a
