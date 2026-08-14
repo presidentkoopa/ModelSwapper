@@ -84,10 +84,14 @@ class RS_Menu_ForeignModels : OptionMenu
 			{
 				if (h.EntryUnsure(i) != wantUnsure) continue;
 
-				// Bound to one of the player's weapon slots by whatever mod is
-				// loaded. Nothing else is: the Heretic, Hexen, Strife and Chex
-				// arsenals the engine compiles in are bound to no slot at all.
-				if (!showAll && !h.EntryLocated(i)) continue;
+				// A row earns its place by EITHER signal. located = bound to
+				// one of the player's weapon slots (the Heretic/Hexen/Strife/
+				// Chex arsenals the engine compiles in never are). modDefined
+				// = the class was read out of a sideloaded archive's own
+				// DECORATE/ZSCRIPT text -- which rescues Golden Souls-style
+				// mods whose slots live on a player class that never spawns,
+				// the case that makes located alone return an empty menu.
+				if (!showAll && !h.EntryLocated(i) && !h.EntryModDefined(i)) continue;
 
 				desc.mItems.Push(new("OptionMenuItemRS_ForeignRow").InitRow(i));
 				shown++;
@@ -272,7 +276,7 @@ class RS_Menu_ForeignReport : OptionMenu
 		int listed = 0, unsure = 0, pinned = 0;
 		for (int i = 0; i < n; ++i)
 		{
-			if (!showAll && !h.EntryLocated(i)) continue;
+			if (!showAll && !h.EntryLocated(i) && !h.EntryModDefined(i)) continue;
 			listed++;
 			if (h.EntryUnsure(i)) unsure++;
 			if (h.EntryPinned(i)) pinned++;
@@ -288,7 +292,7 @@ class RS_Menu_ForeignReport : OptionMenu
 
 		for (int i = 0; i < n; ++i)
 		{
-			if (!showAll && !h.EntryLocated(i)) continue;
+			if (!showAll && !h.EntryLocated(i) && !h.EntryModDefined(i)) continue;
 
 			string src;
 			if (h.EntryPinned(i))       src = "\c[Green]yours\c-";
@@ -298,6 +302,12 @@ class RS_Menu_ForeignReport : OptionMenu
 			string slot = (h.EntrySlot(i) >= 0)
 				? String.Format("slot %d", h.EntrySlot(i))
 				: "no slot";
+
+			// Provenance, when the harvest found it: which archive's own
+			// text defined this class. The one line that answers "why is
+			// this weapon in my list".
+			string origin = h.EntryContainer(i);
+			if (origin.Length() > 0) slot = slot .. ", " .. origin;
 
 			desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
 				String.Format("%s  \c[DarkGray](%s)\c-", h.EntryName(i), slot), Font.CR_WHITE));

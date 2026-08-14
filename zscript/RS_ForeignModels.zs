@@ -44,6 +44,10 @@ class RS_ForeignEntry
 	string archetype;     // guessed archetype (our vocabulary)
 	bool   guessedBySlot; // true = name/ammo told us nothing
 	bool   located;       // player has a slot binding for it (see Scan)
+	bool   modDefined;    // class name found in a sideloaded archive's own
+	                      // DECORATE/ZSCRIPT text (see HarvestModClasses) --
+	                      // false for everything the engine compiles in
+	string srcContainer;  // archive that defined it, when modDefined
 	int    modelPick1;    // MAINHAND  model: index into the archetype's shelf
 	int    modelPick2;    // OFFHAND   model: independent pick, same shelf
 	bool   pinned;        // player chose this; don't re-guess
@@ -645,9 +649,144 @@ class RS_ForeignScanner
 	}
 
 	// -----------------------------------------------------------------
+	// WHICH ARCHIVE DEFINED A CLASS. The engine cannot be asked -- it
+	// knows, but exports nothing -- so the only route is reading the same
+	// text it compiled: every sideloaded archive's root DECORATE/ZSCRIPT
+	// lump and the include tree under it, harvesting declared class names.
+	//
+	// Container 0 is the engine's own resource archive, and every stock
+	// arsenal -- Doom, Heretic, Hexen, Strife, Chex -- compiles from ITS
+	// root zscript. Skipping it is the entire filter: no game names, no
+	// IWAD lists, nothing to maintain. (game_support.pk3 only carries
+	// filter/-scoped scripts, which are not root-level lumps, so the
+	// root-only rule below skips those on its own.)
+	//
+	// THE API TRAP, learned the hard way: GetContainerName takes a
+	// CONTAINER INDEX. Feeding it a lump number silently returns wrong
+	// names and made this filter pass everything. The correct chain is
+	// GetContainerName(GetLumpContainer(lump)).
+	//
+	// This is INFORMATION for the menu, never a scan gate. If every part
+	// of it fails, modDefined is simply false everywhere and the menu
+	// falls back to the slot-binding filter -- the models cannot be taken
+	// down by a parsing bug here. That rule is load-bearing; see Scan().
+	// -----------------------------------------------------------------
+	static void HarvestModClasses(out Array<string> outNames, out Array<string> outFrom)
+	{
+		outNames.Clear();
+		outFrom.Clear();
+
+		Array<int> visited;
+		int n = Wads.GetNumLumps();
+		for (int i = 0; i < n; ++i)
+		{
+			if (Wads.GetLumpContainer(i) == 0) continue;   // the engine itself
+
+			// Roots live at archive top level: "DECORATE", "decorate.txt",
+			// "zscript.zsc", "ZSCRIPT" -- any extension, no directory.
+			string fn = Wads.GetLumpFullName(i);
+			fn = fn.MakeLower();
+			if (fn.IndexOf("/") >= 0) continue;
+			int dp = fn.IndexOf(".");
+			string stem = (dp >= 0) ? fn.Left(dp) : fn;
+			if (stem != "decorate" && stem != "zscript") continue;
+
+			string from = Wads.GetContainerName(Wads.GetLumpContainer(i));
+			ParseLump(i, from, outNames, outFrom, visited, 0);
+		}
+	}
+
+	// One lump: harvest "class X" / "actor X" declarations, recurse into
+	// #include lines. Text-level, deliberately dumb -- it only has to agree
+	// with the compiler about NAMES, not semantics.
+	static void ParseLump(int lump, string from,
+	                      in out Array<string> outNames, in out Array<string> outFrom,
+	                      in out Array<int> visited, int depth)
+	{
+		if (depth > 8) return;                 // include cycles / silly nesting
+		if (visited.Size() > 500) return;      // runaway safety
+		for (int i = 0; i < visited.Size(); ++i)
+			if (visited[i] == lump) return;
+		visited.Push(lump);
+
+		string text = Wads.ReadLump(lump);
+		Array<string> lines;
+		text.Split(lines, "\n");
+
+		for (int i = 0; i < lines.Size(); ++i)
+		{
+			string ln = lines[i];
+			int cm = ln.IndexOf("//");
+			if (cm >= 0) ln = ln.Left(cm);
+			string low = ln.MakeLower();
+
+			// #include -- and DECORATE includes are often UNQUOTED
+			// ("#Include Actors/Weapons/Crowbar.txt", Ashes does exactly
+			// this), so both forms have to parse.
+			int inc = low.IndexOf("#include");
+			if (inc >= 0)
+			{
+				int p = inc + 8;
+				while (p < ln.Length() && (ln.ByteAt(p) == 32 || ln.ByteAt(p) == 9)) p++;
+				string path = "";
+				if (p < ln.Length() && ln.ByteAt(p) == 34)   // opening quote
+				{
+					int q2 = ln.IndexOf("\"", p + 1);
+					if (q2 > p) path = ln.Mid(p + 1, q2 - p - 1);
+				}
+				else
+				{
+					int s0 = p;
+					while (p < ln.Length() && ln.ByteAt(p) > 32) p++;
+					path = ln.Mid(s0, p - s0);
+				}
+				if (path.Length() > 0)
+				{
+					int il = Wads.CheckNumForFullName(path);
+					if (il < 0) { string lp = path.MakeLower(); il = Wads.CheckNumForFullName(lp); }
+					if (il >= 0) ParseLump(il, from, outNames, outFrom, visited, depth + 1);
+				}
+				continue;
+			}
+
+			// Declarations only: the FIRST token on the line must be the
+			// keyword. That skips "extend class" (defines nothing new) and
+			// incidental uses of the words mid-line.
+			int p = 0;
+			while (p < low.Length() && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
+			bool isDecl = false;
+			if (low.Mid(p, 6) == "class " || low.Mid(p, 6) == "class\t") { p += 6; isDecl = true; }
+			else if (low.Mid(p, 6) == "actor " || low.Mid(p, 6) == "actor\t") { p += 6; isDecl = true; }
+			if (!isDecl) continue;
+
+			while (p < low.Length() && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
+			int s0 = p;
+			while (p < low.Length())
+			{
+				int ch = low.ByteAt(p);
+				bool idc = (ch >= 97 && ch <= 122) || (ch >= 48 && ch <= 57) || ch == 95;
+				if (!idc) break;
+				p++;
+			}
+			if (p > s0)
+			{
+				outNames.Push(low.Mid(s0, p - s0));
+				outFrom.Push(from);
+			}
+		}
+	}
+
+	// -----------------------------------------------------------------
 	static void Scan(in out Array<RS_ForeignEntry> outList)
 	{
 		outList.Clear();
+
+		// Once per scan, not per class. See HarvestModClasses for why a
+		// total failure here is safe: modDefined false everywhere degrades
+		// to exactly the pre-harvest menu behavior.
+		Array<string> harvestNames, harvestFrom;
+		HarvestModClasses(harvestNames, harvestFrom);
+
 		int n = AllActorClasses.Size();
 		for (int i = 0; i < n; ++i)
 		{
@@ -702,6 +841,23 @@ class RS_ForeignScanner
 			// rows and sorts them last. (Ashes is unaffected either way -- it
 			// puts weapon.slotnumber on each weapon.)
 			e.located = located;
+
+			// Same rule for provenance: information, filled here, filtered in
+			// the MENU. The union of located and modDefined is what the menu
+			// shows by default -- located alone missed Golden Souls entirely
+			// (see above), modDefined alone would go dark if the harvest hit
+			// a packaging it can't parse. Either signal earns a row.
+			e.modDefined   = false;
+			e.srcContainer = "";
+			for (int hj = 0; hj < harvestNames.Size(); ++hj)
+			{
+				if (harvestNames[hj] == lcn)
+				{
+					e.modDefined   = true;
+					e.srcContainer = harvestFrom[hj];
+					break;
+				}
+			}
 
 			string ammo1 = "", ammo2 = "";
 			if (def.AmmoType1 != null) ammo1 = "" .. def.AmmoType1.GetClassName();
@@ -1608,6 +1764,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 	bool   EntryUnsure(int i) const    { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].guessedBySlot : false; }
 	bool   EntryPinned(int i) const    { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].pinned : false; }
 	bool   EntryLocated(int i) const   { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].located : false; }
+	bool   EntryModDefined(int i) const { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].modDefined : false; }
+	string EntryContainer(int i) const { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].srcContainer : ""; }
 	int    EntrySlot(int i) const      { return (i >= 0 && i < mEntries.Size()) ? mEntries[i].slot : -1; }
 
 	// hand: 1 = mainhand (Model_1), 2 = offhand (Model_2)

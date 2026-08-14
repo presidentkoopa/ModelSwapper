@@ -50,7 +50,9 @@ OptionMenu "RSFM_Main"
     StaticText " "
 
     Option "List Unbound Weapons", "rs_foreignmodels_showall", "OnOff"
-    StaticText "Turn on if the weapon list comes up empty.", "DarkGray"
+    StaticText "Shows every weapon class the engine compiled -- including the", "DarkGray"
+    StaticText "Heretic/Hexen/Strife/Chex arsenals it always carries. Normally", "DarkGray"
+    StaticText "the list is just the loaded mod's own weapons.", "DarkGray"
     StaticText " "
 
     Submenu "Ballistics", "RSFM_Ballistic"

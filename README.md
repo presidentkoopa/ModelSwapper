@@ -132,12 +132,27 @@ Rows the classifier had to guess from slot alone are marked `?` and sorted to th
 ### Which weapons are listed
 
 The scan sees every class the engine compiled, because that is what binds models and it
-must not be narrowed. The **menu** then shows only weapons bound to one of the player's
-weapon slots — which the loaded mod put there, and which the Heretic, Hexen, Strife and
-Chex arsenals are not.
+must not be narrowed. The **menu** then shows a row if *either* of two signals earns it:
 
-That filter is in the menu on purpose. Filtering inside the scan means a broken filter
-takes your models down with it.
+- **Slot binding** — the weapon is bound to one of the player's weapon slots, which the
+  loaded mod put there and the engine-compiled Heretic/Hexen/Strife/Chex arsenals never
+  are.
+- **Provenance** — the class name was read out of a sideloaded archive's own
+  `DECORATE`/`ZSCRIPT` text. The engine can't be asked which archive defined a class, so
+  the scanner reads the same text the engine compiled: every container's root
+  script lump and its `#include` tree (quoted and unquoted forms both — Ashes includes
+  without quotes), skipping container 0, which is the engine itself and the home of
+  every stock arsenal. No game names, no IWAD lists, nothing to maintain.
+
+Either alone has a known failure. Slot binding misses Golden Souls entirely (its slots
+live on a player class that never spawns under RS_Main — the menu came up empty).
+Provenance goes dark on packaging the text parser can't read. The union covers both, and
+if the harvest fails completely the menu degrades to exactly the old slot-binding
+behavior — never to empty-while-models-work.
+
+Both filters live in the menu on purpose. Filtering inside the scan means a broken
+filter takes your models down with it. The scan report also names the archive each
+listed weapon came from.
 
 ---
 
