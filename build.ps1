@@ -9,7 +9,11 @@ Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $root = $PSScriptRoot
-$out  = Join-Path $root 'ModelSwapper.pk3'
+# REMAP build: deliberately NOT named ModelSwapper.pk3. Two identically
+# named pk3s in two folders is how a test session silently loads the wrong
+# engine and produces results that test nothing. The name in the load order
+# is the proof of which build ran.
+$out  = Join-Path $root 'ModelSwapper-REMAP.pk3'
 
 # Everything that belongs in the pk3. Anything else in the repo (README, this
 # script, .git) stays out.
