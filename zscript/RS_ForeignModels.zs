@@ -895,18 +895,13 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 	RS_ForeignShelf mShelf;   // built once at world-load
 	RS_ForeignClip  mClips;   // our animation clips, per donor
-	RS_ForeignPersist mPersist; // learned timings that survive a restart
 	RS_ForeignPickPersist mPicks; // player's model choices, keyed by class -- de facto per-mod profiles
 
-	// Live per-hand animation state, and what watching has taught us.
+	// Per-hand display state. Two fields now: the remap engine reads the
+	// weapon's own state machine every tic, so there is nothing to track
+	// between tics beyond who we're painting and where we parked.
 	RS_ForeignHand  mHandMain;
 	RS_ForeignHand  mHandOff;
-	Array<RS_ForeignLearned> mLearned;
-
-	// Plays before a sequence's timing locks. Shared by Commit (which
-	// counts against it) and Animate (which must not trust a rate that
-	// has not survived it -- see the rate block there).
-	const LOCK_AFTER = 3;
 
 	static bool Enabled()
 	{
@@ -947,7 +942,6 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mClips = new("RS_ForeignClip");
 			mClips.Build();
 		}
-		if (!mPersist) { mPersist = new("RS_ForeignPersist"); mPersist.Load(); }
 		if (!mPicks)   { mPicks   = new("RS_ForeignPickPersist"); mPicks.Load(); }
 		if (!mHandMain) mHandMain = new("RS_ForeignHand");
 		if (!mHandOff)  mHandOff  = new("RS_ForeignHand");
@@ -1119,662 +1113,72 @@ class RS_ForeignModelHandler : StaticEventHandler
 		}
 	}
 
-	// Is `to` on `parked`'s natural path? Natural progression -- including
-	// Goto loops, which the state table encodes as NextState -- is a walk;
-	// a button-initiated jump is not on it. Bounded: a parked ready-ish
-	// state reaches its successors within a few hops or not at all.
-	static bool ReachableFrom(State parked, State to, int cap)
+	// -----------------------------------------------------------------
+	// THE ANIMATION, remap edition. Their state machine is the clock:
+	// psp.CurState -> one table lookup -> mesh frame. The table is built
+	// once per (weapon class, donor) by walking their labeled sequences
+	// (see RS_ForeignRemap). Nothing here learns, predicts, glues, or
+	// times -- the machinery that used to (boundary detection, duration
+	// learning, ammo rates, evidence gates, timing persistence) is gone,
+	// and every bug it hosted went with it.
+	// -----------------------------------------------------------------
+	Array<RS_ForeignRemap> mMaps;   // per (class, donor); session-lifetime
+
+	RS_ForeignRemap MapFor(Weapon w, string donor, int frameCount, int restFrame)
 	{
-		State s = parked;
-		for (int i = 0; i <= cap && s != null; ++i)
-		{
-			if (s == to) return true;
-			State nxt = s.NextState;
-			if (nxt == s) return false;   // self-loop (Ready's Loop) ends the walk
-			s = nxt;
-		}
-		return false;
+		string cn = w.GetClassName();
+		for (int i = 0; i < mMaps.Size(); ++i)
+			if (mMaps[i].clsName == cn && mMaps[i].donor == donor) return mMaps[i];
+
+		let m = RS_ForeignRemap.Build((class<Weapon>)(w.GetClass()), donor,
+		                              mClips, frameCount, restFrame);
+		mMaps.Push(m);
+		return m;
 	}
 
-	// -----------------------------------------------------------------
-	// THE ANIMATION. Watch their sequence, learn its real length, replay
-	// ours across it.
-	// -----------------------------------------------------------------
 	void Animate(RS_ForeignHand hs, PlayerInfo pi, Weapon w, PSprite psp, string donor,
 	             int restFrame, int frameCount, int readyMask)
 	{
-		State cur = psp.CurState;
-
-		// A SEQUENCE IS "LEFT IDLE UNTIL BACK TO IDLE" -- not the gap between
-		// two state changes.
-		//
-		// Treating every unpredicted state change as a boundary looks right
-		// and is badly wrong on real mods. Ashes' revolver reload runs through
-		// 0-tic conditional jumps, so a single 68-tic reload shattered into a
-		// dozen 2-tic "sequences", each learned separately, each restarting
-		// the clip. The reload happened; the cylinder never swung out, because
-		// the clip never got past its first two frames before being reset.
-		//
-		// WF_WEAPONREADY is the exact signal. A_WeaponReady SETS it, and the
-		// engine clears it every tick before psprite processing -- so it is
-		// true exactly while the weapon is idle, in any mod, because calling
-		// A_WeaponReady is what makes a weapon usable at all. No naming, no
-		// state walking, no assumptions about how their reload is written.
-		bool idle = (pi.WeaponState & readyMask) != 0;
-
-		// A RELOAD PROVING ITSELF THROUGH A STALE FIRE SEQUENCE.
-		//
-		// The gap glue below exists to bridge SHORT idle blips inside ONE
-		// continuing action -- but on its own it cannot tell "still the
-		// same action" apart from "a different action started right after
-		// this one, close enough in time to land inside the glue window."
-		// A voluntary reload pressed within a few tics of the last shot is
-		// exactly that: hs.entry is still the FIRE sequence's, un-reset (it
-		// only resets when hs.entry is already null), so the reload runs
-		// entirely under a stale liveSeq=="fire" -- elapsed and ammoAtEntry
-		// both still belong to the shot that already happened. The model
-		// sits wherever the fire clip's last frame was while the mod's own
-		// reload timer and sound run underneath it, which is indistinguishable
-		// from no animation at all. Reloading from empty dodges this only by
-		// accident: there is naturally more than a glue window's worth of
-		// pause between running dry and pressing reload.
-		//
-		// Ammo direction is the tell, and it needs no state-walking to read.
-		// A continuing fire session can only hold ammoAtEntry's baseline or
-		// fall further below it -- every shot is a decrement, and
-		// ammoAtEntry is fixed at whatever the count was BEFORE the first
-		// shot of the session, refires included. Ammo rising back above
-		// that baseline is proof a reload started, on whatever tic that
-		// happens to be, glue window or not.
-		if (hs.entry && (hs.liveSeq == "fire" || hs.liveSeq == "altfire"))
-		{
-			int a1n = (w.Ammo1 ? w.Ammo1.Amount : -1);
-			int a2n = (w.Ammo2 ? w.Ammo2.Amount : -1);
-			if ((hs.ammoAtEntry  >= 0 && a1n > hs.ammoAtEntry)
-			 || (hs.ammo2AtEntry >= 0 && a2n > hs.ammo2AtEntry))
-			{
-				Commit(hs, w);
-				hs.entry = null;
-			}
-		}
-
-		// A JUMP OUT OF GLUE IS A NEW ACTION, and the glue must not eat it.
-		//
-		// The glue exists to bridge idle blips INSIDE one action. But any
-		// button pressed within the glue window landed in the same bridge:
-		// fire, then reload half a second later, and the reload ran as a
-		// continuation of the dead fire sequence -- its animation never
-		// selected, the model parked on the fire clip's last frame. Hence
-		// "I have to wait a beat and press deliberately or nothing plays":
-		// waiting let the glue expire; fight-paced input never did. Running
-		// dry made it a certainty, because an empty-mag reload is always
-		// pressed tics after the shot that emptied it.
-		//
-		// The state table itself is the tell. Natural progression --
-		// including Goto loops, which are encoded as NextState -- walks
-		// forward from the parked state. A button-initiated action is a
-		// JUMP the table does not predict: the engine sets the psprite to
-		// the Fire/Reload/Zoom label directly. So on the tic the weapon
-		// leaves idle-glue, walk the parked state's NextState chain; if the
-		// current state is not on it, something redirected the weapon --
-		// that is a boundary, on exactly the tic it happened. The old
-		// sequence commits, and the fresh one lands on its own (usually
-		// already-learned) entry, so the right clip plays from tic one.
-		//
-		// Runtime A_Jump* side-effects are also invisible to NextState, but
-		// they cannot false-positive here: this test only runs on the
-		// glue-exit tic, and a state parked in glue is parked precisely
-		// because it is calling A_WeaponReady and waiting -- the jumps such
-		// states take are button-driven by design. (BD's fire-to-cancel
-		// mid-reload is a jump AND a genuinely new action: ending the
-		// sequence there is correct, not collateral.)
-		if (hs.entry && !idle && hs.idleRun > 0 && cur != null && hs.lastState != null
-		 && !ReachableFrom(hs.lastState, cur, 24))
-		{
-			Commit(hs, w);
-			hs.entry = null;
-		}
-
 		if (psp.Caller != hs.lastCaller)
 		{
-			// Different weapon entirely; whatever was running is not ours.
 			hs.Reset();
 			hs.lastCaller = psp.Caller;
 		}
-		else if (idle && hs.entry)
+
+		State cur = psp.CurState;
+		let map = MapFor(w, donor, frameCount, restFrame);
+
+		int mf, mn;
+		if (cur != null && map != null && map.Lookup(cur, mf, mn))
 		{
-			// GAP GLUE -- do not end a sequence on the first idle tic.
-			//
-			// Brutal Doom's shotgun calls A_WeaponReady for five tics inside
-			// EVERY shell insertion. Treating that as the end meant an
-			// eight-shell reload was eight sequences: the model replayed the
-			// first fifth of the reload clip eight times and snapped back to
-			// rest between each. Trailblazer's ChromeJustice does it ten
-			// times. A brief idle gap is part of the action, not the end of
-			// it.
-			//
-			// The cost is that a real return to idle is noticed six tics
-			// late, so the ready pose starts a fifth of a second after the
-			// action finishes. Invisible next to an eightfold stutter.
-			hs.idleRun++;
-			hs.elapsed++;
-			if (hs.idleRun >= 6)
-			{
-				Commit(hs, w);
-				hs.entry = null;
-			}
-		}
-		else if (!idle && !hs.entry)
-		{
-			// Left idle: a sequence begins here, and THIS state identifies it
-			// for as long as the mod exists.
-			hs.entry         = cur;
-			hs.elapsed       = 0;
-			hs.sawBrightAt   = -1;
-			hs.liveSeq       = "";
-			hs.idleRun       = 0;
-			hs.ammoAtEntry   = (w.Ammo1 ? w.Ammo1.Amount : -1);
-			hs.ammo2AtEntry  = (w.Ammo2 ? w.Ammo2.Amount : -1);
-			hs.ammoMark      = hs.ammoAtEntry;
+			// Intra-state progress off the psprite's own countdown -- Tics
+			// counts down from the state's duration, so this is exact and
+			// free, and multi-tic states glide instead of stepping.
+			double prog = 0;
+			int d = cur.Tics;
+			if (d > 1 && psp.Tics > 0 && psp.Tics <= d)
+				prog = double(d - psp.Tics) / double(d);
 
-			// Cleared, not carried over. liveSeq takes a few tics to resolve,
-			// and until it does, a stale expectedUnits left over from the
-			// PREVIOUS reload (a full reload's "8", say) would rate-scale
-			// this new sequence's duration before its own amount is known --
-			// wrong for exactly the tics it takes liveSeq to catch up.
-			hs.expectedUnits = 0;
-
-			// Alt-fire held at the start is the only thing that separates an
-			// alt-fire from a primary when both leave idle identically. The
-			// clip table already carries eleven altfire rows that nothing
-			// could reach until now.
-			hs.altHeld = (pi.cmd.buttons & BT_ALTATTACK) != 0;
-		}
-		else if (!idle && hs.entry)
-		{
-			hs.idleRun = 0;   // still going; any glue accrued was a gap
-		}
-
-		if (hs.entry && !idle)
-		{
-			hs.elapsed++;
-			if (cur && cur.bFullbright && hs.sawBrightAt < 0) hs.sawBrightAt = hs.elapsed;
-
-			// RE-TRIGGER, DO NOT SMEAR.
-			//
-			// Held fire never returns to idle: A_Refire and its hand-rolled
-			// equivalents keep one sequence running for as long as the trigger
-			// is down. Stretching one clip across that ran an eight-frame
-			// recoil over five seconds -- the chaingun kicking in visible slow
-			// motion, once, while the real weapon cycled ten times a second.
-			//
-			// A fresh ammo decrement is a fresh shot. Restart the clip on it
-			// and held fire becomes a repeating cycle at the mod's own
-			// cadence, which is what it looks like.
-			int nowAmmo = (w.Ammo1 ? w.Ammo1.Amount : -1);
-			if (hs.liveSeq == "fire" && nowAmmo >= 0 && hs.ammoMark >= 0
-			 && nowAmmo < hs.ammoMark && hs.elapsed > 2)
-			{
-				hs.elapsed     = 1;
-				hs.sawBrightAt = -1;
-			}
-			if (nowAmmo >= 0) hs.ammoMark = nowAmmo;
-
-			// SETTLE THE SEQUENCE WHILE IT IS STILL RUNNING.
-			//
-			// The prior used to be read only at the END, which meant the very
-			// FIRST reload of every weapon played the fire animation -- there
-			// was nothing learned yet, so it fell back to a guess, and by the
-			// time we knew better the reload was over.
-			//
-			// Ammo rising is a reload no matter what the sequence is called,
-			// and it is observable the tic it happens. Reading it live means
-			// the first reload looks right too.
-			if (hs.liveSeq.Length() == 0)
-			{
-				int a1 = (w.Ammo1 ? w.Ammo1.Amount : -1);
-				int a2 = (w.Ammo2 ? w.Ammo2.Amount : -1);
-				if ((hs.ammoAtEntry  >= 0 && a1 > hs.ammoAtEntry)
-				 || (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry))
-				{
-					hs.liveSeq = "reload";
-
-					// Predict THIS run's total restore now, while it is still
-					// knowable -- capacity minus what the weapon had when the
-					// reload began. Ammo1 preferred, matching the precedence
-					// the rest of the classifier already uses; falls back to
-					// Ammo2 only when Ammo1 is the one that did not rise.
-					if (hs.ammoAtEntry >= 0 && a1 > hs.ammoAtEntry && w.Ammo1)
-						hs.expectedUnits = w.Ammo1.MaxAmount - hs.ammoAtEntry;
-					else if (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry && w.Ammo2)
-						hs.expectedUnits = w.Ammo2.MaxAmount - hs.ammo2AtEntry;
-					if (hs.expectedUnits < 1) hs.expectedUnits = 1;
-				}
-				else if ((hs.ammoAtEntry  >= 0 && a1 < hs.ammoAtEntry)
-				      || (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry))
-					hs.liveSeq = hs.altHeld ? "altfire" : "fire";
-			}
-		}
-		hs.lastState  = cur;
-		hs.lastTics   = psp.Tics;
-		hs.lastCaller = psp.Caller;
-
-		// ---- pick the clip ----
-		string seq = "ready";
-		int D = 0;
-		int shotTic = -1;
-		int restoreUnits = 0;   // paired with D -- see rate scaling, below
-
-		// The rate is EVIDENCE-GATED, and the gate runs at lock -- so a
-		// rate read off an entry that has not locked yet is an unproven
-		// guess, and applying it was the bug that looked like "it has to
-		// learn every fill level separately": play 1 records duration and
-		// restored-amount, plays 2 and 3 scaled by that ratio before the
-		// gate ever ran, so a fixed-length mag swap at any OTHER fill got
-		// stretched or crushed by a correlation nobody had checked.
-		// Trust the rate only from a locked entry (the gate has run) or
-		// from the archive (only ever written at lock).
-		bool rateTrusted = false;
-
-		if (hs.entry)
-		{
-			int li = FindLearned(w.GetClassName(), hs.entry);
-			if (li >= 0)
-			{
-				seq = mLearned[li].seq; D = mLearned[li].observedTics;
-				shotTic = mLearned[li].brightTic; restoreUnits = mLearned[li].restoreUnits;
-				rateTrusted = (mLearned[li].plays >= LOCK_AFTER);
-			}
-			else
-			{
-				// UNLEARNED AND NOTHING PROVEN YET -- hold the rest pose.
-				//
-				// This used to default to "fire", which meant every melee
-				// swing, kick, taunt, scope-in and mode toggle played the
-				// firing animation the first time it was ever seen -- and
-				// then Commit() learned "fire" for it permanently. Brutal
-				// Doom alone inherits kick, slide attack, taunt and execution
-				// onto all 37 of its weapons.
-				//
-				// A weapon at rest during an action we cannot identify is
-				// wrong quietly. A weapon miming a gunshot while you kick
-				// something is wrong loudly, and then stays wrong.
-				seq = "ready";
-			}
-
-			// FIRST RUN OF A SESSION, ON A WEAPON WE ALREADY KNOW.
-			//
-			// The runtime entry does not exist until this sequence has
-			// finished once, so without this the very first reload after
-			// loading the game plays at natural rate even though the timing
-			// was worked out days ago. The archive is keyed by name rather
-			// than by pointer precisely so it can be consulted here, before
-			// any pointer has been associated with anything.
-			if (li < 0 && D <= 0 && mPersist && hs.liveSeq.Length() > 0)
-			{
-				int pd, pb, pr;
-				if (mPersist.Get(w.GetClassName(), hs.liveSeq, pd, pb, pr))
-				{
-					seq = hs.liveSeq; D = pd; shotTic = pb; restoreUnits = pr;
-					rateTrusted = true;   // archive rows are written at lock, post-gate
-				}
-			}
-
-			// What the weapon has actually DONE this run outranks anything
-			// remembered from a previous one. A weapon whose fire and reload
-			// share an entry state -- common where reload is reached by a
-			// conditional jump out of Fire -- would otherwise be stuck with
-			// whichever one it did first, forever.
-			if (hs.liveSeq.Length() > 0 && hs.liveSeq != seq)
-			{
-				seq          = hs.liveSeq;
-				D            = 0;           // learned duration was for the other sequence
-				shotTic      = -1;
-				restoreUnits = 0;
-				rateTrusted  = false;
-				int lj = FindLearned(w.GetClassName(), hs.entry);
-				if (lj >= 0 && mLearned[lj].seq == seq)
-				{
-					D            = mLearned[lj].observedTics;
-					shotTic      = mLearned[lj].brightTic;
-					restoreUnits = mLearned[lj].restoreUnits;
-					rateTrusted  = (mLearned[lj].plays >= LOCK_AFTER);
-				}
-			}
-
-			// RATE-SCALE A RELOAD TO HOW MUCH IT IS ACTUALLY RESTORING.
-			//
-			// D above is a duration measured on ONE past run. Locking that
-			// number for every future reload of the weapon was the original
-			// design and it is exactly what makes reload timing inconsistent:
-			// a six-shell tube reload and a one-shell top-up can share an
-			// entry state and be wildly different lengths, and only one of
-			// them can match a fixed D. The other either finishes early and
-			// holds, or overruns into the 1.15x stretch below.
-			//
-			// restoreUnits is how much ammo THAT locked run restored --
-			// paired with D, that is a rate (tics per unit). hs.expectedUnits
-			// is how much THIS run is predicted to restore, known from the
-			// moment liveSeq resolves to "reload" (see Animate(), above).
-			// D * expectedUnits / restoreUnits times the duration to how much
-			// THIS reload is actually missing, instead of to whatever the
-			// first three observed runs happened to be.
-			//
-			// restoreUnits <= 0 means no rate was ever learned for this
-			// entry -- predates rate learning, or it is not a reload at all
-			// (fire's ammo delta is a decrease) -- and D is used exactly as
-			// measured, same as before this existed.
-			if (D > 0 && rateTrusted && restoreUnits > 0 && hs.expectedUnits > 0)
-				D = max(1, D * hs.expectedUnits / restoreUnits);
-		}
-
-		Array<int> frames; int markFire;
-		if (!mClips.Get(donor, seq, frameCount, frames, markFire)
-		 || frames.Size() == 0)
-		{
-			// No clip for this sequence on this donor: hold the rest pose.
-			int rf = restFrame;
-			if (frameCount > 0 && rf >= frameCount) rf = frameCount - 1;
-			if (rf < 0) rf = 0;
-			psp.ModelFrame     = rf;
-			psp.ModelFrameNext = rf;
-			psp.ModelFrameLerp = 0;
+			psp.ModelFrame     = mf;
+			psp.ModelFrameNext = mn;
+			psp.ModelFrameLerp = (mf == mn) ? 0 : prog;
+			hs.lastMesh = mf;
 			return;
 		}
 
-		int N = frames.Size();
-		double ct;
-
-		// TIME-MATCHED AND DETERMINISTIC -- these were never in conflict.
-		//
-		// The warp is a pure function of elapsed tics and the learned
-		// duration: the same tick of the same sequence yields the same frame,
-		// every time. What made the animation vary was the DURATION moving
-		// underneath it, refitted on every play. Commit() locks it after a
-		// few observations, so from then on this is fixed.
-		//
-		// Until it locks, natural rate -- honest about not knowing yet, rather
-		// than guessing at a fit that will change.
-		//
-		// rs_foreignmodels_natural forces natural rate permanently for anyone
-		// who prefers the authored pacing to a matched one.
-		bool natural = false;
-		{
-			CVar nc = CVar.FindCVar("rs_foreignmodels_natural");
-			natural = (nc && nc.GetBool());
-		}
-
-		if (natural || D <= 0)
-		{
-			// Natural rate: one clip tic per game tic, exactly as authored.
-			// Identical on every play, on every weapon, forever.
-			ct = hs.elapsed - 1;
-		}
-		else
-		{
-			// Stretch or compress our clip across the duration they took.
-			//
-			// RUNNING LONGER THAN EXPECTED IS NORMAL, NOT AN ERROR. A reload
-			// takes longer when more rounds are missing -- a six-shell tube
-			// reload can be several times a one-shell top-up, off the same
-			// entry state. Fitting a fixed duration meant the animation
-			// finished in a fraction of the time and then FROZE, in full view,
-			// for the rest of it. That is the "off" reload.
-			//
-			// D has already been rate-scaled to how much THIS reload is
-			// predicted to restore, above -- that is the primary fix for the
-			// six-shell-vs-one-shell case, not this. What is left here is the
-			// residual: a prediction that undershoots (ammo capacity read
-			// wrong, a top-up that keeps going further than expected) or a
-			// weapon with no rate learned yet. So the target still stretches
-			// as the run outlives the estimate, same as before rate-scaling
-			// existed -- a safety net now, not the whole mechanism.
-			double dEff = D;
-			if (hs.elapsed > D) dEff = double(hs.elapsed) * 1.15;
-
-			double e  = double(hs.elapsed - 1);
-			double bt = double(shotTic - 1);          // sawBrightAt counts from 1
-			double mf = double(markFire);
-
-			// ANCHOR THE RECOIL TO THEIR SHOT.
-			//
-			// A proportional warp puts our animation in roughly the right
-			// place; it does not put the KICK on the bang. Our clip knows
-			// which of its own frames is the shot (markFire, authored from
-			// the donor's own states) and watching taught us which tic of
-			// their sequence the muzzle flash landed on. Pin those two
-			// together and interpolate on either side, and the recoil hits
-			// the frame the round leaves the barrel rather than merely near
-			// it.
-			//
-			// Two segments: run-up compressed or stretched to reach the kick
-			// exactly on time, then the recovery spread across whatever is
-			// left. Falls back to the straight proportional warp when either
-			// anchor is missing -- no flash seen, or a clip with no marked
-			// shot, which is every reload.
-			if (bt > 0 && mf > 0 && bt < dEff - 1 && mf < N - 1)
-			{
-				if (e <= bt) ct = e * mf / bt;
-				else         ct = mf + (e - bt) * (double(N - 1) - mf) / (dEff - bt);
-			}
-			else
-			{
-				ct = e * double(N) / dEff;
-			}
-		}
-
-		// Past the end -- held triggers and A_ReFire both do this -- hold.
-		if (ct > N - 1) ct = N - 1;
-		if (ct < 0) ct = 0;
-
-		int i0 = int(ct);
-		int i1 = (i0 + 1 < N) ? i0 + 1 : i0;
-
-		psp.ModelFrame     = frames[i0];
-		psp.ModelFrameNext = frames[i1];
-		// Sub-tic blend: the model moves at display rate instead of stepping
-		// at 35Hz. Lerp 0 with next == current is also the hard-frame case,
-		// which is what a 1-frame clip (every `ready`) resolves to.
-		psp.ModelFrameLerp = (frames[i0] == frames[i1]) ? 0 : (ct - i0);
-	}
-
-	// Learn from the sequence that just ended.
-	void Commit(RS_ForeignHand hs, Weapon w)
-	{
-		if (!hs.entry || hs.elapsed <= 0) return;
-
-		int li = FindLearned(w.GetClassName(), hs.entry);
-		if (li < 0)
-		{
-			let L = new("RS_ForeignLearned");
-			L.clsName = w.GetClassName();
-			L.entry   = hs.entry;
-			L.seq     = GuessSeq(hs, w);
-			L.plays   = 0;
-
-			// Seen this weapon's sequence in a previous session? Then it is
-			// already known and arrives locked -- no relearning, no first few
-			// reloads at the wrong pace.
-			if (mPersist)
-			{
-				int pd, pb, pr;
-				if (mPersist.Get(L.clsName, L.seq, pd, pb, pr))
-				{
-					L.observedTics  = pd;
-					L.brightTic     = pb;
-					L.restoreUnits  = pr;
-					L.plays         = 3;   // already locked
-				}
-			}
-
-			mLearned.Push(L);
-			li = mLearned.Size() - 1;
-		}
-		else if (hs.liveSeq.Length() > 0 && mLearned[li].seq != hs.liveSeq)
-		{
-			// The run proved itself something other than what we had recorded.
-			// Believe the run. The old label was a guess from an earlier one,
-			// and a duration learned under the wrong label is meaningless, so
-			// it starts over.
-			mLearned[li].seq          = hs.liveSeq;
-			mLearned[li].observedTics = 0;
-			mLearned[li].brightTic    = -1;
-			mLearned[li].restoreUnits = 0;
-		}
-		// REJECT RUNS THAT WERE NOT REAL.
-		//
-		// The estimate is the shortest run seen, which makes it exactly as
-		// good as the worst outlier. A reload cancelled two tics in by
-		// switching weapons, or a fire loop clipped by running out of ammo,
-		// would become the new "shortest" and every subsequent play would be
-		// crushed into a fraction of its proper length.
-		//
-		// Two guards. A run has to be long enough to be plausible at all, and
-		// once an estimate exists a run has to be within reach of it -- a
-		// quarter is generous for genuine variation (a one-shell top-up
-		// against a full tube reload) and still rejects a cancel.
-		// The trailing idle gap that the glue kept alive is not part of the
-		// action; counting it would inflate every learned duration by six.
-		if (hs.idleRun > 0) hs.elapsed -= hs.idleRun;
-
-		if (hs.elapsed < 3) { mLearned[li].plays++; return; }
-		if (mLearned[li].observedTics > 0
-		 && hs.elapsed * 4 < mLearned[li].observedTics)
-		{
-			mLearned[li].plays++;
-			return;
-		}
-
-		// LEARN, THEN LOCK.
-		//
-		// The timing used to be refitted on every single play, and THAT is
-		// what made the animation different every time -- not the warp, which
-		// is a pure function of elapsed tics and duration and yields the same
-		// frame for the same tick, always. A moving duration was the entire
-		// source of "it worked once and then it didn't".
-		//
-		// So: watch the first few runs, take the SHORTEST of them, and never
-		// move it again. Shortest rather than average because a run that
-		// outlives the estimate is handled gracefully -- the clip stretches
-		// and keeps moving -- while one that ends early is cut off mid-motion,
-		// which is the failure that looks broken.
-		//
-		// After LOCK_AFTER plays the animation for that sequence is fixed
-		// forever: time-matched to how that weapon actually behaves, and
-		// identical on the hundredth reload as on the fourth.
-		//
-		// PAIRED WITH A RATE, NOT JUST A NUMBER, for reloads that actually
-		// scale with how much ammo is missing. What ammo THIS run restored,
-		// read now while it is still fresh, is recorded alongside the run's
-		// duration below. A fire/altfire run has ammo going DOWN, so
-		// restored stays 0 and nothing here applies -- exactly the old
-		// flat-duration behavior, unchanged.
-		int restored = 0;
-		int a1now = (w.Ammo1 ? w.Ammo1.Amount : -1);
-		int a2now = (w.Ammo2 ? w.Ammo2.Amount : -1);
-		if (hs.ammoAtEntry >= 0 && a1now > hs.ammoAtEntry)
-			restored = a1now - hs.ammoAtEntry;
-		else if (hs.ammo2AtEntry >= 0 && a2now > hs.ammo2AtEntry)
-			restored = a2now - hs.ammo2AtEntry;
-
-		if (mLearned[li].plays < LOCK_AFTER)
-		{
-			if (mLearned[li].observedTics <= 0 || hs.elapsed < mLearned[li].observedTics)
-			{
-				mLearned[li].observedTics = hs.elapsed;
-				mLearned[li].restoreUnits = restored;   // paired with the run above
-			}
-
-			// EVIDENCE FOR THE LOCK DECISION, tracked separately from which
-			// run anchors the rate. A single (duration, restored) pair can't
-			// tell a reload that scales with ammo missing apart from one
-			// that always takes the same time and happened to restore that
-			// much -- most fixed-magazine weapons (pistols, SMGs, rifles:
-			// eject whatever's left, load a fresh mag, same motion either
-			// way) are the second kind, and scaling THEM would predict a
-			// short partial reload's duration from a long full one, rushing
-			// the clip through early and then freezing for what's left --
-			// worse than the flat duration this is meant to improve on.
-			// Two runs that actually restored different amounts, with
-			// duration moving the same direction, is the bar for evidence.
-			if (restored > 0)
-			{
-				if (mLearned[li].minRestore <= 0 || restored < mLearned[li].minRestore)
-				{
-					mLearned[li].minRestore     = restored;
-					mLearned[li].minRestoreTics = hs.elapsed;
-				}
-				if (restored > mLearned[li].maxRestore)
-				{
-					mLearned[li].maxRestore     = restored;
-					mLearned[li].maxRestoreTics = hs.elapsed;
-				}
-			}
-		}
-		else if (mLearned[li].plays == LOCK_AFTER && mPersist)
-		{
-			// Reject the rate at the moment of locking unless the evidence
-			// actually supports it: a real difference in restored amount
-			// (2, not 1 -- filters a single stray round from counting as
-			// "variation") whose duration moved the same direction. Anything
-			// less -- every observed reload restored about the same amount,
-			// or duration didn't track the amount that did vary -- and this
-			// entry keeps the flat duration it would have had before rate
-			// learning existed, permanently, same as a weapon whose ammo
-			// never went up at all.
-			// The direction check alone was too easy to pass: durations are
-			// measured with a tic or two of jitter (glue timing, branch
-			// differences inside the mod's own reload), so two runs that
-			// restored different amounts and happened to differ by ONE tic
-			// read as correlation. Demand a difference that noise can't
-			// fake: at least 4 tics AND at least a fifth of the shorter
-			// run. A real per-shell reload clears both bars trivially; a
-			// mag swap's jitter clears neither.
-			int td = mLearned[li].maxRestoreTics - mLearned[li].minRestoreTics;
-			bool scales = (mLearned[li].maxRestore - mLearned[li].minRestore >= 2)
-			           && (td >= 4)
-			           && (td * 5 >= mLearned[li].minRestoreTics);
-			if (!scales) mLearned[li].restoreUnits = 0;
-
-			// Just locked: archive it, keyed by something that survives a
-			// restart. Written once per sequence, ever.
-			mPersist.Store(mLearned[li].clsName, mLearned[li].seq,
-			               mLearned[li].observedTics, mLearned[li].brightTic,
-			               mLearned[li].restoreUnits);
-		}
-
-		if (hs.sawBrightAt >= 0) mLearned[li].brightTic = hs.sawBrightAt;
-		mLearned[li].plays++;
-	}
-
-	// The PRIOR. Behaviour, not names -- what the weapon DID over the
-	// sequence, because what it is called is unreliable across mods.
-	//   ammo went DOWN -> they shot
-	//   clip went UP    -> they reloaded
-	//   a bright frame appeared and it was short -> they shot
-	// It is allowed to be wrong. The picker is the correction path.
-	string GuessSeq(RS_ForeignHand hs, Weapon w)
-	{
-		int a1 = (w.Ammo1 ? w.Ammo1.Amount : -1);
-		int a2 = (w.Ammo2 ? w.Ammo2.Amount : -1);
-
-		// Anything the run PROVED outranks a fresh reading -- liveSeq already
-		// applied the alt-fire distinction and the UP-before-DOWN priority.
-		if (hs.liveSeq.Length() > 0) return hs.liveSeq;
-
-		if (hs.ammoAtEntry >= 0 && a1 > hs.ammoAtEntry)  return "reload";
-		if (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry) return "reload";
-		if (hs.ammoAtEntry >= 0 && a1 < hs.ammoAtEntry)  return hs.altHeld ? "altfire" : "fire";
-		if (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry) return hs.altHeld ? "altfire" : "fire";
-		if (hs.sawBrightAt >= 0) return "fire";
-		return "ready";
-	}
-
-	int FindLearned(string cls, State entry) const
-	{
-		for (int i = 0; i < mLearned.Size(); ++i)
-			if (mLearned[i].entry == entry && mLearned[i].clsName == cls) return i;
-		return -1;
+		// Unmapped territory: a state reached only through a runtime jump
+		// the walk could not see (a reload-done tail behind an inventory
+		// check, a mod-custom combo label), or a TNT1 invisibility state.
+		// Hold the last mapped pose -- their logic returns to mapped
+		// states on its own, and a held pose reads as a pause, never as
+		// garbage.
+		int hold = hs.lastMesh;
+		if (hold < 0) hold = restFrame;
+		if (frameCount > 0 && hold >= frameCount) hold = frameCount - 1;
+		if (hold < 0) hold = 0;
+		psp.ModelFrame     = hold;
+		psp.ModelFrameNext = hold;
+		psp.ModelFrameLerp = 0;
 	}
 
 	// Release every weapon we bound. A_ChangeModel with an empty modeldef name
@@ -1904,21 +1308,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 			return;
 		}
 
-		// Throw away every learned timing, this session's and the archive's.
-		// For when a mod is updated and its weapons no longer behave the way
-		// they did when this was measured.
-		if (e.name == "rs-fm-forget")
-		{
-			mLearned.Clear();
-			if (mPersist) mPersist.Forget();
-			if (mHandMain) mHandMain.Reset();
-			if (mHandOff)  mHandOff.Reset();
-			return;
-		}
-
-		// Separate from the above on purpose -- timing is a measured fact,
-		// picks are a deliberate choice, and clearing one should never
-		// silently take the other with it.
+		// (rs-fm-forget is gone: the remap engine learns nothing, so there
+		// is nothing to forget. Model choices are still clearable below.)
 		if (e.name == "rs-fm-forget-picks")
 		{
 			if (mPicks) mPicks.Forget();

@@ -38,11 +38,6 @@ OptionMenu "RSFM_Main"
     StaticText "any models you already picked.", "DarkGray"
     StaticText " "
 
-    Command  "Forget Learned Timing", "netevent rs-fm-forget"
-    StaticText "Animation timings are measured by watching, then kept between", "DarkGray"
-    StaticText "sessions. Clear them if a mod update changed how a weapon moves.", "DarkGray"
-    StaticText " "
-
     Command  "Forget Saved Models", "netevent rs-fm-forget-picks"
     StaticText "Model choices are remembered per weapon, kept between sessions --", "DarkGray"
     StaticText "one archive shared across every mod you load. Clear it to go back", "DarkGray"

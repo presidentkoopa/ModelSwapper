@@ -3,19 +3,10 @@ server bool rs_foreignmodels         = true;   // master switch
 server bool rs_foreignmodels_dump    = false;  // dump the scan to console
 server bool rs_foreignmodels_showall = false;  // include weapons with no slot binding
 
-// Ignore learned timing and always play clips at their authored rate.
-// Timing is locked after a few observations either way, so both settings are
-// deterministic -- this one just prefers the animation's own pacing.
-server bool rs_foreignmodels_natural = false;
-
-// Learned sequence timings, packed as
-// class:seq:duration:brightTic:restoreUnits;... -- the last field is ammo
-// restored during the same run duration was measured on, which is what
-// lets a reload's timing scale to how much THIS reload is missing instead
-// of playing back a fixed length every time. Absent or 0 on older saves,
-// which just means that entry has no rate yet, not that it's invalid.
-// Written once per sequence when its timing locks. Clear it with the menu.
-server string rs_fm_learned = "";
+// (rs_foreignmodels_natural and rs_fm_learned are gone: the remap engine
+// reads timing off the weapon's own state table every tic, so there is
+// no learned timing to store and no "natural rate" distinct from theirs.
+// A stale archived copy in an old ini is ignored harmlessly.)
 
 // The player's own model choices, packed as class:archetype:pick1:pick2;...
 // Written every time a pick changes. Keyed on class name only -- no notion

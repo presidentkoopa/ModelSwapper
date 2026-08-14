@@ -90,25 +90,41 @@ tick because the foreign weapon's own states re-set the sprite every frame.
 bypassing the sprite encoding and its 29-frame ceiling, with `ModelFrameNext` and
 `ModelFrameLerp` blending at display rate.
 
-### Animation — identity without names
+### Animation — their state machine is the clock
 
-A sequence is **everything from leaving idle until returning to it** — not the gap
-between two state changes. `WF_WEAPONREADY` marks that boundary exactly:
-`A_WeaponReady` sets it and the engine clears it every tick, so it is true precisely
-while a weapon is idle, in any mod, because calling `A_WeaponReady` is what makes a
-weapon usable at all.
+The weapon already broadcasts its complete animation state every tic: which state its
+psprite is in. Everything else follows from reading it.
 
-The state you land on when you leave idle *is* the sequence's identity —
-`(weaponClass, entryState)`. It never has to be **named**, only recognised again.
+**At bind time, once per (weapon, donor):** walk the weapon's labeled state sequences —
+`Ready`, `Fire`, `AltFire`, `Reload`, `Zoom`, `User1-4`, and the rest. Those labels are
+engine-structural, not conventions: the engine's own button code jumps to them by name,
+so any weapon that answers a button has them. Collect each sequence's states in order
+with their tic durations (`Goto` is encoded in `NextState`, so the walk follows the real
+authored flow), and distribute the donor clip's frames across that timeline
+proportionally. The result is a lookup table: **their state → our mesh frame**.
 
-Which clip to play is read from **behaviour, live**: ammo up is a reload, ammo down is
-a shot, a bright frame on a short sequence is a shot. Names are never consulted,
-because names are the one thing that doesn't generalise.
+**At runtime, per tic:** one table lookup. Their conditionals, branches, per-shell
+loops, refires, and empty-mag auto-reloads all just happen — whatever state their logic
+lands in, the mapped frame shows. Timing cannot drift from theirs because there is no
+timing of ours. A partial reload displays fewer of their states than a full one, and the
+mesh follows exactly. Nothing is learned, so nothing has a learning period: **the first
+shot of the first session is already right.**
 
-Playback is at natural rate — one clip tic per game tic, exactly as authored,
-identical on every play. An animation that is right every time beats one that is
-occasionally better timed and never predictable. `rs_foreignmodels_warp` enables
-time-matching to the observed duration for anyone who wants it.
+The recoil lands on the bang **statically**: their fire states carry `bFullbright`, our
+clip knows which of its frames is the shot, and the walk pins those together at build
+time — no observation needed.
+
+Sequences claim states in priority order (Ready first, Reload before Fire), so shared
+tails park on the rest pose and an empty-mag `Fire → Goto Reload` shows the reload
+mapping the moment its states are entered. States reachable only through runtime
+`A_Jump` side effects are absent from the table; the runtime holds the last mapped pose
+until their logic returns to mapped territory — a pause, never garbage.
+
+An earlier design predicted instead of reading: it learned durations by observation,
+locked them, scaled them by ammo-rates, gated the rates on evidence, and glued idle gaps
+to find sequence boundaries. Every mechanism in that list existed to reconstruct
+information the state table already carries, and every one of them hosted bugs. The
+remap replaced all of it and deleted more code than it added.
 
 ### Classification
 
@@ -188,26 +204,12 @@ Results and per-mod fixes will be recorded here as they land.
 
 ## Known limits
 
-**Reload timing is rate-scaled, not just fitted.** A single locked duration used to mean
-a six-shell tube reload and a one-shell top-up — the same entry state, wildly different
-real lengths — couldn't both look right off one number; whichever kind got observed
-first is the one that matched. Reload durations now carry the ammo the locked run
-actually restored alongside the tic count, so a future reload scales that duration by how
-much *it* is missing rather than replaying a fixed length regardless.
-
-Not every reload scales with how much ammo is gone. Most fixed-magazine weapons —
-pistols, SMGs, rifles — eject whatever's left and load a fresh mag either way, same
-motion, same duration, whether one round or the whole mag was missing. Scaling *those*
-would predict a short partial reload from a long full one and rush the model through the
-clip early, then leave it frozen for what's left — worse than not scaling at all. So the
-rate is never assumed from one observed reload; it has to be **earned**, across the
-learning window, by two runs that actually restored different amounts *and* took
-different amounts of time to do it. No such evidence, on a fixed-mag weapon or a
-shotgun-style one the player just always ran dry before reloading — and that entry keeps
-flat-duration timing permanently, same as before rate scaling existed. This is derived
-from behavior alone, never from what kind of weapon it is; nothing here knows or asks
-whether something is a shotgun. Fire and altfire never scale this way regardless — ammo
-drops there, it doesn't rise, so nothing about this touches them.
+**States reached only by runtime jumps are unmapped.** The sequence walk follows
+`NextState` (which encodes `Goto`), but a state entered *only* through an `A_Jump*`
+side effect — a reload-done tail behind an inventory check, a mod-custom combo label —
+is invisible to it. The model holds its last mapped pose through such states and resumes
+the moment their logic returns to mapped territory. In practice these are short tails;
+a held pose reads as a pause.
 
 **Eighteen of the fifty donors have no reload animation.** Knives, chainsaws, fists, the
 shorter MeatGrinder meshes: the mesh has no such frames. Bound to a weapon that reloads
