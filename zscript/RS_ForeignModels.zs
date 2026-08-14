@@ -777,7 +777,24 @@ class RS_ForeignScanner
 	}
 
 	// -----------------------------------------------------------------
-	static void Scan(in out Array<RS_ForeignEntry> outList)
+	// djb2-style hash, deterministic per class name. Not for security --
+	// only for spreading auto-guessed picks across a shelf without ever
+	// changing which index a given class name lands on. Wrap-safe: the
+	// multiply can overflow into negative territory on a long name, so the
+	// final % is corrected the same way CyclePick already does.
+	static int HashPick(string cls, int n)
+	{
+		if (n <= 0) return 0;
+		int h = 5381;
+		int len = cls.Length();
+		for (int i = 0; i < len; ++i)
+			h = h * 33 + cls.ByteAt(i);
+		int r = h % n;
+		if (r < 0) r += n;
+		return r;
+	}
+
+	static void Scan(RS_ForeignShelf shelf, in out Array<RS_ForeignEntry> outList)
 	{
 		outList.Clear();
 
@@ -866,6 +883,19 @@ class RS_ForeignScanner
 			bool bySlot; int pick;
 			e.archetype     = RS_ForeignScanner.Classify(type, e.clsName, e.tag, e.slot, ammo1, ammo2, bySlot, pick);
 			e.guessedBySlot = bySlot;
+
+			// pick == 0 is Classify's universal "no deliberate index" value
+			// (the only nonzero it ever hands back is the forced pick 2 for
+			// the slot-8 second BFG, which must never be overridden). Seed
+			// the auto-guess by class name instead of leaving it at the
+			// shelf's first entry for everything -- every unpinned weapon of
+			// an archetype otherwise wore the exact same donor forever.
+			if (pick == 0 && shelf)
+			{
+				int have = shelf.Count(e.archetype);
+				if (have > 1) pick = HashPick(e.clsName, have);
+			}
+
 			e.modelPick1    = pick;
 			e.modelPick2    = pick;
 			e.pinned        = false;
@@ -952,7 +982,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		for (int i = 0; i < mEntries.Size(); ++i)
 			if (mEntries[i].pinned) keep.Push(mEntries[i]);
 
-		RS_ForeignScanner.Scan(mEntries);
+		RS_ForeignScanner.Scan(mShelf, mEntries);
 
 		for (int k = 0; k < keep.Size(); ++k)
 		{
