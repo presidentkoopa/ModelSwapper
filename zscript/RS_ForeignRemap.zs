@@ -122,6 +122,32 @@ class RS_ForeignRemap
 	// -----------------------------------------------------------------
 	// Build the whole table for one weapon wearing one donor.
 	// -----------------------------------------------------------------
+	static string LabelName(int li)
+	{
+		switch (li)
+		{
+		case 0:  return "Ready";
+		case 1:  return "Deselect";
+		case 2:  return "Select";
+		case 3:  return "Reload";
+		case 4:  return "Zoom";
+		case 5:  return "User1";
+		case 6:  return "User2";
+		case 7:  return "User3";
+		case 8:  return "User4";
+		case 9:  return "AltFire";
+		case 10: return "AltHold";
+		case 11: return "Fire";
+		default: return "Hold";
+		}
+	}
+
+	static bool DebugOn()
+	{
+		CVar c = CVar.FindCVar("rs_foreignmodels_dump");
+		return (c && c.GetBool());
+	}
+
 	static RS_ForeignRemap Build(class<Weapon> type, string donorCls,
 	                             RS_ForeignClip clips, int frameCount, int restFrame)
 	{
@@ -131,14 +157,28 @@ class RS_ForeignRemap
 		m.mHint   = 0;
 
 		readonly<Weapon> def = GetDefaultByType(type);
-		if (!def) return m;
+		if (!def)
+		{
+			if (DebugOn()) Console.Printf("[RSRM] %s: GetDefaultByType returned NULL", m.clsName);
+			return m;
+		}
 
 		for (int li = 0; li <= 12; ++li)
 		{
 			State root = RootFor(def, li);
-			if (root == null) continue;
+			if (root == null)
+			{
+				if (DebugOn()) Console.Printf("[RSRM] %s/%s: label %s -> no state",
+					m.clsName, donorCls, LabelName(li));
+				continue;
+			}
+			int before = m.mStates.Size();
 			MapSequence(m, root, ClipFor(li), donorCls, clips, frameCount, restFrame);
+			if (DebugOn()) Console.Printf("[RSRM] %s/%s: label %s -> %d states mapped (clip '%s', fc=%d)",
+				m.clsName, donorCls, LabelName(li), m.mStates.Size() - before, ClipFor(li), frameCount);
 		}
+		if (DebugOn()) Console.Printf("[RSRM] %s/%s: TABLE COMPLETE, %d states total",
+			m.clsName, donorCls, m.mStates.Size());
 		return m;
 	}
 

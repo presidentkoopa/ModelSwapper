@@ -1010,12 +1010,33 @@ class RS_ForeignModelHandler : StaticEventHandler
 			return null;
 
 		// STEP 1 -- once per INSTANCE: point this actor's model lookup at
-		// our class. Brings its Path/Skin/Scale/Offset along with it.
+		// our class (brings its Path/Skin/Scale/Offset along), then hand the
+		// ENGINE the state->frame table. From that moment the renderer
+		// resolves every frame against the psprite's own current state
+		// natively -- there is no step 3 anymore, and no per-tick script in
+		// the animation path at all. (RegisterModelStateFrame requires
+		// modelData, which A_ChangeModel just created, so the order of
+		// these two calls is load-bearing.)
 		if (lastBound != w)
+		{
 			w.A_ChangeModel(mcls);
 
+			let map = MapFor(w, mcls, frameCount, restFrame);
+			w.ClearModelStateFrames();
+			int pushed = 0;
+			for (int i = 0; i < map.mStates.Size(); ++i)
+				if (w.RegisterModelStateFrame(map.mStates[i], map.mMesh[i], map.mMeshNext[i]))
+					pushed++;
+			if (RS_ForeignRemap.DebugOn())
+				Console.Printf("[RSRM] bound %s -> %s: %d/%d rows registered",
+					w.GetClassName(), mcls, pushed, map.mStates.Size());
+		}
+
 		// STEP 2 -- every tick: their states re-set the psprite each frame,
-		// so re-pin it to our anchor at the resting pose.
+		// so re-pin it to our anchor at the resting pose. The pin is what
+		// makes FindModelFrame resolve; the frame NUMBER now comes from the
+		// engine-side table. The legacy per-tick fields are cleared so
+		// nothing serialized from an older build can fight the table.
 		let psp = pi.FindPSprite(layer);
 		if (psp)
 		{
@@ -1027,12 +1048,9 @@ class RS_ForeignModelHandler : StaticEventHandler
 			psp.Sprite = si;
 			psp.Frame  = heldFrame;
 
-			// STEP 3 -- address the model frame DIRECTLY. The sprite pin above
-			// only has to make FindModelFrame resolve; which frame actually
-			// draws is this. That is what lifts the 29-frame ceiling and makes
-			// a 75-frame reload reachable at all.
-			Animate(hs, pi, w, psp, mcls, restFrame, frameCount,
-				layer == PSP_OFFHANDWEAPON ? WF_OFFHANDREADY : WF_WEAPONREADY);
+			psp.ModelFrame     = -1;
+			psp.ModelFrameNext = -1;
+			psp.ModelFrameLerp = -1;
 		}
 		return w;
 	}
@@ -1134,51 +1152,6 @@ class RS_ForeignModelHandler : StaticEventHandler
 		                              mClips, frameCount, restFrame);
 		mMaps.Push(m);
 		return m;
-	}
-
-	void Animate(RS_ForeignHand hs, PlayerInfo pi, Weapon w, PSprite psp, string donor,
-	             int restFrame, int frameCount, int readyMask)
-	{
-		if (psp.Caller != hs.lastCaller)
-		{
-			hs.Reset();
-			hs.lastCaller = psp.Caller;
-		}
-
-		State cur = psp.CurState;
-		let map = MapFor(w, donor, frameCount, restFrame);
-
-		int mf, mn;
-		if (cur != null && map != null && map.Lookup(cur, mf, mn))
-		{
-			// Intra-state progress off the psprite's own countdown -- Tics
-			// counts down from the state's duration, so this is exact and
-			// free, and multi-tic states glide instead of stepping.
-			double prog = 0;
-			int d = cur.Tics;
-			if (d > 1 && psp.Tics > 0 && psp.Tics <= d)
-				prog = double(d - psp.Tics) / double(d);
-
-			psp.ModelFrame     = mf;
-			psp.ModelFrameNext = mn;
-			psp.ModelFrameLerp = (mf == mn) ? 0 : prog;
-			hs.lastMesh = mf;
-			return;
-		}
-
-		// Unmapped territory: a state reached only through a runtime jump
-		// the walk could not see (a reload-done tail behind an inventory
-		// check, a mod-custom combo label), or a TNT1 invisibility state.
-		// Hold the last mapped pose -- their logic returns to mapped
-		// states on its own, and a held pose reads as a pause, never as
-		// garbage.
-		int hold = hs.lastMesh;
-		if (hold < 0) hold = restFrame;
-		if (frameCount > 0 && hold >= frameCount) hold = frameCount - 1;
-		if (hold < 0) hold = 0;
-		psp.ModelFrame     = hold;
-		psp.ModelFrameNext = hold;
-		psp.ModelFrameLerp = 0;
 	}
 
 	// Release every weapon we bound. A_ChangeModel with an empty modeldef name
