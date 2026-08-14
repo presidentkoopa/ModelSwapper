@@ -205,10 +205,18 @@ class RS_ForeignRemap
 		if (seq.Size() == 0) return;
 
 		// 2. The donor clip, already expanded to a per-tic frame list.
+		// A donor without an altfire clip plays its FIRE clip for altfire
+		// -- a kick or grenade toss wearing the fire animation reads far
+		// better than a weapon frozen at rest. (No such fallback for
+		// reload: a fire animation during a reload reads as a bug, and
+		// rest is the honest pose for a mesh with no reload frames.)
 		Array<int> frames;
 		int markFire;
 		bool haveClip = clips.Get(donorCls, clipName, frameCount, frames, markFire)
 		                && frames.Size() > 0;
+		if (!haveClip && clipName == "altfire")
+			haveClip = clips.Get(donorCls, "fire", frameCount, frames, markFire)
+			           && frames.Size() > 0;
 
 		int rest = restFrame;
 		if (frameCount > 0 && rest >= frameCount) rest = frameCount - 1;
