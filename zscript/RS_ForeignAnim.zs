@@ -282,20 +282,94 @@ class RS_ForeignClip
 }
 
 // ---------------------------------------------------------------------
-// Display state for ONE hand. This used to be fifteen fields of watched
-// behavior -- entry states, elapsed tics, ammo baselines, idle glue,
-// live sequence proofs. The remap engine (RS_ForeignRemap) reads the
-// weapon's own state machine every tic instead, so all that survives is
-// who we're painting and where the mesh parked.
+// What we have learned about one (foreign weapon, entry state) pair by
+// watching it run. Duration is OBSERVED, never predicted -- a foreign
+// sequence's real length is not derivable from its state tics.
+// ---------------------------------------------------------------------
+class RS_ForeignLearned
+{
+	string clsName;
+	State  entry;
+	string seq;          // the prior: which of our clips to play
+	int    observedTics; // <=0 until it has run once
+	int    brightTic;    // when bFullbright first appeared, -1 = never
+	int    plays;
+
+	// Ammo actually restored during the SAME run observedTics was taken
+	// from -- the pairing is what makes it a rate. <=0 means either this
+	// isn't a reload (fire's ammo delta is a decrease, not a restore), it
+	// predates rate learning, or scaling was tried and REJECTED for lack of
+	// evidence (see minRestore/maxRestore, and Commit()'s lock branch) --
+	// either way, duration stays flat instead of being scaled by a ratio
+	// that was never actually measured to hold.
+	int    restoreUnits;
+
+	// EVIDENCE, not the rate itself -- the smallest and largest restored
+	// amounts seen across the plays before lock, and how long each took.
+	// A single (duration, restored) pair cannot tell "this reload scales
+	// with ammo missing" apart from "this reload always takes the same
+	// time and happened to restore that much" -- a fixed magazine swap
+	// (most pistols, SMGs, rifles: eject whatever's left, load a fresh
+	// mag, same motion either way) looks exactly like a scaling reload
+	// until a SECOND run with a different amount either confirms it
+	// (duration moved too) or refutes it (duration didn't move). Discarded
+	// once the lock decision is made; not persisted.
+	int    minRestore, minRestoreTics;
+	int    maxRestore, maxRestoreTics;
+}
+
+// ---------------------------------------------------------------------
+// Live animation state for ONE hand.
 // ---------------------------------------------------------------------
 class RS_ForeignHand
 {
-	Actor lastCaller;
-	int   lastMesh;    // last mapped mesh frame; held on unmapped states
+	Actor  lastCaller;
+	State  lastState;
+	State  predictedNext;
+	State  entry;
+	int    lastTics;
+	int    elapsed;
+	int    sawBrightAt;
+	int    ammoAtEntry;
+	int    ammo2AtEntry;
+
+	// What this sequence has PROVEN itself to be, mid-run. Empty until the
+	// weapon does something that settles it. Ammo going up is a reload
+	// whatever the sequence is called and whatever we guessed last time --
+	// and knowing that DURING the run is what lets the very first reload of
+	// a weapon play the reload animation instead of the fire one.
+	string liveSeq;
+
+	// GAP GLUE. Consecutive tics spent idle while a sequence is still, in
+	// truth, running. Brutal Doom's shotgun calls A_WeaponReady for five tics
+	// inside EVERY shell insertion, so an eight-shell reload looks like eight
+	// separate sequences and the model replays the first fifth of the reload
+	// eight times, snapping to rest between each. A short idle gap is part of
+	// the action, not the end of it.
+	int idleRun;
+
+	// Ammo at the last observed change, for spotting a NEW shot inside a run
+	// that never returned to idle -- held fire, A_Refire, autofire loops.
+	int ammoMark;
+
+	// Alt-fire was held when this sequence began. The only thing that can
+	// distinguish an alt-fire sequence from a primary one when both leave
+	// idle the same way.
+	bool altHeld;
+
+	// THIS run's predicted total restore, for scaling duration to how much
+	// is actually missing rather than to a flat number every reload shares.
+	// Set once, the tic liveSeq resolves to a reload, from ammo capacity
+	// minus what the weapon had at entry -- known early, unlike the real
+	// final ammo, which isn't known until the run is already over. <=0
+	// means no prediction was possible (no ammo type, or full already).
+	int expectedUnits;
 
 	void Reset()
 	{
-		lastCaller = null;
-		lastMesh   = -1;
+		lastCaller = null; lastState = null; predictedNext = null;
+		entry = null; lastTics = 0; elapsed = 0; sawBrightAt = -1;
+		ammoAtEntry = -1; ammo2AtEntry = -1; liveSeq = "";
+		idleRun = 0; ammoMark = -1; altHeld = false; expectedUnits = 0;
 	}
 }
