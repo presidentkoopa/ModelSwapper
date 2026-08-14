@@ -144,8 +144,11 @@ class RS_ForeignRemap
 
 	static bool DebugOn()
 	{
-		CVar c = CVar.FindCVar("rs_foreignmodels_dump");
-		return (c && c.GetBool());
+		// Always on, by request. The build/bind trace IS the debugging story
+		// for the remap -- a handful of console lines per weapon, printed
+		// once per bind, and the whole reason nobody ever has to relaunch
+		// the game just to find out what the table thinks it did.
+		return true;
 	}
 
 	static RS_ForeignRemap Build(class<Weapon> type, string donorCls,
