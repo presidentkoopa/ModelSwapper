@@ -1,41 +1,35 @@
 // =====================================================================
 // RS_ForeignRemap -- THEIR STATE MACHINE IS THE CLOCK.
 //
-// The old animation engine watched behavior and predicted: learned
-// durations, locked them, scaled them by ammo rates, guarded the rates
-// with evidence gates, glued idle gaps, and detected boundaries. Every
-// one of those mechanisms existed to reconstruct information the
-// weapon already broadcasts every tic: WHICH STATE IT IS IN. This file
-// replaces all of it with a lookup table.
+// Build a table mapping every state a weapon can display to a frame of
+// our donor mesh, register it with the engine once at bind, and the
+// renderer resolves each frame against the psprite's actual current
+// state natively. No learning, no timing of ours, no per-tick script.
 //
-// AT BIND TIME, ONCE PER (WEAPON CLASS, DONOR): walk the weapon's
-// labeled state sequences -- Ready, Fire, AltFire, Reload, and the
-// rest. Those labels are engine-structural, not conventions: the
-// engine's own button code jumps to them by name (P_CheckWeaponButtons
-// -> NAME_Reload etc.), so any weapon that responds to a button HAS
-// them. Collect each sequence's states in order with their tic
-// durations, and distribute the donor clip's per-tic frame list across
-// that timeline proportionally. Store state -> (meshFrame, nextFrame).
+// V2, after the Ashes session log proved v1's blind spot: DECORATE-era
+// mods put their REAL animations behind runtime conditional jumps into
+// mod-custom labels -- RealFire, Work1, ReloadChamber, ReloadDone --
+// which a NextState walk from the standard labels can never reach (the
+// log: revolver Reload mapped 4 states out of a 60-tic animation; Fire
+// mapped 2). ZScript could not even see those labels: FindState probes
+// names known in advance. The fork now enumerates the class's ENTIRE
+// label table (Actor.CountStateLabels / GetStateLabelAt), sorted by
+// state address -- which is source declaration order -- so every custom
+// label can be attributed to the standard label it was written under:
 //
-// AT RUNTIME, PER TIC: psp.CurState -> one table lookup. Their
-// conditionals, their branches, their per-shell loops, their refires
-// all just happen -- whatever state their logic lands in, we show the
-// frame mapped to it. Timing cannot drift from theirs because there is
-// no timing of ours: a partial reload shows fewer of their states, a
-// full one more, and the mesh follows. Nothing is learned, so nothing
-// has to be learned three times, and the first shot of the first
-// session is already right.
+//   Fire:            <- opens the "fire" group
+//   RealFire: ...    <- custom, joins fire
+//   Fire2: ...       <- custom, joins fire
+//   Reload:          <- opens the "reload" group
+//   Work1: ...       <- custom, joins reload
+//   ReloadDone: ...  <- custom, joins reload
+//   Spawn:           <- non-psprite label, closes any open group
 //
-// THE KEY IS THE STATE POINTER, not (sprite, frame). Two sequences can
-// share a sprite frame; they can never share a State. Pointers are
-// stable for the session; the table is rebuilt lazily per session, so
-// savegame restores across sessions just repopulate it.
-//
-// WHAT A WALK CAN'T SEE: states reached only through runtime A_Jump*
-// side effects (a reload-done tail entered by an inventory check, a
-// mod-custom combo label). Those are simply absent from the table, and
-// the runtime holds the last mapped frame until their logic returns to
-// mapped territory. Degrades to a pose, never to garbage.
+// Each group's states -- all its labels' chains, concatenated in source
+// order -- get the group's donor clip distributed across them by tic
+// weight. Their per-shell loops replay mapped states; their branches
+// select between mapped states; timing is theirs because no other
+// timing exists.
 // =====================================================================
 
 class RS_ForeignRemap
@@ -77,71 +71,6 @@ class RS_ForeignRemap
 		return false;
 	}
 
-	// -----------------------------------------------------------------
-	// Labels in CLAIM ORDER, which is load-bearing. Sequences flow into
-	// each other ("Goto Ready", fire falling into reload on empty), and
-	// a state belongs to whichever sequence claimed it first. Ready
-	// claims first so every transitional tail parks on the rest pose;
-	// Reload claims before Fire so a Fire label that jumps straight to
-	// reloading (the empty-mag auto-reload idiom) shows the reload
-	// mapping the moment its states are entered.
-	// -----------------------------------------------------------------
-	static State RootFor(readonly<Weapon> def, int li)
-	{
-		switch (li)
-		{
-		case 0:  return def.FindState('Ready');
-		case 1:  return def.FindState('Deselect');
-		case 2:  return def.FindState('Select');
-		case 3:  return def.FindState('Reload');
-		case 4:  return def.FindState('Zoom');
-		case 5:  return def.FindState('User1');
-		case 6:  return def.FindState('User2');
-		case 7:  return def.FindState('User3');
-		case 8:  return def.FindState('User4');
-		case 9:  return def.FindState('AltFire');
-		case 10: return def.FindState('AltHold');
-		case 11: return def.FindState('Fire');
-		default: return def.FindState('Hold');
-		}
-	}
-
-	static string ClipFor(int li)
-	{
-		switch (li)
-		{
-		case 3:  return "reload";
-		case 9:  return "altfire";
-		case 10: return "altfire";
-		case 11: return "fire";
-		case 12: return "fire";
-		default: return "ready";
-		}
-	}
-
-	// -----------------------------------------------------------------
-	// Build the whole table for one weapon wearing one donor.
-	// -----------------------------------------------------------------
-	static string LabelName(int li)
-	{
-		switch (li)
-		{
-		case 0:  return "Ready";
-		case 1:  return "Deselect";
-		case 2:  return "Select";
-		case 3:  return "Reload";
-		case 4:  return "Zoom";
-		case 5:  return "User1";
-		case 6:  return "User2";
-		case 7:  return "User3";
-		case 8:  return "User4";
-		case 9:  return "AltFire";
-		case 10: return "AltHold";
-		case 11: return "Fire";
-		default: return "Hold";
-		}
-	}
-
 	static bool DebugOn()
 	{
 		// Always on, by request. The build/bind trace IS the debugging story
@@ -151,6 +80,38 @@ class RS_ForeignRemap
 		return true;
 	}
 
+	// Which of our clips a STANDARD psprite label plays. "" = not a
+	// psprite standard (so it cannot open a group).
+	static string PspriteClip(string lname)
+	{
+		if (lname == "fire"    || lname == "hold"    || lname == "flash")    return "fire";
+		if (lname == "altfire" || lname == "althold" || lname == "altflash") return "altfire";
+		if (lname == "reload") return "reload";
+		if (lname == "ready"  || lname == "deselect" || lname == "select"
+		 || lname == "zoom"   || lname == "user1"    || lname == "user2"
+		 || lname == "user3"  || lname == "user4") return "ready";
+		return "";
+	}
+
+	// Labels that mean "whatever follows is NOT part of a psprite
+	// sequence" -- world-actor and inventory labels. A custom label that
+	// follows one of these in source order belongs to it, not to us.
+	static bool ClosesGroup(string lname)
+	{
+		return lname == "spawn"  || lname == "see"    || lname == "idle"
+		    || lname == "melee"  || lname == "missile"|| lname == "pain"
+		    || lname == "death"  || lname == "xdeath" || lname == "raise"
+		    || lname == "crash"  || lname == "wound"  || lname == "heal"
+		    || lname == "pickup" || lname == "use"    || lname == "drop"
+		    || lname == "lightdone" || lname == "cache" || lname == "bounce"
+		    || lname == "burn"   || lname == "ice"    || lname == "disintegrate"
+		    || lname == "brainexplode" || lname == "genericfreezedeath"
+		    || lname == "gibbed" || lname == "genericcrush";
+	}
+
+	// -----------------------------------------------------------------
+	// Build the whole table for one weapon wearing one donor.
+	// -----------------------------------------------------------------
 	static RS_ForeignRemap Build(class<Weapon> type, string donorCls,
 	                             RS_ForeignClip clips, int frameCount, int restFrame)
 	{
@@ -159,68 +120,94 @@ class RS_ForeignRemap
 		m.donor   = donorCls;
 		m.mHint   = 0;
 
-		readonly<Weapon> def = GetDefaultByType(type);
-		if (!def)
-		{
-			if (DebugOn()) Console.Printf("[RSRM] %s: GetDefaultByType returned NULL", m.clsName);
-			return m;
-		}
+		class<Actor> ac = (class<Actor>)(type);
+		int n = Actor.CountStateLabels(ac);
+		if (DebugOn()) Console.Printf("[RSRM] %s/%s: %d labels total", m.clsName, donorCls, n);
 
-		for (int li = 0; li <= 12; ++li)
+		// One pass in source order. A psprite standard opens a group (and
+		// closes the previous one); a world/inventory label closes without
+		// opening; a custom label joins whatever group is open.
+		string groupClip  = "";
+		string groupNames = "";
+		Array<State> roots;
+
+		for (int i = 0; i <= n; ++i)   // one extra pass flushes the last group
 		{
-			State root = RootFor(def, li);
-			if (root == null)
+			string lname = "";
+			State  lst   = null;
+			if (i < n)
 			{
-				if (DebugOn()) Console.Printf("[RSRM] %s/%s: label %s -> no state",
-					m.clsName, donorCls, LabelName(li));
-				continue;
+				Name nm; State st;
+				[nm, st] = Actor.GetStateLabelAt(ac, i);
+				lname = "" .. nm; lname = lname.MakeLower();
+				lst = st;
 			}
-			int before = m.mStates.Size();
-			MapSequence(m, root, ClipFor(li), donorCls, clips, frameCount, restFrame);
-			if (DebugOn()) Console.Printf("[RSRM] %s/%s: label %s -> %d states mapped (clip '%s', fc=%d)",
-				m.clsName, donorCls, LabelName(li), m.mStates.Size() - before, ClipFor(li), frameCount);
+
+			string std = (i < n) ? PspriteClip(lname) : "";
+			bool closer = (i >= n) || (std.Length() > 0) || ClosesGroup(lname);
+
+			if (closer)
+			{
+				if (groupClip.Length() > 0 && roots.Size() > 0)
+					MapGroup(m, roots, groupClip, groupNames, donorCls, clips, frameCount, restFrame);
+				roots.Clear();
+				groupNames = "";
+				groupClip  = std;   // "" when a world label or the end closed it
+			}
+
+			if (i < n && groupClip.Length() > 0 && lst != null)
+			{
+				roots.Push(lst);
+				if (groupNames.Length() > 0) groupNames = groupNames .. "+";
+				groupNames = groupNames .. lname;
+			}
 		}
 		if (DebugOn()) Console.Printf("[RSRM] %s/%s: TABLE COMPLETE, %d states total",
 			m.clsName, donorCls, m.mStates.Size());
 		return m;
 	}
 
-	static void MapSequence(RS_ForeignRemap m, State root, string seqName,
-	                        string donorCls, RS_ForeignClip clips,
-	                        int frameCount, int restFrame)
+	// -----------------------------------------------------------------
+	// One GROUP: every label chain it owns, concatenated in source order,
+	// wearing one clip distributed across the whole span by tic weight.
+	// -----------------------------------------------------------------
+	static void MapGroup(RS_ForeignRemap m, Array<State> roots, string clipName,
+	                     string groupNames, string donorCls, RS_ForeignClip clips,
+	                     int frameCount, int restFrame)
 	{
-		// 1. Collect the sequence: follow NextState until we revisit a
-		// state (their loop), hit territory another sequence already
-		// claimed, or run off the end. Goto is encoded as NextState, so
-		// this follows the real authored flow, not a guess about it.
+		// 1. Collect. Each root's NextState chain (Goto is encoded there),
+		// stopping at states already claimed -- by an earlier group or
+		// earlier in THIS group -- or revisited (their loops).
 		Array<State> seq;
 		Array<int>   dur;
 		int total = 0;
 
-		State s = root;
-		for (int guard = 0; guard < 512; ++guard)
+		for (int r = 0; r < roots.Size(); ++r)
 		{
-			if (s == null) break;
-			if (m.Claimed(s)) break;
-			bool seen = false;
-			for (int k = 0; k < seq.Size(); ++k)
-				if (seq[k] == s) { seen = true; break; }
-			if (seen) break;
+			State s = roots[r];
+			for (int guard = 0; guard < 512; ++guard)
+			{
+				if (s == null) break;
+				if (m.Claimed(s)) break;
+				bool seen = false;
+				for (int k = 0; k < seq.Size(); ++k)
+					if (seq[k] == s) { seen = true; break; }
+				if (seen) break;
 
-			int d = s.Tics;
-			if (d < 0) d = 1;          // -1 = infinite; it displays, count it once
-			seq.Push(s);
-			dur.Push(d);
-			total += d;
-			s = s.NextState;
+				int d = s.Tics;
+				if (d < 0) d = 1;          // -1 = infinite; it displays, count it once
+				seq.Push(s);
+				dur.Push(d);
+				total += d;
+				s = s.NextState;
+			}
 		}
 		if (seq.Size() == 0) return;
 
-		// 2. The donor clip for this sequence, already expanded to a
-		// per-tic frame list by RS_ForeignClip (authored pacing intact).
+		// 2. The donor clip, already expanded to a per-tic frame list.
 		Array<int> frames;
 		int markFire;
-		bool haveClip = clips.Get(donorCls, seqName, frameCount, frames, markFire)
+		bool haveClip = clips.Get(donorCls, clipName, frameCount, frames, markFire)
 		                && frames.Size() > 0;
 
 		int rest = restFrame;
@@ -229,24 +216,21 @@ class RS_ForeignRemap
 
 		if (!haveClip || total <= 0)
 		{
-			// No clip on this donor for this sequence (or a sequence of
-			// pure 0-tic states): every state parks on the rest pose.
 			for (int k = 0; k < seq.Size(); ++k)
 			{
 				m.mStates.Push(seq[k]);
 				m.mMesh.Push(rest);
 				m.mMeshNext.Push(rest);
 			}
+			if (DebugOn()) Console.Printf("[RSRM]   group [%s] -> %d states at rest (no '%s' clip)",
+				groupNames, seq.Size(), clipName);
 			return;
 		}
 
 		int N = frames.Size();
 
-		// 3. The shot anchor, now STATIC. Their bright frame is authored
-		// into their states (bFullbright); our clip knows which of its
-		// own frames is the shot (markFire). Pin those together and
-		// interpolate on either side -- the recoil lands on the bang
-		// without ever having observed a single shot.
+		// 3. Shot anchor, static: their first bright displaying state pinned
+		// to our clip's marked shot frame, interpolated on both sides.
 		int brightAt = -1, cum = 0;
 		for (int k = 0; k < seq.Size(); ++k)
 		{
@@ -256,10 +240,7 @@ class RS_ForeignRemap
 		bool anchored = (brightAt > 0 && brightAt < total
 		              && markFire > 0 && markFire < N - 1);
 
-		// 4. Distribute. Position t in their timeline -> index into our
-		// per-tic frame list; each state stores its frame and the frame
-		// its END lands on, so the runtime can lerp across multi-tic
-		// states at display rate.
+		// 4. Distribute across the whole group span.
 		cum = 0;
 		for (int k = 0; k < seq.Size(); ++k)
 		{
@@ -270,6 +251,8 @@ class RS_ForeignRemap
 			m.mMeshNext.Push(frames[b]);
 			cum += dur[k];
 		}
+		if (DebugOn()) Console.Printf("[RSRM]   group [%s] -> %d states / %d tics on clip '%s'%s",
+			groupNames, seq.Size(), total, clipName, anchored ? " (shot-anchored)" : "");
 	}
 
 	// Their tic position -> our frame-list index, piecewise-linear
