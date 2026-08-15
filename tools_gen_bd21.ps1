@@ -80,6 +80,9 @@ $DROP = @{
   'RPG'            = 'same mesh as VanAlek RocketLauncher, which keeps the slot'
   'HellishMissile' = 'rocket family is down to VanAlek + MeatGrinder'
   'SnipaRPG'       = 'a 2-frame def on a 41-frame mesh; its reload was inferred'
+  'BFG'            = 'bfg keeps the BFG10k and VanAlek''s'
+  'FlameCannon'    = 'one flamethrower, and Flamethrower2 is the flamethrower'
+  'Minigun'        = 'same mesh as VanAlek Chaingun, which keeps the slot'
 }
 
 # section comment -> our clip name. Anything unlisted is ignored.

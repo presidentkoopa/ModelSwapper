@@ -15,10 +15,8 @@ version "4.14"
 
 class MS_VR_BFG9000 : Actor {}
 class MS_BW_Colt : Actor {}
-class MS_BW_Flamethrower : Actor {}
 class MS_BW_Garand : Actor {}
 class MS_BW_Kar98 : Actor {}
-class MS_BW_Luger : Actor {}
 class MS_BW_MG42 : Actor {}
 class MS_BW_MP40 : Actor {}
 class MS_BW_STG44 : Actor {}
@@ -27,17 +25,13 @@ class MS_BW_Trenchgun : Actor {}
 class MS_Chaingun : Actor {}
 class MS_Chainsaw : Actor {}
 class MS_Fist : Actor {}
-class MS_MG_BFG : Actor {}
 class MS_MG_Bolter : Actor {}
 class MS_MG_Chaingun : Actor {}
 class MS_MG_Knife : Actor {}
 class MS_MG_RPG : Actor {}
-class MS_MG_Saw : Actor {}
 class MS_MG_Tec9 : Actor {}
 class MS_Pistol : Actor {}
-class MS_PlasmaRifle : Actor {}
 class MS_Revolver : Actor {}
-class MS_Rifle : Actor {}
 class MS_RocketLauncher : Actor {}
 
 // Every fork-only engine call lives behind RS_Fork, and the build script
@@ -51,15 +45,12 @@ class MS_RocketLauncher : Actor {}
 class MS_BD_AssaultShotgun : Actor {}
 class MS_BD_nade : Actor {}
 class MS_BD_Boot : Actor {}
-class MS_BD_BFG : Actor {}
 class MS_BD_BFG_10k : Actor {}
 class MS_BD_BrutalAxe : Actor {}
 class MS_BD_DSweap : Actor {}
-class MS_BD_FlameCannon : Actor {}
 class MS_BD_Flamethrower2 : Actor {}
 class MS_BD_M79 : Actor {}
 class MS_BD_Machinegun : Actor {}
-class MS_BD_Minigun : Actor {}
 class MS_BD_BrutalPistol : Actor {}
 class MS_BD_Plasma : Actor {}
 class MS_BD_RailGun : Actor {}
@@ -69,6 +60,10 @@ class MS_BD_Shotgun : Actor {}
 class MS_BD_BrutalSMG : Actor {}
 class MS_BD_SSG : Actor {}
 class MS_BD_Unmaker : Actor {}
+class MS_Shotgun : Actor {}
+class MS_SuperShotgun : Actor {}
+class MS_MG_Shotgun : Actor {}
+class MS_MG_SSG : Actor {}
 
 #include "zscript/RS_ForeignFork.zs"
 #include "zscript/RS_ForeignPersist.zs"

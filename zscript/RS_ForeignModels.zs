@@ -133,15 +133,12 @@ class RS_ForeignShelf
 			"shotgun|MS_BD_AssaultShotgun|SHTG|0|0|32",
 			"grenade|MS_BD_nade|MISG|0|0|27",
 			"kick|MS_BD_Boot|PUNG|0|0|58",
-			"bfg|MS_BD_BFG|BFGG|0|0|16",
 			"bfg|MS_BD_BFG_10k|BFGG|0|6|21",
 			"axe|MS_BD_BrutalAxe|PUNG|0|0|15",
 			"axe|MS_BD_DSweap|PUNG|0|5|10",
-			"flamethrower|MS_BD_FlameCannon|PLSG|0|0|8",
 			"flamethrower|MS_BD_Flamethrower2|PLSG|0|0|6",
 			"launcher|MS_BD_M79|MISG|0|0|33",
 			"machinegun|MS_BD_Machinegun|CHGG|0|0|36",
-			"chaingun|MS_BD_Minigun|CHGG|0|0|16",
 			"pistol|MS_BD_BrutalPistol|PISG|0|0|38",
 			"plasma|MS_BD_Plasma|PLSG|0|0|30",
 			"railgun|MS_BD_RailGun|PLSG|0|0|37",
@@ -161,10 +158,8 @@ class RS_ForeignShelf
 			// the standalone pk3.
 			"pistol|MS_Pistol|PISG|0|0|32",
 			"revolver|MS_Revolver|PISG|0|0|41",
-			"rifle|MS_Rifle|CHGG|0|0|41",
 			"chaingun|MS_Chaingun|CHGG|0|4|16",
 			"rocket|MS_RocketLauncher|MISG|0|5|39",
-			"plasma|MS_PlasmaRifle|PLSG|0|4|30",
 			"bfg|MS_VR_BFG9000|BFGG|0|6|16",
 			"melee|MS_Fist|PUNG|0|0|57",
 			// This set had no flamethrower or BFG10k of its own -- those three
@@ -186,12 +181,14 @@ class RS_ForeignShelf
 			// than either of the others -- the cheapest breadth on offer.
 			"melee|MS_MG_Knife|PUNG|0|0|9",
 
+			// Melee holds one of each silhouette a slot-1 weapon can be: a
+			// bare fist, an axe, a knife. The axe is on this shelf as well as
+			// its own because a mod's slot 1 is frequently a hand axe and the
+			// classifier files it as melee.
+			"melee|MS_BD_BrutalAxe|PUNG|0|0|15",
+
 			// ---- axe/blade: a held edge, not a bare hand ----
 			"axe|MS_MG_Knife|PUNG|0|0|9",
-
-			// The Dragonslayer, Brutal Doom's greatsword. It sits on melee as
-			// well as axe: a mod whose slot 1 is a blade of any size reads
-			// better wearing this than a fist.
 
 			// ---- thrown explosives ----
 			// A hand grenade is not a rocket launcher. Every mod with a frag
@@ -199,8 +196,15 @@ class RS_ForeignShelf
 			// nade is a Bv21 row up top; this shelf exists so it is reachable.
 
 			// ---- saws, on their own shelf ----
+			// "saw" here is the CHAINSAW slot -- SAWG is Doom's chainsaw
+			// sprite and every model on this shelf is a chainsaw. It is not a
+			// squad automatic weapon; a belt-fed gun belongs on machinegun,
+			// where BD's Machinegun and the MG42 already sit.
+			//
+			// One chainsaw of ours. VanAlek's keeps it over MeatGrinder's on
+			// frame count, 8 to 6. The RS_ rows below are RS_Main's own
+			// classes and cost nothing when RS_Main is not loaded.
 			"saw|MS_Chainsaw|SAWG|0|0|8",
-			"saw|MS_MG_Saw|SAWG|0|2|6",
 			"saw|VR_Chainsaw|SAWG|0|0|8",
 			"saw|RS_GH_Chainsaw|HBCS|0|27|65",
 			"saw|RS_PS_Chainsaw|SAWG|2|2|6",
@@ -208,14 +212,12 @@ class RS_ForeignShelf
 			"chaingun|MS_MG_Chaingun|CHGG|0|0|6",
 			"rocket|MS_MG_RPG|MISG|0|0|7",
 			"plasma|MS_MG_Bolter|PLSG|0|0|5",
-			"bfg|MS_MG_BFG|BFGG|0|0|11",
 
 			// The Bolter is a handheld -- it reads as a high-power sidearm or
 			// a compact rifle just as well as an energy weapon, so it sits on
 			// three shelves. Nothing stops a donor appearing under more than
 			// one archetype; the row is the same, only the shelf differs.
 			"pistol|MS_MG_Bolter|PLSG|0|0|5",
-			"rifle|MS_MG_Bolter|PLSG|0|0|5",
 
 			// ---- Brutal Wolfenstein set. Real WW2 weapons, which is what a
 			// post-apocalyptic or contemporary mod actually wants -- Ashes'
@@ -229,7 +231,6 @@ class RS_ForeignShelf
 			// "Ready:" is the DEPLOY animation in this mod and would have put
 			// the Luger at frame 53.
 			"pistol|MS_BW_Colt|PISG|0|1|60",
-			"pistol|MS_BW_Luger|PISG|0|0|61",
 			"rifle|MS_BW_Kar98|CHGG|0|1|44",
 			"rifle|MS_BW_Garand|CHGG|0|1|36",
 			"rifle|MS_BW_STG44|CHGG|0|13|51",
@@ -237,12 +238,10 @@ class RS_ForeignShelf
 			"smg|MS_BW_Thompson|CHGG|0|1|53",
 			"machinegun|MS_BW_MG42|CHGG|0|12|97",
 			"shotgun|MS_BW_Trenchgun|SHTG|0|1|47",
-			"flamethrower|MS_BW_Flamethrower|PLSG|0|0|15",
 
 			// The Kar98 is a bolt-action rifle -- it reads as a marksman
 			// weapon as well as a battle rifle, so it also sits on railgun,
 			// which otherwise has one model.
-			"railgun|MS_BW_Kar98|CHGG|0|1|44",
 
 			// ---- sniper ----
 			// The Kar98 is a bolt-action: one shot, work the bolt, shoot
@@ -253,7 +252,11 @@ class RS_ForeignShelf
 			// MD3 header showed it was a one-frame mesh -- a scope, not a
 			// rifle.
 			"sniper|MS_BW_Kar98|CHGG|0|1|44",
-			"sniper|MS_BW_Garand|CHGG|0|1|36"
+			"sniper|MS_BW_Garand|CHGG|0|1|36",
+			"shotgun|MS_Shotgun|SHTG|0|0|32",
+			"shotgun|MS_MG_Shotgun|SHTG|0|0|4",
+			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
+			"supershotgun|MS_MG_SSG|SHT2|0|0|12"
 		};
 		mRows.Clear();
 		for (int i = 0; i < SHELF.Size(); ++i)
@@ -658,7 +661,7 @@ class RS_ForeignScanner
 	//
 	// hasmodel is set on the CLASS DEFAULTS by the MODELDEF parser and is the
 	// same flag FindModelFrameRaw gates on, so it answers exactly the right
-	// question. It is an RS-fork export (FORK_CHANGES.md ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§15); on stock GZDoom
+	// question. It is an RS-fork export (FORK_CHANGES.md ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§15); on stock GZDoom
 	// this is not answerable from ZScript at all.
 	//
 	// READ IT OFF THE DEFAULTS, NEVER OFF A LIVE ACTOR. A_ChangeModel sets

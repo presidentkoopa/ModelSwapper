@@ -33,14 +33,6 @@ Model MS_Revolver
    FrameIndex PISG A 0 0
 }
 
-Model MS_Rifle
-{
-	Path "Models/Weapons/hud/RS_Weapon/VR_Rifle"
-	Model 0 "m16.md3"
-	Skin 0 "WPN-M16.png"
-	Scale 1.35 1.35 1.35
-   FrameIndex CHGG A 0 0
-}
 
 Model MS_Chaingun
 {
@@ -64,15 +56,6 @@ Model MS_RocketLauncher
    FrameIndex MISG A 0 5
 }
 
-Model MS_PlasmaRifle
-{
-	Path "models/bd21/Plasma_Gun"
-	Model 0 "Plasma.md3"
-	Skin 0 "Plasma.png"
-	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-   FrameIndex PLSG A 0 4
-}
 
 Model MS_Chainsaw
 {
@@ -117,15 +100,6 @@ Model MS_MG_Knife
    FrameIndex PUNG A 0 0
 }
 
-Model MS_MG_Saw
-{
-	Path "models/meatgrinder/Saw"
-	Model 0 "Saw.md3"
-	Skin 0 "Saw.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-   FrameIndex SAWG A 0 2
-}
 
 Model MS_MG_Tec9
 {
@@ -167,15 +141,6 @@ Model MS_MG_Bolter
    FrameIndex PLSG A 0 0
 }
 
-Model MS_MG_BFG
-{
-	Path "models/meatgrinder/BFG"
-	Model 0 "BFG.md3"
-	Skin 0 "BFG_9k.png"
-	Scale -1.1 1.1 1.1
-	ZOffset -6
-   FrameIndex BFGG A 0 0
-}
 
 Model MS_BW_Colt
 {
@@ -188,16 +153,6 @@ Model MS_BW_Colt
 	FrameIndex PISG A 0 1
 }
 
-Model MS_BW_Flamethrower
-{
-	Path "models/bw/Flammenwerfer"
-	Model 0 "flammenwerfer.md3"
-	Skin 0 "flammenwerfer.png"
-	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
-	FrameIndex PLSG A 0 0
-}
 
 Model MS_BW_Garand
 {
@@ -210,16 +165,6 @@ Model MS_BW_Garand
 	FrameIndex CHGG A 0 1
 }
 
-Model MS_BW_Luger
-{
-	Path "models/bw/Luger"
-	Model 0 "luger.md3"
-	Skin 0 "luger.png"
-	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
-	FrameIndex PISG A 0 0
-}
 
 Model MS_BW_MG42
 {
@@ -333,16 +278,6 @@ Model MS_BD_Boot
 	FrameIndex PUNG A 0 0
 }
 
-Model MS_BD_BFG
-{
-	Path "models/bd21/BFG"
-	Model 0 "BFG.md3"
-	Skin 0 "BFG.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex BFGG A 0 0
-}
 
 Model MS_BD_BFG_10k
 {
@@ -377,16 +312,6 @@ Model MS_BD_DSweap
 	FrameIndex PUNG A 0 5
 }
 
-Model MS_BD_FlameCannon
-{
-	Path "models/bd21/FlameCannon"
-	Model 0 "FlameCannon.md3"
-	Skin 0 "FlameCannon.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex PLSG A 0 0
-}
 
 Model MS_BD_Flamethrower2
 {
@@ -421,16 +346,6 @@ Model MS_BD_Machinegun
 	FrameIndex CHGG A 0 0
 }
 
-Model MS_BD_Minigun
-{
-	Path "models/bd21/Minigun"
-	Model 0 "Minigun.md3"
-	Skin 0 "Minigun.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex CHGG A 0 0
-}
 
 Model MS_BD_BrutalPistol
 {
@@ -530,3 +445,59 @@ Model MS_BD_Unmaker
 	NoInterpolation
 	FrameIndex BFGG A 0 4
 }
+
+Model MS_Shotgun
+{
+	Path "Models/Weapons/hud/RS_Weapon/VR_Shotgun"
+	Model 0 "shotgun.md3"
+	Skin 0 "WPN-SHTGUN.png"
+	Scale 1.35 1.35 1.35
+   FrameIndex SHTG A 0 0
+}
+
+Model MS_SuperShotgun
+{
+	Path "Models/Weapons/hud/RS_Weapon/VR_SuperShotgun"
+	Model 0 "ssg.md3"
+	Skin 0 "WPN-SSHTGUN.png"
+	Scale 1.35 1.35 1.35
+	// THE SPAWN FRAME, WHICH IS WHY A DROPPED SSG WAS INVISIBLE ON
+	// ULTIMATE DOOM. Added 2026-08-08.
+	//
+	// VR_SuperShotgun spawns in the world as SGN2 A (RS_Shotgun-style
+	// Spawn state, RS_SuperShotgun.zs), and SGN2A0 is a DOOM 2 lump --
+	// verified absent from doom.wad and present in doom2.wad. The repo
+	// so on doom.wad an SSG elite drop or pedestal fill had NO SPRITE
+	// AND NO MODEL: an actor that ticks, is reachable and renders
+	// nothing. Exactly the PSP1/BFP1/PLP1/RLP1 defect fixed earlier the
+	// same day, in the one family that pass did not cover because its
+	// spawn sprite EXISTS -- just not in every IWAD.
+	//
+	// Mapping it to the model rather than extracting SGN2 from the IWAD:
+	// the other five sprite-backed families already render their own
+	// mesh in the world (SHTG A, CHGG A, REVO A, RIFK A, SAWG A all have
+	// instead of alone in showing a vanilla pickup graphic, and it costs
+	// no IWAD art at all.
+   FrameIndex SHT2 A 0 0
+}
+
+Model MS_MG_Shotgun
+{
+	Path "models/meatgrinder/Shotgun"
+	Model 0 "Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Scale -1.1 1.1 1.1
+	ZOffset -6
+   FrameIndex SHTG A 0 0
+}
+
+Model MS_MG_SSG
+{
+	Path "models/meatgrinder/SSG"
+	Model 0 "SSG.md3"
+	Skin 0 "ssg.png"
+	Scale -1.1 1.1 1.1
+	ZOffset -6
+   FrameIndex SHT2 A 0 0
+}
+

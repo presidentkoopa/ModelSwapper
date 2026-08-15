@@ -55,10 +55,6 @@ class RS_ForeignClip
 			"MS_BD_nade|fire|3@1,4@1,5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1|0|-1|-1",
 			"MS_BD_nade|reload|16@1,17@1,18@1,19@1,20@1,21@1,22@1,23@1,24@1,25@1,26@1|-1|-1|-1",
 			"MS_BD_Boot|fire|5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1,16@1,17@1,18@1,19@1,20@1,21@1,22@1,23@1,24@1,25@1,26@1,27@1,28@1,29@1,30@1,31@1,32@1,33@1,34@1,35@1,36@1,37@1,38@1,39@1,40@1,53@1,54@1,55@1,56@1,57@1|0|-1|-1",
-			"MS_BD_BFG|fire|6@1|0|-1|-1",
-			"MS_BD_BFG|ready|0@1,1@1,2@1,3@1,4@1,5@1|-1|-1|-1",
-			"MS_BD_BFG|reload|7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1|-1|-1|-1",
-			"MS_BD_BFG|sprint|5@1|-1|-1|-1",
 			"MS_BD_BFG_10k|fire|6@1,10@1|0|-1|-1",
 			"MS_BD_BFG_10k|ready|6@1,7@1,8@1,9@1|-1|-1|-1",
 			"MS_BD_BFG_10k|reload|11@1,12@1,13@1,14@1,15@1,16@1,17@1,18@1,19@1,20@1|-1|-1|-1",
@@ -66,8 +62,6 @@ class RS_ForeignClip
 			"MS_BD_BrutalAxe|ready|0@1,1@1,2@1,3@1|-1|-1|-1",
 			"MS_BD_BrutalAxe|sprint|3@1|-1|-1|-1",
 			"MS_BD_DSweap|ready|5@1,6@1,7@1,8@1|-1|-1|-1",
-			"MS_BD_FlameCannon|fire|1@1,2@1,3@1,4@1,5@1,6@1,7@1|0|-1|-1",
-			"MS_BD_FlameCannon|ready|0@1|-1|-1|-1",
 			"MS_BD_Flamethrower2|fire|0@1,1@1,2@1,3@1,4@1|0|-1|-1",
 			"MS_BD_M79|fire|3@1,4@1,5@1,6@1|0|-1|-1",
 			"MS_BD_M79|ready|0@1,1@1,2@1|-1|-1|-1",
@@ -77,9 +71,6 @@ class RS_ForeignClip
 			"MS_BD_Machinegun|ready|0@1,1@1,2@1,3@1|-1|-1|-1",
 			"MS_BD_Machinegun|reload|18@1,19@1,20@1,21@1,22@1,23@1,24@1,25@1,26@1,27@1,28@1,29@1,30@1,31@1,32@1,33@1,34@1,35@1|-1|-1|-1",
 			"MS_BD_Machinegun|sprint|3@1|-1|-1|-1",
-			"MS_BD_Minigun|fire|4@1,5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1|0|-1|-1",
-			"MS_BD_Minigun|ready|0@1,1@1,2@1,3@1|-1|-1|-1",
-			"MS_BD_Minigun|sprint|3@1|-1|-1|-1",
 			"MS_BD_BrutalPistol|fire|2@1,3@1,4@1,5@1,6@1,7@1|0|-1|-1",
 			"MS_BD_BrutalPistol|ready|0@1,1@1|-1|-1|-1",
 			"MS_BD_BrutalPistol|reload|8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1,16@1,17@1,18@1,19@1,20@1,21@1,22@1,23@1,24@1,25@1|-1|-1|-1",
@@ -118,10 +109,8 @@ class RS_ForeignClip
 			"MS_BD_Unmaker|ready|4@1,5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1|-1|-1|-1",
 
 			"MS_BW_Colt|ready|1@1|-1|-1|-1",
-			"MS_BW_Flamethrower|ready|0@1|-1|-1|-1",
 			"MS_BW_Garand|ready|1@1|-1|-1|-1",
 			"MS_BW_Kar98|ready|1@1|-1|-1|-1",
-			"MS_BW_Luger|ready|0@1|-1|-1|-1",
 			"MS_BW_MG42|ready|12@1|-1|-1|-1",
 			"MS_BW_MP40|ready|13@1|-1|-1|-1",
 			"MS_BW_STG44|ready|13@1|-1|-1|-1",
@@ -130,17 +119,13 @@ class RS_ForeignClip
 			"MS_Chaingun|ready|4@1|-1|-1|-1",
 			"MS_Chainsaw|ready|0@1|-1|-1|-1",
 			"MS_Fist|ready|0@1|-1|-1|-1",
-			"MS_MG_BFG|ready|0@1|-1|-1|-1",
 			"MS_MG_Bolter|ready|0@1|-1|-1|-1",
 			"MS_MG_Chaingun|ready|0@1|-1|-1|-1",
 			"MS_MG_Knife|ready|0@1|-1|-1|-1",
 			"MS_MG_RPG|ready|0@1|-1|-1|-1",
-			"MS_MG_Saw|ready|2@1|-1|-1|-1",
 			"MS_MG_Tec9|ready|0@1|-1|-1|-1",
 			"MS_Pistol|ready|0@1|-1|-1|-1",
-			"MS_PlasmaRifle|ready|4@1|-1|-1|-1",
 			"MS_Revolver|ready|0@1|-1|-1|-1",
-			"MS_Rifle|ready|0@1|-1|-1|-1",
 			"MS_RocketLauncher|ready|5@1|-1|-1|-1",
 
 			"MS_VR_BFG9000|ready|6@1|-1|-1|-1",
@@ -155,22 +140,17 @@ class RS_ForeignClip
 			// simply never written down; every OTHER fist/knife/saw donor
 			// already has a fire clip.
 			"MS_Fist|fire|1@4,2@4,3@5,2@4,1@5,0@1|0|-1|-1",
-			"MS_MG_BFG|fire|1-4@1,1-4@1,1-4@1,5-10@1,0@5|0|-1|-1",
 
 			"MS_MG_Bolter|fire|3@1,1@1,1@1,2@1|0|-1|-1",
 			"MS_MG_Chaingun|fire|4@1,5@1,0-3@1,0-3@1,0-3@1,0-3@2,0-3@2,0-3@2|0|-1|-1",
 			"MS_MG_Knife|fire|1@1,2@1,3@1,4@1,5@1,6@1,7@1,8@1,0@1|0|-1|-1",
 			"MS_MG_RPG|altfire|4@1,5@1,6@1,0@5,0-3@1,0-3@1,0-3@1|0|-1|-1",
 			"MS_MG_RPG|fire|4@1,5@1,0@3,1@1,2@1,3@1,0@3|0|-1|-1",
-			"MS_MG_Saw|fire|4@1,5@1,6@1,7@1|0|-1|-1",
 			"MS_MG_Tec9|fire|4@1,1@1,2@1,0@1|0|-1|-1",
 			"MS_Pistol|fire|1@2,2@2,0@1|0|-1|-1",
 			"MS_Pistol|reload|5-17@1,18-22@1,23-24@1|0|-1|-1",
-			"MS_PlasmaRifle|fire|4@2,12@2|0|-1|-1",
 			"MS_Revolver|fire|1-3@1,4-5@2,6-15@1|0|-1|-1",
 			"MS_Revolver|reload|16-25@2,26@1,27-33@2,34-37@1,0@1|0|-1|-1",
-			"MS_Rifle|fire|1-2@1,0@1|0|-1|-1",
-			"MS_Rifle|reload|11-13@2,14-24@1,26-34@2,35-37@1,38-40@2|0|-1|-1",
 			"MS_RocketLauncher|fire|10@6,10@4,5@1|0|-1|-1",
 			// INFERRED RELOADS.
 			//
@@ -186,13 +166,10 @@ class RS_ForeignClip
 			// a range could be wrong. If one looks off, the picker is the fix --
 			// every family has three or more donors.
 			"MS_RocketLauncher|reload|11-38@1|-1|0|14",
-			"MS_PlasmaRifle|reload|13-29@1|-1|0|8",
 
 
 			"MS_BW_Colt|fire|2@1,3@1,4-6@1|0|-1|-1",
 			"MS_BW_Colt|reload|36-43@1,44-51@2,52-55@2,56-59@1,16-23@1,24-31@2,32-35@2,23-16@1|-1|0|20",
-			"MS_BW_Luger|fire|1@1,2@1,3-4@1,5@1|0|-1|-1",
-			"MS_BW_Luger|reload|6-13@1,14-16@2,17-22@2,22-26@2,27-28@2,29-30@3,31-39@1,40-43@1,44-46@2,47-48@2,49@4,50-52@2,39-31@1|-1|0|24",
 			"MS_BW_Kar98|fire|2@1,3-6@1,6@3,7-10@2,11@6,10-7@2|0|-1|-1",
 			"MS_BW_Kar98|reload|7-8@2,9-11@2,28-29@2,30-33@2,7-8@2,9-11@2,12-27@2,11-7@2|-1|0|18",
 			"MS_BW_Garand|fire|2@1,3-5@1,6-9@1|0|-1|-1",
@@ -207,7 +184,16 @@ class RS_ForeignClip
 			"MS_BW_MG42|reload|18-28@1,29@3,30-46@1,47-72@2,73-78@1,79@3,80@1,81@3,82-87@1,88@3,89-92@1,93@3,94-96@1|-1|0|60",
 			"MS_BW_Trenchgun|fire|2@1,3-7@1,23@1,25@1,27@1,29@1,31@1,32@1,34@1,32@1,30@1,28@1,26@1,23@1|0|4|-1",
 			"MS_BW_Trenchgun|reload|23-31@1,35-36@2,37-44@1,45@4,34-23@1|-1|0|14",
-			"MS_BW_Flamethrower|fire|14@1|0|-1|-1"
+			"MS_MG_SSG|ready|0@1|-1|-1|-1",
+			"MS_MG_Shotgun|ready|0@1|-1|-1|-1",
+			"MS_Shotgun|ready|0@1|-1|-1|-1",
+			"MS_SuperShotgun|ready|0@1|-1|-1|-1",
+			"MS_MG_Shotgun|fire|1@1,2@2,3@2,0@2|0|-1|-1",
+			"MS_Shotgun|fire|1-4@1,5@1,6@1,7@1,8-12@1,13@1,14-19@1,0@1|0|-1|-1",
+			"MS_Shotgun|reload|5@2,6@2,19@1,18@1,17@1,16@1,15@1,14@1,13@1,12@1,11@1,10@1,9@1,8@1,7@1,6@1,5@1|0|-1|-1",
+			"MS_MG_SSG|reload|2-11@2|-1|0|5",
+			"MS_SuperShotgun|fire|0@2,1-7@2|0|-1|-1",
+			"MS_SuperShotgun|reload|8@2,9-17@3,18@2,19-21@3,23@2,24@2,24@1|0|-1|-1"
 		};
 		mRows.Clear();
 		for (int i = 0; i < CLIP.Size(); ++i) mRows.Push(CLIP[i]);
