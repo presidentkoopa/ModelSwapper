@@ -133,26 +133,20 @@ class RS_ForeignShelf
 			"shotgun|MS_BD_AssaultShotgun|SHTG|0|0|32",
 			"grenade|MS_BD_nade|MISG|0|0|27",
 			"kick|MS_BD_Boot|PUNG|0|0|58",
-			"melee|MS_BD_fistclosed|PUNG|0|0|75",
 			"bfg|MS_BD_BFG|BFGG|0|0|16",
 			"bfg|MS_BD_BFG_10k|BFGG|0|6|21",
 			"axe|MS_BD_BrutalAxe|PUNG|0|0|15",
 			"axe|MS_BD_DSweap|PUNG|0|5|10",
-			"melee|MS_BD_DSweap|PUNG|0|5|10",
 			"flamethrower|MS_BD_FlameCannon|PLSG|0|0|8",
 			"flamethrower|MS_BD_Flamethrower2|PLSG|0|0|6",
-			"rocket|MS_BD_HellishMissile|MISG|0|0|10",
 			"launcher|MS_BD_M79|MISG|0|0|33",
 			"machinegun|MS_BD_Machinegun|CHGG|0|0|36",
 			"chaingun|MS_BD_Minigun|CHGG|0|0|16",
-			"smg|MS_BD_MP40|CHGG|0|0|14",
 			"pistol|MS_BD_BrutalPistol|PISG|0|0|38",
 			"plasma|MS_BD_Plasma|PLSG|0|0|30",
 			"railgun|MS_BD_RailGun|PLSG|0|0|37",
 			"revolver|MS_BD_Revolver|PISG|0|0|33",
 			"rifle|MS_BD_Rifle|CHGG|0|0|32",
-			"rocket|MS_BD_RPG|MISG|0|0|39",
-			"rocket|MS_BD_SnipaRPG|MISG|0|0|41",
 			"shotgun|MS_BD_Shotgun|SHTG|0|0|36",
 			"smg|MS_BD_BrutalSMG|CHGG|0|0|27",
 			"supershotgun|MS_BD_SSG|SHT2|0|47|52",
@@ -168,8 +162,6 @@ class RS_ForeignShelf
 			"pistol|MS_Pistol|PISG|0|0|32",
 			"revolver|MS_Revolver|PISG|0|0|41",
 			"rifle|MS_Rifle|CHGG|0|0|41",
-			"shotgun|MS_Shotgun|SHTG|0|0|32",
-			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
 			"chaingun|MS_Chaingun|CHGG|0|4|16",
 			"rocket|MS_RocketLauncher|MISG|0|5|39",
 			"plasma|MS_PlasmaRifle|PLSG|0|4|30",
@@ -213,8 +205,6 @@ class RS_ForeignShelf
 			"saw|RS_GH_Chainsaw|HBCS|0|27|65",
 			"saw|RS_PS_Chainsaw|SAWG|2|2|6",
 			"smg|MS_MG_Tec9|CHGG|0|0|6",
-			"shotgun|MS_MG_Shotgun|SHTG|0|0|4",
-			"supershotgun|MS_MG_SSG|SHT2|0|0|12",
 			"chaingun|MS_MG_Chaingun|CHGG|0|0|6",
 			"rocket|MS_MG_RPG|MISG|0|0|7",
 			"plasma|MS_MG_Bolter|PLSG|0|0|5",
@@ -258,13 +248,12 @@ class RS_ForeignShelf
 			// The Kar98 is a bolt-action: one shot, work the bolt, shoot
 			// again. It reads as a marksman weapon far better than as a
 			// battle rifle, and it is the only mesh here with that
-			// silhouette. The Garand backs it up, and Brutal Doom's own scoped
-			// railgun -- SnipaRG, a distinct mesh from the plain RailGun -- is
-			// the long scoped option for a sci-fi mod.
+			// silhouette. The Garand backs it up. Brutal Doom's own scoped
+			// railgun, SnipaRG, used to be the sci-fi option here until the
+			// MD3 header showed it was a one-frame mesh -- a scope, not a
+			// rifle.
 			"sniper|MS_BW_Kar98|CHGG|0|1|44",
-			"sniper|MS_BW_Garand|CHGG|0|1|36",
-
-			"smg|MS_SMG|CHGG|0|3|27"
+			"sniper|MS_BW_Garand|CHGG|0|1|36"
 		};
 		mRows.Clear();
 		for (int i = 0; i < SHELF.Size(); ++i)
@@ -669,7 +658,7 @@ class RS_ForeignScanner
 	//
 	// hasmodel is set on the CLASS DEFAULTS by the MODELDEF parser and is the
 	// same flag FindModelFrameRaw gates on, so it answers exactly the right
-	// question. It is an RS-fork export (FORK_CHANGES.md Ãƒâ€šÃ‚Â§15); on stock GZDoom
+	// question. It is an RS-fork export (FORK_CHANGES.md ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§15); on stock GZDoom
 	// this is not answerable from ZScript at all.
 	//
 	// READ IT OFF THE DEFAULTS, NEVER OFF A LIVE ACTOR. A_ChangeModel sets

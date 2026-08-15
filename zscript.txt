@@ -32,18 +32,13 @@ class MS_MG_Bolter : Actor {}
 class MS_MG_Chaingun : Actor {}
 class MS_MG_Knife : Actor {}
 class MS_MG_RPG : Actor {}
-class MS_MG_SSG : Actor {}
 class MS_MG_Saw : Actor {}
-class MS_MG_Shotgun : Actor {}
 class MS_MG_Tec9 : Actor {}
 class MS_Pistol : Actor {}
 class MS_PlasmaRifle : Actor {}
 class MS_Revolver : Actor {}
 class MS_Rifle : Actor {}
 class MS_RocketLauncher : Actor {}
-class MS_SMG : Actor {}
-class MS_Shotgun : Actor {}
-class MS_SuperShotgun : Actor {}
 
 // Every fork-only engine call lives behind RS_Fork, and the build script
 // ships one of two implementations of this path: the desktop one, or the
@@ -56,25 +51,20 @@ class MS_SuperShotgun : Actor {}
 class MS_BD_AssaultShotgun : Actor {}
 class MS_BD_nade : Actor {}
 class MS_BD_Boot : Actor {}
-class MS_BD_fistclosed : Actor {}
 class MS_BD_BFG : Actor {}
 class MS_BD_BFG_10k : Actor {}
 class MS_BD_BrutalAxe : Actor {}
 class MS_BD_DSweap : Actor {}
 class MS_BD_FlameCannon : Actor {}
 class MS_BD_Flamethrower2 : Actor {}
-class MS_BD_HellishMissile : Actor {}
 class MS_BD_M79 : Actor {}
 class MS_BD_Machinegun : Actor {}
 class MS_BD_Minigun : Actor {}
-class MS_BD_MP40 : Actor {}
 class MS_BD_BrutalPistol : Actor {}
 class MS_BD_Plasma : Actor {}
 class MS_BD_RailGun : Actor {}
 class MS_BD_Revolver : Actor {}
 class MS_BD_Rifle : Actor {}
-class MS_BD_RPG : Actor {}
-class MS_BD_SnipaRPG : Actor {}
 class MS_BD_Shotgun : Actor {}
 class MS_BD_BrutalSMG : Actor {}
 class MS_BD_SSG : Actor {}

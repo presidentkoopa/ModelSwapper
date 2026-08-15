@@ -48,9 +48,11 @@ $MESHFAM = @{
   'BFG_10k'   = @('bfg','BFGG')
 }
 
-# Meshes that earn a place on a second shelf.
+# Meshes that earn a place on a second shelf. The Dragonslayer sat on melee
+# for a while, but melee is meant to hold one fist and one knife -- a
+# greatsword is an axe-shelf weapon, and having it on both put a third
+# silhouette in a family that wanted two.
 $EXTRAFAM = @{
-  'DSweap' = @('melee')
 }
 
 # Meshes we deliberately do not ship, and why.
@@ -71,6 +73,13 @@ $DROP = @{
   'Rifle_Dual'     = 'dual-wield mesh'
   'HitlersBuzzsaw' = 'size: 4.9MB, saw family has other models'
   'Chain_saw'      = 'size: 18.4MB, the largest single asset in the pk3'
+  # One model per silhouette. These lost a straight comparison against the
+  # model kept for their family -- see the shelf in RS_ForeignModels.zs.
+  'fistclosed'     = 'one fist: VanAlek keeps the melee slot'
+  'MP40'           = 'one MP40: Brutal Wolfenstein keeps it'
+  'RPG'            = 'same mesh as VanAlek RocketLauncher, which keeps the slot'
+  'HellishMissile' = 'rocket family is down to VanAlek + MeatGrinder'
+  'SnipaRPG'       = 'a 2-frame def on a 41-frame mesh; its reload was inferred'
 }
 
 # section comment -> our clip name. Anything unlisted is ignored.
