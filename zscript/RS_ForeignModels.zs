@@ -569,10 +569,18 @@ class RS_ForeignScanner
 		 || hay.IndexOf("dynamite") >= 0 || hay.IndexOf("molotov") >= 0
 		 || hay.IndexOf("satchel") >= 0 || hay.IndexOf("throwable") >= 0
 		 || hay.IndexOf("cocktail") >= 0) return "grenade";
+		// "1911" and "acp" earn their place from a real miss: Weapons of
+		// Saturn's 1911 sits on slot 8, matched no name or ammo token, and
+		// fell through to the slot fallback -- where slot 8 means "second
+		// BFG". A BFG10k on a .45 automatic. Both tokens are unambiguous
+		// (no other weapon word contains either), and "acp" also catches
+		// the ammo class, since AmmoArchetype runs names through here too.
 		if (hay.IndexOf("pistol") >= 0 || hay.IndexOf("handgun") >= 0
 		 || hay.IndexOf("glock") >= 0 || hay.IndexOf("autoloader") >= 0
 		 || hay.IndexOf("9mm") >= 0 || hay.IndexOf("luger") >= 0
 		 || hay.IndexOf("beretta") >= 0 || hay.IndexOf("deagle") >= 0
+		 || hay.IndexOf("1911") >= 0 || hay.IndexOf("acp") >= 0
+		 || hay.IndexOf("makarov") >= 0 || hay.IndexOf("tokarev") >= 0
 		 || hay.IndexOf("desert eagle") >= 0 || hay.IndexOf("sidearm") >= 0) return "pistol";
 		// SAWS ARE NOT FISTS. Both are melee, and a shared melee shelf leads
 		// with a fist, so every chainsaw in every mod came out as knuckles.
