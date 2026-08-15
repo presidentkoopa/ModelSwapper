@@ -116,18 +116,43 @@ class RS_ForeignRemap play
 	// rows are permanent for the session and re-heal identically the
 	// next session on first encounter.
 	// -----------------------------------------------------------------
-	int HealFrom(int fromRow, State missed, Actor w)
+	// Which group plays a given clip. The healer needs this to answer
+	// "the player pressed altfire, so the orphan chain they landed on is
+	// the altfire animation" -- see ApplyHand.
+	int FindGroupByClip(string clipName) const
 	{
-		if (fromRow < 0 || fromRow >= mStates.Size()) return 0;
+		for (int i = 0; i < mGroups.Size(); ++i)
+			if (mGroups[i].clipName == clipName) return i;
+		return -1;
+	}
+
+	string GroupClip(int gid) const
+	{
+		if (gid < 0 || gid >= mGroups.Size()) return "";
+		return mGroups[gid].clipName;
+	}
+
+	int GroupIdOfRow(int row) const
+	{
+		if (row < 0 || row >= mGroupId.Size()) return -1;
+		return mGroupId[row];
+	}
+
+	int EndIdxOfRow(int row) const
+	{
+		if (row < 0 || row >= mEndIdx.Size()) return 0;
+		return mEndIdx[row];
+	}
+
+	int HealInto(int gid, int startIdx, State missed, Actor w)
+	{
+		if (gid < 0 || gid >= mGroups.Size()) return 0;
 		if (missed == null || w == null) return 0;
 
-		int gid = mGroupId[fromRow];
-		if (gid < 0 || gid >= mGroups.Size()) return 0;
 		let grp = mGroups[gid];
 		int N = grp.frames.Size();
 		if (N == 0) return 0;
 
-		int startIdx = mEndIdx[fromRow];
 		if (startIdx < 0) startIdx = 0;
 		if (startIdx > N - 1) startIdx = N - 1;
 
