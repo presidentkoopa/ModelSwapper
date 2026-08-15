@@ -177,26 +177,22 @@ class RS_ForeignShelf
 			"chaingun|MS_Chaingun|CHGG|0|4|16",
 			"rocket|MS_RocketLauncher|MISG|0|5|39",
 			"plasma|MS_PlasmaRifle|PLSG|0|4|30",
-			"flamethrower|MS_Flamethrower|PLSG|0|0|6",
-			"bfg|MS_BFG9000|BFGG|0|6|16",
 			"bfg|MS_VR_BFG9000|BFGG|0|6|16",
-			"bfg|MS_BFG10k|BFGG|0|6|21",
 			"melee|MS_Fist|PUNG|0|0|57",
+			// This set had no flamethrower or BFG10k of its own -- those three
+			// rows pointed into the Brutal Doom folder while wearing a VanAlek
+			// label. Both families are covered by real Bv21 rows above, so the
+			// borrowing is gone rather than repointed. A family honestly absent
+			// from a set beats one silently answered by another set's mesh.
 
-			// ---- GoldHunter set. Fills the two families the VR set has no
-			// model for at all (smg, railgun) and gives every other family a
-			// second and third option.
-			"pistol|MS_GH_Pistol|PISG|0|2|38",
-			"revolver|MS_GH_Revolver|PISG|0|0|33",
-			"rifle|MS_GH_Rifle|CHGG|0|3|32",
-			"smg|MS_GH_SMG|CHGG|0|3|27",
-			"smg|MS_GH_MP40|CHGG|0|2|14",
-			"chaingun|MS_GH_Minigun|CHGG|0|4|16",
-			"shotgun|MS_GH_AutoShotgun|SHTG|0|4|32",
-			"launcher|MS_GH_GrenadeLauncher|MISG|0|3|33",
-			"plasma|MS_GH_Plasma|PLSG|0|4|30",
-			"railgun|MS_GH_Railgun|PLSG|0|3|37",
-			"melee|MS_GH_Fist|PUNG|0|0|75",
+			// The Bv21 rows above ARE the Brutal Doom set. There used to be a
+			// second copy of these same guns here, taken from RS_Main's
+			// re-export rather than from Brutal Doom itself -- 20 models and
+			// 72MB duplicating meshes the block above already covers, minus
+			// the axe, the boot, the Dragonslayer and the dual variants that
+			// only the real set has. Shipping both meant the picker offered
+			// each gun twice and "assign all Bv21" reached for the lesser of
+			// the two. One set, sourced from BD's own MODELDEFs.
 
 			// ---- MeatGrinder set. Nine models in 6MB, and a grittier look
 			// than either of the others -- the cheapest breadth on offer.
@@ -205,14 +201,19 @@ class RS_ForeignShelf
 			// ---- axe/blade: a held edge, not a bare hand ----
 			"axe|MS_MG_Knife|PUNG|0|0|9",
 
+			// The Dragonslayer, Brutal Doom's greatsword. It sits on melee as
+			// well as axe: a mod whose slot 1 is a blade of any size reads
+			// better wearing this than a fist.
+			"axe|MS_BD_DSweap|PUNG|0|5|9",
+			"melee|MS_BD_DSweap|PUNG|0|5|9",
+
 			// ---- thrown explosives ----
 			// A hand grenade is not a rocket launcher. Every mod with a frag
-			// or a pipe bomb was getting an RPG welded to its hand.
-			"grenade|MS_GH_Grenade|MISG|0|2|27",
+			// or a pipe bomb was getting an RPG welded to its hand. The thrown
+			// nade is a Bv21 row up top; this shelf exists so it is reachable.
 
 			// ---- saws, on their own shelf ----
 			"saw|MS_Chainsaw|SAWG|0|0|8",
-			"saw|MS_GH_Chainsaw|SAWG|0|27|65",
 			"saw|MS_MG_Saw|SAWG|0|2|6",
 			"saw|VR_Chainsaw|SAWG|0|0|8",
 			"saw|RS_GH_Chainsaw|HBCS|0|27|65",
@@ -263,19 +264,13 @@ class RS_ForeignShelf
 			// The Kar98 is a bolt-action: one shot, work the bolt, shoot
 			// again. It reads as a marksman weapon far better than as a
 			// battle rifle, and it is the only mesh here with that
-			// silhouette. The Garand backs it up, and the Railgun is the
-			// long scoped-looking option for a sci-fi mod.
+			// silhouette. The Garand backs it up, and Brutal Doom's own scoped
+			// railgun -- SnipaRG, a distinct mesh from the plain RailGun -- is
+			// the long scoped option for a sci-fi mod.
 			"sniper|MS_BW_Kar98|CHGG|0|1|44",
 			"sniper|MS_BW_Garand|CHGG|0|1|36",
-			"sniper|MS_GH_Railgun|PLSG|0|3|37",
+			"sniper|MS_BD_SnipaRG|PLSG|0|0|37",
 
-			// ---- the rest of the GoldHunter set, and the VR SMG. All four
-			// donor sets are now complete: VR, GoldHunter, MeatGrinder and
-			// Brutal Wolfenstein.
-			"supershotgun|MS_GH_SSG|SHT2|0|1|52",
-			"shotgun|MS_GH_PumpShotgun|SHTG|0|4|36",
-			"machinegun|MS_GH_Machinegun|CHGG|0|4|36",
-			"unmaker|MS_GH_Unmaker|BFGG|0|0|16",
 			"smg|MS_SMG|CHGG|0|3|27"
 		};
 		mRows.Clear();
@@ -1847,7 +1842,11 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// 2 MeatG, 3 BWolf.
 	static int SetOfDonor(string cls)
 	{
-		if (cls.IndexOf("MS_GH_") == 0 || cls.IndexOf("RS_GH_") == 0) return 1;
+		// MS_BD_ is the Bv21 set. RS_GH_ stays because RS_Main, when it is
+		// sideloaded, supplies its own classes under that prefix and the
+		// shelf keeps rows for them -- they are the same guns, so they
+		// belong on the same button.
+		if (cls.IndexOf("MS_BD_") == 0 || cls.IndexOf("RS_GH_") == 0) return 1;
 		if (cls.IndexOf("MS_MG_") == 0 || cls.IndexOf("RS_PS_") == 0) return 2;
 		if (cls.IndexOf("MS_BW_") == 0)                               return 3;
 		return 0;   // VanAlek: the plain MS_/VR_ donors

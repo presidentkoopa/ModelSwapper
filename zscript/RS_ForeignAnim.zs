@@ -1,4 +1,4 @@
-﻿// =====================================================================
+// =====================================================================
 // RS_ForeignAnim -- PLAYING OUR ANIMATION ON THEIR TIMING.
 //
 // Their weapon runs its own states at its own pace. We do not get to know
@@ -45,7 +45,6 @@ class RS_ForeignClip
 	void Build()
 	{
 		static const string CLIP[] = {
-			"MS_BFG10k|ready|6@1|-1|-1|-1",
 
 			// BD21 set -- derived from BD's own section comments.
 			"MS_BD_AssaultShotgun|sprint|3@1|-1|-1|-1",
@@ -61,6 +60,8 @@ class RS_ForeignClip
 			"MS_BD_BFG|ready|0@1,1@1,2@1,3@1,4@1,5@1|-1|-1|-1",
 			"MS_BD_BFG_10k|ready|6@1,7@1,8@1,9@1|-1|-1|-1",
 			"MS_BD_BFG_10k|fire|6@1,10@1|0|-1|-1",
+			"MS_BD_DSweap|ready|5@1,6@1,7@1,8@1|-1|-1|-1",
+			"MS_BD_DSweap|fire|0@1,1@1,2@1,3@1,4@1|0|-1|-1",
 			"MS_BD_BrutalAxe|sprint|3@1|-1|-1|-1",
 			"MS_BD_BrutalAxe|fire|5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1|0|-1|-1",
 			"MS_BD_BrutalAxe|ready|0@1,1@1,2@1,3@1|-1|-1|-1",
@@ -114,7 +115,6 @@ class RS_ForeignClip
 			"MS_BD_DualSMG|ready|0@1,1@1,2@1|-1|-1|-1",
 			"MS_BD_Unmaker|ready|4@1,5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1|-1|-1|-1",
 
-			"MS_BFG9000|ready|6@1|-1|-1|-1",
 			"MS_BW_Colt|ready|1@1|-1|-1|-1",
 			"MS_BW_Flamethrower|ready|0@1|-1|-1|-1",
 			"MS_BW_Garand|ready|1@1|-1|-1|-1",
@@ -128,23 +128,6 @@ class RS_ForeignClip
 			"MS_Chaingun|ready|4@1|-1|-1|-1",
 			"MS_Chainsaw|ready|0@1|-1|-1|-1",
 			"MS_Fist|ready|0@1|-1|-1|-1",
-			"MS_Flamethrower|ready|0@1|-1|-1|-1",
-			"MS_GH_AutoShotgun|ready|4@1|-1|-1|-1",
-			"MS_GH_Chainsaw|ready|27@1|-1|-1|-1",
-			"MS_GH_Fist|ready|0@1|-1|-1|-1",
-			"MS_GH_GrenadeLauncher|ready|3@1|-1|-1|-1",
-			"MS_GH_MP40|ready|2@1|-1|-1|-1",
-			"MS_GH_Machinegun|ready|4@1|-1|-1|-1",
-			"MS_GH_Minigun|ready|4@1|-1|-1|-1",
-			"MS_GH_Pistol|ready|2@1|-1|-1|-1",
-			"MS_GH_Plasma|ready|4@1|-1|-1|-1",
-			"MS_GH_PumpShotgun|ready|4@1|-1|-1|-1",
-			"MS_GH_Railgun|ready|3@1|-1|-1|-1",
-			"MS_GH_Revolver|ready|0@1|-1|-1|-1",
-			"MS_GH_Rifle|ready|3@1|-1|-1|-1",
-			"MS_GH_SMG|ready|3@1|-1|-1|-1",
-			"MS_GH_SSG|ready|1@1|-1|-1|-1",
-			"MS_GH_Unmaker|ready|0@1|-1|-1|-1",
 			"MS_MG_BFG|ready|0@1|-1|-1|-1",
 			"MS_MG_Bolter|ready|0@1|-1|-1|-1",
 			"MS_MG_Chaingun|ready|0@1|-1|-1|-1",
@@ -163,8 +146,6 @@ class RS_ForeignClip
 			"MS_Shotgun|ready|0@1|-1|-1|-1",
 			"MS_SuperShotgun|ready|0@1|-1|-1|-1",
 
-			"MS_BFG10k|fire|7@1,8@2,9@2|0|-1|-1",
-			"MS_BFG9000|fire|11@1,12@2,13@2,6@1|0|-1|-1",
 			"MS_VR_BFG9000|ready|6@1|-1|-1|-1",
 			"MS_VR_BFG9000|fire|7@3,8@3,9@3,6@1|0|-1|-1",
 			"MS_Chaingun|fire|4@2,10@2|0|-1|-1",
@@ -177,45 +158,8 @@ class RS_ForeignClip
 			// simply never written down; every OTHER fist/knife/saw donor
 			// already has a fire clip.
 			"MS_Fist|fire|1@4,2@4,3@5,2@4,1@5,0@1|0|-1|-1",
-			"MS_Flamethrower|fire|1@1,2@2,3@2|0|-1|-1",
-			"MS_GH_AutoShotgun|fire|5@1,6@2,7@2|0|-1|-1",
-			"MS_GH_AutoShotgun|reload|11-31@1|0|-1|-1",
-			"MS_GH_Chainsaw|fire|28@1,29@2,30@2,27@1|0|-1|-1",
-			"MS_GH_Fist|fire|1@1,4@2,6@2,0@1|0|-1|-1",
-			"MS_GH_GrenadeLauncher|fire|4@1,6@2,5@2,3@1|0|-1|-1",
-			"MS_GH_GrenadeLauncher|reload|7-32@1|0|-1|-1",
-			"MS_GH_MP40|fire|3@1,5@2,6@2|0|-1|-1",
-			"MS_GH_MP40|reload|7-13@1|0|-1|-1",
-			"MS_GH_Machinegun|altfire|5@2,6@8,7@8,4@1|0|-1|-1",
-			"MS_GH_Machinegun|fire|5@1,6@2,7@2|0|-1|-1",
-			"MS_GH_Minigun|altfire|8@1,10@1|0|-1|-1",
-			"MS_GH_Minigun|fire|8@1,9@2,10@2|0|-1|-1",
-			"MS_GH_Pistol|altfire|3@1,4@1,3@1,4@1,3@1,4@3,2@1|0|-1|-1",
-			"MS_GH_Pistol|fire|3@1,4@2,5@2,2@1|0|-1|-1",
-			"MS_GH_Pistol|reload|8-25@1|0|-1|-1",
-			"MS_GH_Plasma|fire|5@1,6@2,7@2|0|-1|-1",
-			"MS_GH_Plasma|reload|18-29@1|0|-1|-1",
-			"MS_GH_PumpShotgun|fire|5@1,14@2,21@2,4@1|0|-1|-1",
-			"MS_GH_PumpShotgun|reload|23-31@1|0|-1|-1",
-			"MS_GH_Railgun|altfire|4@1,5@2,6@2,3@1|0|-1|-1",
-			"MS_GH_Railgun|fire|4@1,5@2,6@2,3@1|0|-1|-1",
-			"MS_GH_Railgun|reload|11-34@1|0|-1|-1",
-			"MS_GH_Revolver|altfire|1@1,2@2,0@1|0|-1|-1",
-			"MS_GH_Revolver|fire|1@1,2@2,3@2,0@1|0|-1|-1",
-			"MS_GH_Revolver|reload|18-30@1|0|-1|-1",
-			"MS_GH_Rifle|altfire|4@1,5@1,6@2|0|-1|-1",
-			"MS_GH_Rifle|fire|4@1,5@2,6@2,3@1|0|-1|-1",
-			"MS_GH_Rifle|reload|7-15@1,17-26@1|0|-1|-1",
-			"MS_GH_SMG|fire|4@1,5@2,6@2|0|-1|-1",
-			"MS_GH_SMG|reload|7-26@1|0|-1|-1",
-			"MS_GH_SSG|altfire|2@1,3@2,1@1|0|-1|-1",
-			"MS_GH_SSG|fire|2@1,3@2,4@2,1@1|0|-1|-1",
-			"MS_GH_SSG|reload|13-37@1|0|-1|-1",
-			"MS_GH_Unmaker|fire|12@1,13@2,14@2|0|-1|-1",
 			"MS_MG_BFG|fire|1-4@1,1-4@1,1-4@1,5-10@1,0@5|0|-1|-1",
 
-			"MS_GH_Grenade|ready|2@1|-1|-1|-1",
-			"MS_GH_Grenade|fire|3-14@1,15-26@1|6|-1|-1",
 			"MS_MG_Bolter|fire|3@1,1@1,1@1,2@1|0|-1|-1",
 			"MS_MG_Chaingun|fire|4@1,5@1,0-3@1,0-3@1,0-3@1,0-3@2,0-3@2,0-3@2|0|-1|-1",
 			"MS_MG_Knife|fire|1@1,2@1,3@1,4@1,5@1,6@1,7@1,8@1,0@1|0|-1|-1",
@@ -251,9 +195,7 @@ class RS_ForeignClip
 			// every family has three or more donors.
 			"MS_RocketLauncher|reload|11-38@1|-1|0|14",
 			"MS_PlasmaRifle|reload|13-29@1|-1|0|8",
-			"MS_GH_Machinegun|reload|9-35@1|-1|0|13",
 			"MS_MG_SSG|reload|2-11@2|-1|0|5",
-			"MS_BFG10k|reload|10-20@2|-1|0|-1",
 
 			"MS_SuperShotgun|fire|0@2,1-7@2|0|-1|-1",
 			"MS_SuperShotgun|reload|8@2,9-17@3,18@2,19-21@3,23@2,24@2,24@1|0|-1|-1",

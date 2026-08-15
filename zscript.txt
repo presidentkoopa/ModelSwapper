@@ -1,4 +1,4 @@
-﻿version "4.14"
+version "4.14"
 
 // ============================================================================
 // ModelSwapper -- donor stubs.
@@ -9,11 +9,10 @@
 // subclassed by anything (FindModelFrameRaw is an exact class-pointer test).
 //
 // MS_ prefix so this pk3 can load alongside RS_Main without duplicate-class
-// errors. MS_GH_ are the GoldHunter set, MS_MG_ the MeatGrinder set.
+// errors. MS_BD_ are the Bv21 set, MS_MG_ the MeatGrinder set, MS_BW_ the
+// Brutal Wolfenstein set; the bare MS_ names are VanAlek.
 // ============================================================================
 
-class MS_BFG10k : Actor {}
-class MS_BFG9000 : Actor {}
 class MS_VR_BFG9000 : Actor {}
 class MS_BW_Colt : Actor {}
 class MS_BW_Flamethrower : Actor {}
@@ -28,24 +27,6 @@ class MS_BW_Trenchgun : Actor {}
 class MS_Chaingun : Actor {}
 class MS_Chainsaw : Actor {}
 class MS_Fist : Actor {}
-class MS_Flamethrower : Actor {}
-class MS_GH_AutoShotgun : Actor {}
-class MS_GH_Chainsaw : Actor {}
-class MS_GH_Fist : Actor {}
-class MS_GH_GrenadeLauncher : Actor {}
-class MS_GH_Grenade : Actor {}
-class MS_GH_MP40 : Actor {}
-class MS_GH_Machinegun : Actor {}
-class MS_GH_Minigun : Actor {}
-class MS_GH_Pistol : Actor {}
-class MS_GH_Plasma : Actor {}
-class MS_GH_PumpShotgun : Actor {}
-class MS_GH_Railgun : Actor {}
-class MS_GH_Revolver : Actor {}
-class MS_GH_Rifle : Actor {}
-class MS_GH_SMG : Actor {}
-class MS_GH_SSG : Actor {}
-class MS_GH_Unmaker : Actor {}
 class MS_MG_BFG : Actor {}
 class MS_MG_Bolter : Actor {}
 class MS_MG_Chaingun : Actor {}
@@ -101,6 +82,10 @@ class MS_BD_Rifle_Dual : Actor {}
 class MS_BD_SnipaRPG : Actor {}
 class MS_BD_DualSMG : Actor {}
 class MS_BD_Unmaker : Actor {}
+// The Dragonslayer. BD ships it under a folder name our importer's map did
+// not know, so it rode along in the pk3 for a release with nothing pointing
+// at it. It carries real frame data, so it is a model, not ballast.
+class MS_BD_DSweap : Actor {}
 
 #include "zscript/RS_ForeignFork.zs"
 #include "zscript/RS_ForeignPersist.zs"

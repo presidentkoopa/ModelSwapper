@@ -294,6 +294,28 @@ class RS_ForeignRemap play
 		int n = RS_Fork.CountLabels(ac);
 		if (DebugOn()) Console.Printf("[RSRM] %s/%s: %d labels total", m.clsName, donorCls, n);
 
+		// EVERY STANDARD LABEL'S ENTRY STATE, collected before any walking.
+		//
+		// A group's chain routinely ends in `Goto Ready`, so a walk that
+		// only stops on already-claimed states runs straight out of its own
+		// label and into the next one's. Source order decides who gets
+		// there first, and Ashes declares Select: before Ready: -- so the
+		// select group swallowed the idle loop and every idle tic rendered
+		// a frame of the raise animation. That was invisible while select
+		// and ready shared one clip; giving select its own multi-frame clip
+		// made it a weapon convulsing in your hands while you stood still.
+		//
+		// A standard label's entry state is a hard boundary: whatever is
+		// there belongs to that label, not to whoever wandered in.
+		Array<State> stops;
+		for (int q = 0; q < n; ++q)
+		{
+			Name qn; State qs;
+			[qn, qs] = RS_Fork.LabelAt(ac, q);
+			string ql = "" .. qn; ql = ql.MakeLower();
+			if (qs != null && PspriteClip(ql).Length() > 0) stops.Push(qs);
+		}
+
 		// One pass in source order. A psprite standard opens a group (and
 		// closes the previous one); a world/inventory label closes without
 		// opening; a custom label joins whatever group is open.
@@ -334,7 +356,7 @@ class RS_ForeignRemap play
 			if (closer)
 			{
 				if (groupClip.Length() > 0 && roots.Size() > 0)
-					MapGroup(m, roots, groupClip, groupNames, donorCls, clips, frameCount, restFrame);
+					MapGroup(m, roots, stops, groupClip, groupNames, donorCls, clips, frameCount, restFrame);
 				roots.Clear();
 				groupNames = "";
 				groupClip  = std;   // "" when a world label or the end closed it
@@ -356,7 +378,8 @@ class RS_ForeignRemap play
 	// One GROUP: every label chain it owns, concatenated in source order,
 	// wearing one clip distributed across the whole span by tic weight.
 	// -----------------------------------------------------------------
-	static void MapGroup(RS_ForeignRemap m, Array<State> roots, string clipName,
+	static void MapGroup(RS_ForeignRemap m, Array<State> roots, Array<State> stops,
+	                     string clipName,
 	                     string groupNames, string donorCls, RS_ForeignClip clips,
 	                     int frameCount, int restFrame)
 	{
@@ -374,6 +397,21 @@ class RS_ForeignRemap play
 			{
 				if (s == null) break;
 				if (m.Claimed(s)) break;
+
+				// Another standard label starts here. Stop -- a chain that
+				// ends in `Goto Ready` must not annex the idle loop. Our own
+				// entry states are in the list by definition, so they are
+				// checked against this group's roots before breaking.
+				bool foreign = false;
+				for (int k = 0; k < stops.Size(); ++k)
+					if (stops[k] == s) { foreign = true; break; }
+				if (foreign)
+				{
+					bool mine = false;
+					for (int k = 0; k < roots.Size(); ++k)
+						if (roots[k] == s) { mine = true; break; }
+					if (!mine) break;
+				}
 				bool seen = false;
 				for (int k = 0; k < seq.Size(); ++k)
 					if (seq[k] == s) { seen = true; break; }
