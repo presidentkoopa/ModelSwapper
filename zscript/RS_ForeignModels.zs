@@ -41,6 +41,10 @@ class RS_ForeignEntry
 	string clsName;       // the foreign weapon's class name
 	string tag;           // display tag (falls back to class name)
 	int    slot;          // runtime slot, -1 = none
+	int    slotPos;       // position WITHIN that slot, -1 = none. LocateWeapon
+	                      // has always returned it and it was always thrown
+	                      // away; it is what lets tiered/morphing variants of
+	                      // one weapon share a single picker row. See GroupKey.
 	string archetype;     // guessed archetype (our vocabulary)
 	bool   guessedBySlot; // true = name/ammo told us nothing
 	bool   located;       // player has a slot binding for it (see Scan)
@@ -124,6 +128,27 @@ class RS_ForeignShelf
 			"bfg|RS_GH_BFG10k|HBBT|0|6|21",
 			"bfg|RS_PS_BFG|BFGN|0|0|11",
 			"melee|RS_GH_Fist|HBFS|0|0|75",
+
+			// The complete BD21 set -- generated, see modeldef.
+			"shotgun|MS_BD_AssaultShotgun|SHTG|0|0|32",
+			"grenade|MS_BD_nade|MISG|0|0|27",
+			"kick|MS_BD_Boot|PUNG|0|0|58",
+			"bfg|MS_BD_BFG_10k|BFGG|0|6|21",
+			"axe|MS_BD_BrutalAxe|PUNG|0|0|15",
+			"axe|MS_BD_DSweap|PUNG|0|5|10",
+			"flamethrower|MS_BD_Flamethrower2|PLSG|0|0|6",
+			"launcher|MS_BD_M79|MISG|0|0|33",
+			"machinegun|MS_BD_Machinegun|CHGG|0|0|36",
+			"pistol|MS_BD_BrutalPistol|PISG|0|0|38",
+			"plasma|MS_BD_Plasma|PLSG|0|0|30",
+			"railgun|MS_BD_RailGun|PLSG|0|0|37",
+			"revolver|MS_BD_Revolver|PISG|0|0|33",
+			"rifle|MS_BD_Rifle|CHGG|0|0|32",
+			"shotgun|MS_BD_Shotgun|SHTG|0|0|36",
+			"smg|MS_BD_BrutalSMG|CHGG|0|0|27",
+			"supershotgun|MS_BD_SSG|SHT2|0|47|52",
+			"unmaker|MS_BD_Unmaker|BFGG|0|4|16",
+
 			"melee|RS_PS_Fist|FSTZ|0|0|9",
 
 			// ---- standalone ModelSwapper.pk3 donors (MS_ namespace) ----
@@ -133,66 +158,70 @@ class RS_ForeignShelf
 			// the standalone pk3.
 			"pistol|MS_Pistol|PISG|0|0|32",
 			"revolver|MS_Revolver|PISG|0|0|41",
-			"rifle|MS_Rifle|CHGG|0|0|41",
-			"shotgun|MS_Shotgun|SHTG|0|0|32",
-			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
 			"chaingun|MS_Chaingun|CHGG|0|4|16",
 			"rocket|MS_RocketLauncher|MISG|0|5|39",
-			"plasma|MS_PlasmaRifle|PLSG|0|4|30",
-			"flamethrower|MS_Flamethrower|PLSG|0|0|6",
-			"bfg|MS_BFG9000|BFGG|0|6|16",
 			"bfg|MS_VR_BFG9000|BFGG|0|6|16",
-			"bfg|MS_BFG10k|BFGG|0|6|21",
 			"melee|MS_Fist|PUNG|0|0|57",
+			// This set had no flamethrower or BFG10k of its own -- those three
+			// rows pointed into the Brutal Doom folder while wearing a VanAlek
+			// label. Both families are covered by real Bv21 rows above, so the
+			// borrowing is gone rather than repointed. A family honestly absent
+			// from a set beats one silently answered by another set's mesh.
 
-			// ---- GoldHunter set. Fills the two families the VR set has no
-			// model for at all (smg, railgun) and gives every other family a
-			// second and third option.
-			"pistol|MS_GH_Pistol|PISG|0|2|38",
-			"revolver|MS_GH_Revolver|PISG|0|0|33",
-			"rifle|MS_GH_Rifle|CHGG|0|3|32",
-			"smg|MS_GH_SMG|CHGG|0|3|27",
-			"smg|MS_GH_MP40|CHGG|0|2|14",
-			"chaingun|MS_GH_Minigun|CHGG|0|4|16",
-			"shotgun|MS_GH_AutoShotgun|SHTG|0|4|32",
-			"launcher|MS_GH_GrenadeLauncher|MISG|0|3|33",
-			"plasma|MS_GH_Plasma|PLSG|0|4|30",
-			"railgun|MS_GH_Railgun|PLSG|0|3|37",
-			"melee|MS_GH_Fist|PUNG|0|0|75",
+			// The Bv21 rows above ARE the Brutal Doom set. There used to be a
+			// second copy of these same guns here, taken from RS_Main's
+			// re-export rather than from Brutal Doom itself -- 20 models and
+			// 72MB duplicating meshes the block above already covers, minus
+			// the axe, the boot, the Dragonslayer and the dual variants that
+			// only the real set has. Shipping both meant the picker offered
+			// each gun twice and "assign all Bv21" reached for the lesser of
+			// the two. One set, sourced from BD's own MODELDEFs.
 
 			// ---- MeatGrinder set. Nine models in 6MB, and a grittier look
 			// than either of the others -- the cheapest breadth on offer.
 			"melee|MS_MG_Knife|PUNG|0|0|9",
+
+			// Melee holds one of each silhouette a slot-1 weapon can be: a
+			// bare fist, an axe, a knife. The axe is on this shelf as well as
+			// its own because a mod's slot 1 is frequently a hand axe and the
+			// classifier files it as melee.
 
 			// ---- axe/blade: a held edge, not a bare hand ----
 			"axe|MS_MG_Knife|PUNG|0|0|9",
 
 			// ---- thrown explosives ----
 			// A hand grenade is not a rocket launcher. Every mod with a frag
-			// or a pipe bomb was getting an RPG welded to its hand.
-			"grenade|MS_GH_Grenade|MISG|0|2|27",
+			// or a pipe bomb was getting an RPG welded to its hand. The thrown
+			// nade is a Bv21 row up top; this shelf exists so it is reachable.
 
 			// ---- saws, on their own shelf ----
+			// "saw" here is the CHAINSAW slot -- SAWG is Doom's chainsaw
+			// sprite and every model on this shelf is a chainsaw. It is not a
+			// squad automatic weapon; a belt-fed gun belongs on machinegun,
+			// where BD's Machinegun and the MG42 already sit.
+			//
+			// One chainsaw of ours. VanAlek's keeps it over MeatGrinder's on
+			// frame count, 8 to 6. The RS_ rows below are RS_Main's own
+			// classes and cost nothing when RS_Main is not loaded.
 			"saw|MS_Chainsaw|SAWG|0|0|8",
-			"saw|MS_GH_Chainsaw|SAWG|0|27|65",
-			"saw|MS_MG_Saw|SAWG|0|2|6",
 			"saw|VR_Chainsaw|SAWG|0|0|8",
 			"saw|RS_GH_Chainsaw|HBCS|0|27|65",
 			"saw|RS_PS_Chainsaw|SAWG|2|2|6",
 			"smg|MS_MG_Tec9|CHGG|0|0|6",
-			"shotgun|MS_MG_Shotgun|SHTG|0|0|4",
-			"supershotgun|MS_MG_SSG|SHT2|0|0|12",
 			"chaingun|MS_MG_Chaingun|CHGG|0|0|6",
 			"rocket|MS_MG_RPG|MISG|0|0|7",
 			"plasma|MS_MG_Bolter|PLSG|0|0|5",
-			"bfg|MS_MG_BFG|BFGG|0|0|11",
 
 			// The Bolter is a handheld -- it reads as a high-power sidearm or
 			// a compact rifle just as well as an energy weapon, so it sits on
 			// three shelves. Nothing stops a donor appearing under more than
 			// one archetype; the row is the same, only the shelf differs.
 			"pistol|MS_MG_Bolter|PLSG|0|0|5",
-			"rifle|MS_MG_Bolter|PLSG|0|0|5",
+
+			// The Tec9 is a machine pistol -- it is held in one hand and reads
+			// as a sidearm as readily as it does as an SMG, so it sits on both
+			// shelves rather than being filed under one of them.
+			"pistol|MS_MG_Tec9|CHGG|0|0|6",
 
 			// ---- Brutal Wolfenstein set. Real WW2 weapons, which is what a
 			// post-apocalyptic or contemporary mod actually wants -- Ashes'
@@ -206,7 +235,6 @@ class RS_ForeignShelf
 			// "Ready:" is the DEPLOY animation in this mod and would have put
 			// the Luger at frame 53.
 			"pistol|MS_BW_Colt|PISG|0|1|60",
-			"pistol|MS_BW_Luger|PISG|0|0|61",
 			"rifle|MS_BW_Kar98|CHGG|0|1|44",
 			"rifle|MS_BW_Garand|CHGG|0|1|36",
 			"rifle|MS_BW_STG44|CHGG|0|13|51",
@@ -214,31 +242,25 @@ class RS_ForeignShelf
 			"smg|MS_BW_Thompson|CHGG|0|1|53",
 			"machinegun|MS_BW_MG42|CHGG|0|12|97",
 			"shotgun|MS_BW_Trenchgun|SHTG|0|1|47",
-			"flamethrower|MS_BW_Flamethrower|PLSG|0|0|15",
 
 			// The Kar98 is a bolt-action rifle -- it reads as a marksman
 			// weapon as well as a battle rifle, so it also sits on railgun,
 			// which otherwise has one model.
-			"railgun|MS_BW_Kar98|CHGG|0|1|44",
 
 			// ---- sniper ----
 			// The Kar98 is a bolt-action: one shot, work the bolt, shoot
 			// again. It reads as a marksman weapon far better than as a
 			// battle rifle, and it is the only mesh here with that
-			// silhouette. The Garand backs it up, and the Railgun is the
-			// long scoped-looking option for a sci-fi mod.
+			// silhouette. The Garand backs it up. Brutal Doom's own scoped
+			// railgun, SnipaRG, used to be the sci-fi option here until the
+			// MD3 header showed it was a one-frame mesh -- a scope, not a
+			// rifle.
 			"sniper|MS_BW_Kar98|CHGG|0|1|44",
 			"sniper|MS_BW_Garand|CHGG|0|1|36",
-			"sniper|MS_GH_Railgun|PLSG|0|3|37",
-
-			// ---- the rest of the GoldHunter set, and the VR SMG. All four
-			// donor sets are now complete: VR, GoldHunter, MeatGrinder and
-			// Brutal Wolfenstein.
-			"supershotgun|MS_GH_SSG|SHT2|0|1|52",
-			"shotgun|MS_GH_PumpShotgun|SHTG|0|4|36",
-			"machinegun|MS_GH_Machinegun|CHGG|0|4|36",
-			"unmaker|MS_GH_Unmaker|BFGG|0|0|16",
-			"smg|MS_SMG|CHGG|0|3|27"
+			"shotgun|MS_Shotgun|SHTG|0|0|32",
+			"shotgun|MS_MG_Shotgun|SHTG|0|0|4",
+			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
+			"supershotgun|MS_MG_SSG|SHT2|0|0|12"
 		};
 		mRows.Clear();
 		for (int i = 0; i < SHELF.Size(); ++i)
@@ -474,6 +496,20 @@ class RS_ForeignScanner
 	}
 
 	// contains-match archetype words, ordered so the specific wins
+	// Naming rules for OVERLAY callers only. These are inventory items and
+	// dummy actors, never guns, so body-part words mean what they say -- an
+	// overlay caller called SpareLeg (ParryKick) or BootItem is a kick, where
+	// the same token among the weapon rules would misfile a Legendary rifle.
+	// Falls through to the shared rules so an overlay that IS named after a
+	// weapon still classifies as one.
+	static string OverlayArchetype(string hay)
+	{
+		if (hay.IndexOf("leg")  >= 0 || hay.IndexOf("foot") >= 0
+		 || hay.IndexOf("boot") >= 0 || hay.IndexOf("shin") >= 0
+		 || hay.IndexOf("knee") >= 0 || hay.IndexOf("shoe") >= 0) return "kick";
+		return TokenArchetype(hay);
+	}
+
 	static string TokenArchetype(string hay)
 	{
 		// SUPERSHOTGUN before SHOTGUN, and both before the SMG/pistol
@@ -565,10 +601,18 @@ class RS_ForeignScanner
 		 || hay.IndexOf("dynamite") >= 0 || hay.IndexOf("molotov") >= 0
 		 || hay.IndexOf("satchel") >= 0 || hay.IndexOf("throwable") >= 0
 		 || hay.IndexOf("cocktail") >= 0) return "grenade";
+		// "1911" and "acp" earn their place from a real miss: Weapons of
+		// Saturn's 1911 sits on slot 8, matched no name or ammo token, and
+		// fell through to the slot fallback -- where slot 8 means "second
+		// BFG". A BFG10k on a .45 automatic. Both tokens are unambiguous
+		// (no other weapon word contains either), and "acp" also catches
+		// the ammo class, since AmmoArchetype runs names through here too.
 		if (hay.IndexOf("pistol") >= 0 || hay.IndexOf("handgun") >= 0
 		 || hay.IndexOf("glock") >= 0 || hay.IndexOf("autoloader") >= 0
 		 || hay.IndexOf("9mm") >= 0 || hay.IndexOf("luger") >= 0
 		 || hay.IndexOf("beretta") >= 0 || hay.IndexOf("deagle") >= 0
+		 || hay.IndexOf("1911") >= 0 || hay.IndexOf("acp") >= 0
+		 || hay.IndexOf("makarov") >= 0 || hay.IndexOf("tokarev") >= 0
 		 || hay.IndexOf("desert eagle") >= 0 || hay.IndexOf("sidearm") >= 0) return "pistol";
 		// SAWS ARE NOT FISTS. Both are melee, and a shared melee shelf leads
 		// with a fist, so every chainsaw in every mod came out as knuckles.
@@ -587,6 +631,15 @@ class RS_ForeignScanner
 		 || hay.IndexOf("tomahawk") >= 0 || hay.IndexOf("machete") >= 0
 		 || hay.IndexOf("knife") >= 0 || hay.IndexOf("dagger") >= 0
 		 || hay.IndexOf("blade") >= 0) return "axe";
+
+		// A KICK IS NOT A PUNCH, and it is almost never a weapon -- mods bind
+		// it to its own key and run it on an overlay layer. Only the tokens
+		// that cannot mean anything else live here, because this function
+		// classifies WEAPONS too: "leg" would hand a boot to every gun some
+		// mod called Legendary-something. The looser body-part tokens are in
+		// OverlayArchetype, which only ever sees overlay callers.
+		if (hay.IndexOf("kick") >= 0 || hay.IndexOf("stomp") >= 0
+		 || hay.IndexOf("roundhouse") >= 0) return "kick";
 
 		if (hay.IndexOf("fist") >= 0
 		 || hay.IndexOf("punch") >= 0 || hay.IndexOf("knuckle") >= 0
@@ -635,7 +688,7 @@ class RS_ForeignScanner
 	//
 	// hasmodel is set on the CLASS DEFAULTS by the MODELDEF parser and is the
 	// same flag FindModelFrameRaw gates on, so it answers exactly the right
-	// question. It is an RS-fork export (FORK_CHANGES.md §15); on stock GZDoom
+	// question. It is an RS-fork export (FORK_CHANGES.md ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§15); on stock GZDoom
 	// this is not answerable from ZScript at all.
 	//
 	// READ IT OFF THE DEFAULTS, NEVER OFF A LIVE ACTOR. A_ChangeModel sets
@@ -644,8 +697,7 @@ class RS_ForeignScanner
 	// skip everything the first one bound.
 	static bool HasOwnModel(class<Weapon> type)
 	{
-		readonly<Actor> def = GetDefaultByType(type);
-		return (def && def.hasmodel);
+		return RS_Fork.HasOwnModel(type);
 	}
 
 	// -----------------------------------------------------------------
@@ -720,6 +772,14 @@ class RS_ForeignScanner
 			if (cm >= 0) ln = ln.Left(cm);
 			string low = ln.MakeLower();
 
+			// String.Length() is unsigned; every counter here is a signed
+			// int. Hoisting the lengths into int locals keeps the loop
+			// guards signed-vs-signed -- six "comparison between signed and
+			// unsigned" warnings on every single load otherwise, which
+			// buries real diagnostics in the session log.
+			int lnLen  = int(ln.Length());
+			int lowLen = int(low.Length());
+
 			// #include -- and DECORATE includes are often UNQUOTED
 			// ("#Include Actors/Weapons/Crowbar.txt", Ashes does exactly
 			// this), so both forms have to parse.
@@ -727,9 +787,9 @@ class RS_ForeignScanner
 			if (inc >= 0)
 			{
 				int p = inc + 8;
-				while (p < ln.Length() && (ln.ByteAt(p) == 32 || ln.ByteAt(p) == 9)) p++;
+				while (p < lnLen && (ln.ByteAt(p) == 32 || ln.ByteAt(p) == 9)) p++;
 				string path = "";
-				if (p < ln.Length() && ln.ByteAt(p) == 34)   // opening quote
+				if (p < lnLen && ln.ByteAt(p) == 34)   // opening quote
 				{
 					int q2 = ln.IndexOf("\"", p + 1);
 					if (q2 > p) path = ln.Mid(p + 1, q2 - p - 1);
@@ -737,7 +797,7 @@ class RS_ForeignScanner
 				else
 				{
 					int s0 = p;
-					while (p < ln.Length() && ln.ByteAt(p) > 32) p++;
+					while (p < lnLen && ln.ByteAt(p) > 32) p++;
 					path = ln.Mid(s0, p - s0);
 				}
 				if (path.Length() > 0)
@@ -753,15 +813,15 @@ class RS_ForeignScanner
 			// keyword. That skips "extend class" (defines nothing new) and
 			// incidental uses of the words mid-line.
 			int p = 0;
-			while (p < low.Length() && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
+			while (p < lowLen && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
 			bool isDecl = false;
 			if (low.Mid(p, 6) == "class " || low.Mid(p, 6) == "class\t") { p += 6; isDecl = true; }
 			else if (low.Mid(p, 6) == "actor " || low.Mid(p, 6) == "actor\t") { p += 6; isDecl = true; }
 			if (!isDecl) continue;
 
-			while (p < low.Length() && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
+			while (p < lowLen && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
 			int s0 = p;
-			while (p < low.Length())
+			while (p < lowLen)
 			{
 				int ch = low.ByteAt(p);
 				bool idc = (ch >= 97 && ch <= 122) || (ch >= 48 && ch <= 57) || ch == 95;
@@ -777,7 +837,24 @@ class RS_ForeignScanner
 	}
 
 	// -----------------------------------------------------------------
-	static void Scan(in out Array<RS_ForeignEntry> outList)
+	// djb2-style hash, deterministic per class name. Not for security --
+	// only for spreading auto-guessed picks across a shelf without ever
+	// changing which index a given class name lands on. Wrap-safe: the
+	// multiply can overflow into negative territory on a long name, so the
+	// final % is corrected the same way CyclePick already does.
+	static int HashPick(string cls, int n)
+	{
+		if (n <= 0) return 0;
+		int h = 5381;
+		int len = cls.Length();
+		for (int i = 0; i < len; ++i)
+			h = h * 33 + cls.ByteAt(i);
+		int r = h % n;
+		if (r < 0) r += n;
+		return r;
+	}
+
+	static void Scan(RS_ForeignShelf shelf, in out Array<RS_ForeignEntry> outList)
 	{
 		outList.Clear();
 
@@ -802,6 +879,15 @@ class RS_ForeignScanner
 			string lcn = cn; lcn = lcn.MakeLower();
 			if (lcn.IndexOf("random") == 0) continue;   // RandomSpawner-style
 
+			// PICKUP PROXIES ARE NOT WEAPONS YOU HOLD. WeaponGiver derives
+			// from Weapon (weapons.zs), so every one of them gets scanned --
+			// but its entire job is to hand you a real weapon and vanish. It
+			// is never in your hands, so it can never wear a model, and a
+			// picker row for it is a row that does nothing. MetaDoom alone
+			// ships one per weapon (MetaAxePickup, MetaChaingunPickup...),
+			// which is a doubled menu for no benefit.
+			if (type is 'WeaponGiver') continue;
+
 			// A mod that already ships its own 3D weapon models is not asking
 			// for ours. Leave it alone.
 			if (RS_ForeignScanner.HasOwnModel(type)) continue;
@@ -813,14 +899,15 @@ class RS_ForeignScanner
 			// SlotNumber is -1 for weapons that get their slot from
 			// KEYCONF/MAPINFO instead of the actor property. Read the
 			// player's REAL runtime slot when we can.
-			e.slot = def.SlotNumber;
+			e.slot    = def.SlotNumber;
+			e.slotPos = -1;   // only a real slot binding sets this
 			bool located = false;
 			PlayerInfo pl = players[consolePlayer];
 			if (pl && pl.mo)
 			{
 				int sl; int prio;
 				[located, sl, prio] = pl.weapons.LocateWeapon(type);
-				if (located) e.slot = sl;
+				if (located) { e.slot = sl; e.slotPos = prio; }
 			}
 
 			// DO NOT REJECT ON !located. It looks like a clean way to keep the
@@ -866,6 +953,19 @@ class RS_ForeignScanner
 			bool bySlot; int pick;
 			e.archetype     = RS_ForeignScanner.Classify(type, e.clsName, e.tag, e.slot, ammo1, ammo2, bySlot, pick);
 			e.guessedBySlot = bySlot;
+
+			// pick == 0 is Classify's universal "no deliberate index" value
+			// (the only nonzero it ever hands back is the forced pick 2 for
+			// the slot-8 second BFG, which must never be overridden). Seed
+			// the auto-guess by class name instead of leaving it at the
+			// shelf's first entry for everything -- every unpinned weapon of
+			// an archetype otherwise wore the exact same donor forever.
+			if (pick == 0 && shelf)
+			{
+				int have = shelf.Count(e.archetype);
+				if (have > 1) pick = HashPick(e.clsName, have);
+			}
+
 			e.modelPick1    = pick;
 			e.modelPick2    = pick;
 			e.pinned        = false;
@@ -890,23 +990,25 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// pins its psprite to our anchor, leaving a raw sprite in their hands.
 	Weapon mLastMain;
 	Weapon mLastOff;
+
+	// Callers we have bound on an OVERLAY layer. Not weapons: a kick, a
+	// shoulder-mounted anything, a taunt -- mods run these from an inventory
+	// item on a layer A_Overlay picked, and the caller is that item. Tracked
+	// the same way and for the same reason as the two hands above.
+	Array<Actor> mOvlBound;
+
 	bool   mBound;        // something is currently wearing one of our models
 	bool   mLocatedDone;  // slot flags refreshed after the level settled
 
 	RS_ForeignShelf mShelf;   // built once at world-load
 	RS_ForeignClip  mClips;   // our animation clips, per donor
-	RS_ForeignPersist mPersist; // learned timings that survive a restart
 	RS_ForeignPickPersist mPicks; // player's model choices, keyed by class -- de facto per-mod profiles
 
-	// Live per-hand animation state, and what watching has taught us.
+	// Per-hand display state. Two fields now: the remap engine reads the
+	// weapon's own state machine every tic, so there is nothing to track
+	// between tics beyond who we're painting and where we parked.
 	RS_ForeignHand  mHandMain;
 	RS_ForeignHand  mHandOff;
-	Array<RS_ForeignLearned> mLearned;
-
-	// Plays before a sequence's timing locks. Shared by Commit (which
-	// counts against it) and Animate (which must not trust a rate that
-	// has not survived it -- see the rate block there).
-	const LOCK_AFTER = 3;
 
 	static bool Enabled()
 	{
@@ -947,7 +1049,6 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mClips = new("RS_ForeignClip");
 			mClips.Build();
 		}
-		if (!mPersist) { mPersist = new("RS_ForeignPersist"); mPersist.Load(); }
 		if (!mPicks)   { mPicks   = new("RS_ForeignPickPersist"); mPicks.Load(); }
 		if (!mHandMain) mHandMain = new("RS_ForeignHand");
 		if (!mHandOff)  mHandOff  = new("RS_ForeignHand");
@@ -958,7 +1059,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		for (int i = 0; i < mEntries.Size(); ++i)
 			if (mEntries[i].pinned) keep.Push(mEntries[i]);
 
-		RS_ForeignScanner.Scan(mEntries);
+		RS_ForeignScanner.Scan(mShelf, mEntries);
 
 		for (int k = 0; k < keep.Size(); ++k)
 		{
@@ -988,10 +1089,190 @@ class RS_ForeignModelHandler : StaticEventHandler
 		}
 
 		mScanned  = true;
-		mLastMain = null; mLastOff = null;
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();
+		ReportScan();
 	}
 
-	int FindEntry(string cls)
+	// WHICH MOD IS THIS. The engine prints its "adding X.pk3" list before
+	// autoexec opens the logfile, so a session log never says what was
+	// actually loaded -- which makes reading a log after the fact a guessing
+	// game. The scan already knows: provenance harvesting recorded the
+	// archive that DEFINED each weapon class. Print that, once, with counts.
+	// One line per source archive turns every log into a self-identifying
+	// record of what was tested.
+	void ReportScan()
+	{
+		Array<string> srcNames;
+		Array<int>    srcCounts;
+		int unknown = 0, visible = 0;
+
+		for (int i = 0; i < mEntries.Size(); ++i)
+		{
+			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+			visible++;
+			string src = mEntries[i].srcContainer;
+			if (src.Length() == 0) { unknown++; continue; }
+
+			int at = -1;
+			for (int k = 0; k < srcNames.Size(); ++k)
+				if (srcNames[k] == src) { at = k; break; }
+			if (at < 0) { srcNames.Push(src); srcCounts.Push(1); }
+			else        { srcCounts[at] = srcCounts[at] + 1; }
+		}
+
+		Console.Printf("[RSRM] scan: %d weapons listed of %d classes compiled%s",
+			visible, mEntries.Size(),
+			RS_Fork.Supported() ? "" : "  [STATIC BUILD -- no animation]");
+		for (int k = 0; k < srcNames.Size(); ++k)
+			Console.Printf("[RSRM]   from %s: %d", srcNames[k], srcCounts[k]);
+		if (unknown > 0)
+			Console.Printf("[RSRM]   slot-bound only, no source archive: %d", unknown);
+	}
+
+	// -----------------------------------------------------------------
+	// ONE PICKER ROW PER WEAPON *POSITION*, not per class.
+	//
+	// Mods routinely ship several classes that are the same gun: Ashes'
+	// three jackhammer tiers, MetaDoom weapons that morph as you find
+	// upgrades, DRLA assembly variants, purist-mode duplicates. Only one
+	// of them can ever be in your hands at a given slot position, so
+	// giving each its own row is pure menu bloat -- nobody wants to
+	// assign a shotgun model three times to guarantee the shotgun slot
+	// looks right whatever mode it is in.
+	//
+	// The slot table already answers this: LocateWeapon returns the slot
+	// AND the position within it, and that pair is exactly "which weapon
+	// is this, from the player's point of view". Variants that replace
+	// each other share it. Genuinely different guns (shotgun at 3:0, SSG
+	// at 3:1) do not.
+	//
+	// Weapons with no slot binding fall back to their own class name --
+	// one row each, exactly as before. That keeps Golden Souls-style
+	// mods (slots on a player class that never spawns, so located is
+	// false for everything) working rather than collapsing their whole
+	// arsenal into a single row.
+	//
+	// PERSISTENCE STAYS PER CLASS. A group write fans out to every
+	// member, so the archive is still keyed by class name and still
+	// scoped per mod -- "slot 3 pos 1" would collide between mods.
+	// -----------------------------------------------------------------
+	// The highest ancestor that is ITSELF a real, slot-bound weapon --
+	// which is what a tier root looks like and what a shared abstract
+	// base does not.
+	//
+	// Ashes: `actor Glock2 : Glock`, `actor Glock3 : Glock`, where Glock
+	// is a genuine weapon sitting in a slot. All three collapse to Glock.
+	// The tiers override only Tag, icon and pickup message; mechanically
+	// they are one gun.
+	//
+	// GNRC-WPN: every weapon is `: ModWeapon`, a shared base with no slot
+	// that is never in the player's weapon table. Walking blindly to the
+	// top would merge that mod's whole arsenal into a single row, so the
+	// `located` test is the thing that makes this safe: a base class
+	// nobody can wield is not a group root.
+	//
+	// Weapons Of Saturn: everything derives straight from Weapon, so each
+	// is its own root -- correct, they are genuinely different guns.
+	//
+	// A mod that implements tiers WITHOUT inheritance gets one row each,
+	// exactly as before. This can only merge things that are provably
+	// related, never guess.
+	int GroupRoot(int i) const
+	{
+		if (i < 0 || i >= mEntries.Size()) return i;
+		class<Actor> c = mEntries[i].clsName;
+		if (!c) return i;
+
+		readonly<Actor> dc = GetDefaultByType(c);
+		if (!dc) return i;
+
+		int best = i;
+		class<Object> p = c.GetParentClass();
+		for (int guard = 0; p != null && p != "Weapon" && guard < 16; ++guard)
+		{
+			int j = FindEntry("" .. p.GetClassName());
+			if (j >= 0 && mEntries[j].located)
+			{
+				// INHERITED ANIMATION IS THE TEST, not merely descent.
+				//
+				// A tier that is the same gun overrides cosmetics and keeps
+				// its parent's states: Ashes' `Glock2 : Glock` changes Tag,
+				// icon and pickup text, so both resolve to the SAME Ready
+				// state pointer, and one picker row is right.
+				//
+				// A subclass that redeclares States{} is a different weapon
+				// wearing an inheritance link for convenience. Project
+				// Brutality's `PB_PulseCannon : PB_M1Plasma` is a whole
+				// separate sprite family; DoomRL Arsenal's 223 assemblies
+				// each declare their own. Merging those is wrong, and in
+				// DRLA's case catastrophic -- its RLWeapon base is itself
+				// slot-bound, so a descent-only rule collapsed 222 weapons
+				// into a single row.
+				//
+				// Comparing the resolved Ready pointer answers exactly
+				// "does this share its parent's animation", which is the
+				// real question. Falls back to Select for the rare weapon
+				// with no Ready.
+				class<Actor> pc = (class<Actor>)(p);
+				readonly<Actor> dp = pc ? GetDefaultByType(pc) : null;
+				if (dp)
+				{
+					State sc = dc.FindState('Ready');
+					State sp = dp.FindState('Ready');
+					if (sc == null && sp == null)
+					{
+						sc = dc.FindState('Select');
+						sp = dp.FindState('Select');
+					}
+					if (sc != null && sc == sp) best = j;
+				}
+			}
+			p = p.GetParentClass();
+		}
+		return best;
+	}
+
+	string GroupKey(int i) const
+	{
+		if (i < 0 || i >= mEntries.Size()) return "";
+
+		// COLLAPSE BY FAMILY. Arsenal mods defeat ancestry grouping by
+		// building weapons combinatorially rather than by inheritance --
+		// DoomRL Arsenal's assemblies are base weapon x mod pack, so
+		// "Demolition Ammo Chaingun" and "Nanomachic Chaingun" are
+		// unrelated classes that are both, visibly, a chaingun. 150 rows
+		// of that is unusable however correct each row is.
+		//
+		// With this on, one row per family: the whole menu becomes
+		// "shotgun -> this model, chaingun -> that model", which is what
+		// the player wanted to say in the first place. Off by default,
+		// because on a normal mod each weapon deserves its own say.
+		CVar fc = CVar.FindCVar("rs_foreignmodels_byfamily");
+		if (fc && fc.GetBool())
+			return "a:" .. mEntries[i].archetype;
+
+		return "c:" .. mEntries[GroupRoot(i)].clsName;
+	}
+
+	bool ByFamily() const
+	{
+		CVar fc = CVar.FindCVar("rs_foreignmodels_byfamily");
+		return (fc && fc.GetBool());
+	}
+
+	// How many entries share this row's group -- shown in the picker so a
+	// collapsed row says so rather than silently hiding classes.
+	int GroupSize(int i) const
+	{
+		string k = GroupKey(i);
+		if (k.Length() == 0) return 0;
+		int n = 0;
+		for (int j = 0; j < mEntries.Size(); ++j)
+			if (GroupKey(j) == k) n++;
+		return n;
+	}
+
+	int FindEntry(string cls) const
 	{
 		for (int i = 0; i < mEntries.Size(); ++i)
 			if (mEntries[i].clsName == cls) return i;
@@ -1016,12 +1297,42 @@ class RS_ForeignModelHandler : StaticEventHandler
 			return null;
 
 		// STEP 1 -- once per INSTANCE: point this actor's model lookup at
-		// our class. Brings its Path/Skin/Scale/Offset along with it.
+		// our class (brings its Path/Skin/Scale/Offset along), then hand the
+		// ENGINE the state->frame table. From that moment the renderer
+		// resolves every frame against the psprite's own current state
+		// natively -- there is no step 3 anymore, and no per-tick script in
+		// the animation path at all. (RegisterModelStateFrame requires
+		// modelData, which A_ChangeModel just created, so the order of
+		// these two calls is load-bearing.)
 		if (lastBound != w)
+		{
 			w.A_ChangeModel(mcls);
 
+			// Static build (stock GZDoom / QuestZDoom): the bind above is
+			// the whole feature there -- A_ChangeModel is stock, the pin
+			// below is stock, and the weapon wears its donor at the rest
+			// pose. Everything past here needs the fork's animation
+			// extensions, so it is skipped wholesale rather than run into
+			// no-op shims.
+			if (RS_Fork.Supported())
+			{
+				let map = MapFor(w, mcls, frameCount, restFrame);
+				RS_Fork.ClearRows(w);
+				int pushed = 0;
+				for (int i = 0; i < map.mStates.Size(); ++i)
+					if (RS_Fork.RegisterRow(w, map.mStates[i], map.mMesh[i], map.mMeshNext[i]))
+						pushed++;
+				if (RS_ForeignRemap.DebugOn())
+					Console.Printf("[RSRM] bound %s -> %s: %d/%d rows registered",
+						w.GetClassName(), mcls, pushed, map.mStates.Size());
+			}
+		}
+
 		// STEP 2 -- every tick: their states re-set the psprite each frame,
-		// so re-pin it to our anchor at the resting pose.
+		// so re-pin it to our anchor at the resting pose. The pin is what
+		// makes FindModelFrame resolve; the frame NUMBER now comes from the
+		// engine-side table. The legacy per-tick fields are cleared so
+		// nothing serialized from an older build can fight the table.
 		let psp = pi.FindPSprite(layer);
 		if (psp)
 		{
@@ -1033,14 +1344,134 @@ class RS_ForeignModelHandler : StaticEventHandler
 			psp.Sprite = si;
 			psp.Frame  = heldFrame;
 
-			// STEP 3 -- address the model frame DIRECTLY. The sprite pin above
-			// only has to make FindModelFrame resolve; which frame actually
-			// draws is this. That is what lifts the 29-frame ceiling and makes
-			// a 75-frame reload reachable at all.
-			Animate(hs, pi, w, psp, mcls, restFrame, frameCount,
-				layer == PSP_OFFHANDWEAPON ? WF_OFFHANDREADY : WF_WEAPONREADY);
+			RS_Fork.ReleaseFrames(psp);
+
+			// HEALTH TELEMETRY + SELF-HEALING. Same lookup the renderer
+			// performs, against the same table. A hit records the heal
+			// context (which row, which table). A miss on a displaying
+			// state is the unambiguous signature of a runtime jump the
+			// walk could not see -- so the table repairs itself on the
+			// spot: the orphaned chain is claimed into the interrupted
+			// group and the rest of its clip distributed across it,
+			// registered with the engine THIS tic. The renderer's next
+			// consult already hits. See RS_ForeignRemap.HealFrom.
+			State cur = psp.CurState;
+			if (cur != null && RS_Fork.Supported())
+			{
+				let map = MapFor(w, mcls, frameCount, restFrame);
+				if (map != null)
+				{
+					int row = map.LookupIndex(cur);
+
+					if (row < 0 && cur.Tics != 0)
+					{
+						// WHICH CLIP DOES THE ORPHAN CHAIN BELONG TO?
+						//
+						// Inheriting the last mapped state's group is only
+						// right MID-ACTION. Pressing altfire straight from
+						// idle lands on an orphan chain while the last
+						// mapped state was the ready loop -- healing off
+						// that would spread the one-frame ready clip across
+						// the whole altfire animation and cache it, freezing
+						// that weapon's altfire permanently.
+						//
+						// The button is the honest signal: the engine's own
+						// P_CheckWeaponButtons jumps to Fire/AltFire/Reload
+						// by name, so a button held on the tic the psprite
+						// leaves mapped territory names the sequence that
+						// was just entered. Offhand buttons map the same way
+						// for the offhand layer.
+						int btn = pi.cmd.buttons;
+						bool off = (layer == PSP_OFFHANDWEAPON);
+						int gid = -1;
+						if (btn & (off ? BT_OFFHANDALTATTACK : BT_ALTATTACK))
+							gid = map.FindGroupByClip("altfire");
+						else if (btn & (off ? BT_OFFHANDRELOAD : BT_RELOAD))
+							gid = map.FindGroupByClip("reload");
+						else if (btn & (off ? BT_OFFHANDATTACK : BT_ATTACK))
+							gid = map.FindGroupByClip("fire");
+
+						int startIdx = 0;   // a button press starts its clip
+						if (gid < 0 && hs.lastMap == map && hs.lastHitRow >= 0)
+						{
+							// No button: this is a continuation of whatever
+							// was already running. Only inherit a real
+							// ACTION group -- never "ready", which is the
+							// freeze case above.
+							int g = map.GroupIdOfRow(hs.lastHitRow);
+							if (g >= 0 && map.GroupClip(g) != "ready")
+							{
+								gid      = g;
+								startIdx = map.EndIdxOfRow(hs.lastHitRow);
+							}
+						}
+
+						// No confident group: hold the pose and DO NOT
+						// cache. A wrong heal is permanent; a skipped one
+						// costs a tic and retries.
+						if (gid >= 0)
+						{
+							int n = map.HealInto(gid, startIdx, cur, w);
+							if (n > 0)
+							{
+								hs.healed += n;
+								row = map.LookupIndex(cur);
+							}
+						}
+					}
+
+					if (row >= 0)
+					{
+						hs.hits++;
+						hs.lastMesh   = map.mMesh[row];
+						hs.lastMap    = map;
+						hs.lastHitRow = row;
+					}
+					else if (cur.Tics != 0)   // 0-tic states never display; not a hole
+					{
+						hs.misses++;
+						hs.missSprite = cur.sprite;
+						hs.missFrame  = cur.Frame;
+						hs.missTics   = cur.Tics;
+					}
+				}
+			}
 		}
 		return w;
+	}
+
+	// Print and reset both hands' telemetry. Ten-second cadence: coarse
+	// enough to stay readable, fine enough that a session log shows every
+	// stretch of play.
+	void ReportHealth()
+	{
+		PlayerInfo pi = players[consolePlayer];
+		for (int hand = 0; hand < 2; ++hand)
+		{
+			RS_ForeignHand hs = (hand == 1) ? mHandOff : mHandMain;
+			if (hs == null || (hs.hits == 0 && hs.misses == 0)) continue;
+
+			Weapon w = (hand == 1) ? pi.OffhandWeapon : pi.ReadyWeapon;
+			string wn = w ? "" .. w.GetClassName() : "?";
+			// Which table served this interval -- donor and size. An
+			// all-miss interval with a healthy-sized table is a lookup
+			// problem; with no table at all it is a bind problem. The
+			// line should say which.
+			if (hs.lastMap != null)
+				wn = wn .. " [" .. hs.lastMap.donor .. ", table=" .. hs.lastMap.mStates.Size() .. "]";
+			int total = hs.hits + hs.misses;
+			string healedNote = (hs.healed > 0)
+				? String.Format(" -- healed %d states", hs.healed) : "";
+			if (hs.misses > 0)
+				Console.Printf("[RSRM] health %s %s: %d/%d tics mapped -- top hole spr=%d fr=%d tics=%d%s",
+					hand == 1 ? "offhand" : "mainhand", wn, hs.hits, total,
+					hs.missSprite, hs.missFrame, hs.missTics, healedNote);
+			else
+				Console.Printf("[RSRM] health %s %s: %d/%d tics mapped%s",
+					hand == 1 ? "offhand" : "mainhand", wn, hs.hits, total, healedNote);
+			hs.hits = 0; hs.misses = 0; hs.healed = 0;
+			hs.missSprite = -1; hs.missFrame = -1; hs.missTics = -1;
+		}
 	}
 
 	override void WorldTick()
@@ -1090,7 +1521,13 @@ class RS_ForeignModelHandler : StaticEventHandler
 		else
 			mLastOff = null;
 
-		mBound = (mLastMain != null || mLastOff != null);
+		ApplyOverlays(pi);
+
+		mBound = (mLastMain != null || mLastOff != null || mOvlBound.Size() > 0);
+
+		// Every ten seconds, say how the table did. See ReportHealth.
+		if (mBound && level.maptime > 0 && level.maptime % 350 == 0)
+			ReportHealth();
 
 		// REFRESH THE SLOT FLAGS, LATE.
 		//
@@ -1114,667 +1551,106 @@ class RS_ForeignModelHandler : StaticEventHandler
 				bool loc; int sl; int prio;
 				[loc, sl, prio] = pi.weapons.LocateWeapon(t);
 				mEntries[i].located = loc;
-				if (loc) mEntries[i].slot = sl;
+				if (loc) { mEntries[i].slot = sl; mEntries[i].slotPos = prio; }
 			}
 		}
-	}
-
-	// Is `to` on `parked`'s natural path? Natural progression -- including
-	// Goto loops, which the state table encodes as NextState -- is a walk;
-	// a button-initiated jump is not on it. Bounded: a parked ready-ish
-	// state reaches its successors within a few hops or not at all.
-	static bool ReachableFrom(State parked, State to, int cap)
-	{
-		State s = parked;
-		for (int i = 0; i <= cap && s != null; ++i)
-		{
-			if (s == to) return true;
-			State nxt = s.NextState;
-			if (nxt == s) return false;   // self-loop (Ready's Loop) ends the walk
-			s = nxt;
-		}
-		return false;
 	}
 
 	// -----------------------------------------------------------------
-	// THE ANIMATION. Watch their sequence, learn its real length, replay
-	// ours across it.
+	// THE ANIMATION, remap edition. Their state machine is the clock:
+	// psp.CurState -> one table lookup -> mesh frame. The table is built
+	// once per (weapon class, donor) by walking their labeled sequences
+	// (see RS_ForeignRemap). Nothing here learns, predicts, glues, or
+	// times -- the machinery that used to (boundary detection, duration
+	// learning, ammo rates, evidence gates, timing persistence) is gone,
+	// and every bug it hosted went with it.
 	// -----------------------------------------------------------------
-	void Animate(RS_ForeignHand hs, PlayerInfo pi, Weapon w, PSprite psp, string donor,
-	             int restFrame, int frameCount, int readyMask)
+	Array<RS_ForeignRemap> mMaps;   // per (class, donor); session-lifetime
+
+	// ------------------------------------------------------------------
+	// PAINT THE OVERLAY LAYERS.
+	//
+	// PSP_WEAPON and PSP_OFFHANDWEAPON are not the only layers that draw a
+	// psprite. A_Overlay puts an animation on any layer the mod likes, and a
+	// whole class of actions lives there and nowhere else -- kicks, shoves,
+	// taunts, grenade tosses. ParryKick is the clean example: a
+	// CustomInventory called SpareLeg, bound to its own key, that probes
+	// downward from layer -8 for a free slot and runs a six-tic swing there
+	// out of three sprite frames.
+	//
+	// The engine already draws models on those layers. IsHUDModelForPlayer-
+	// Available walks EVERY psprite below PSP_TARGETCENTER and the per-layer
+	// test is just FindModelFrame(psp->Caller, ...) -- the PSP_WEAPON gate in
+	// hw_weapon.cpp guards the VR flat-sprite projection, not the model path.
+	// So this needs no engine change: bind the caller, pin the layer, and the
+	// renderer does the rest.
+	//
+	// Their Offset(x,y) still applies on top, so the kick still travels up
+	// the screen exactly as the mod authored it. We are replacing the picture,
+	// not the motion.
+	void ApplyOverlays(PlayerInfo pi)
 	{
-		State cur = psp.CurState;
+		// The frame table is what makes an overlay worth painting -- without
+		// it the layer would hold one pose for the whole swing.
+		if (!RS_Fork.Supported() || !mShelf) return;
 
-		// A SEQUENCE IS "LEFT IDLE UNTIL BACK TO IDLE" -- not the gap between
-		// two state changes.
-		//
-		// Treating every unpredicted state change as a boundary looks right
-		// and is badly wrong on real mods. Ashes' revolver reload runs through
-		// 0-tic conditional jumps, so a single 68-tic reload shattered into a
-		// dozen 2-tic "sequences", each learned separately, each restarting
-		// the clip. The reload happened; the cylinder never swung out, because
-		// the clip never got past its first two frames before being reset.
-		//
-		// WF_WEAPONREADY is the exact signal. A_WeaponReady SETS it, and the
-		// engine clears it every tick before psprite processing -- so it is
-		// true exactly while the weapon is idle, in any mod, because calling
-		// A_WeaponReady is what makes a weapon usable at all. No naming, no
-		// state walking, no assumptions about how their reload is written.
-		bool idle = (pi.WeaponState & readyMask) != 0;
-
-		// A RELOAD PROVING ITSELF THROUGH A STALE FIRE SEQUENCE.
-		//
-		// The gap glue below exists to bridge SHORT idle blips inside ONE
-		// continuing action -- but on its own it cannot tell "still the
-		// same action" apart from "a different action started right after
-		// this one, close enough in time to land inside the glue window."
-		// A voluntary reload pressed within a few tics of the last shot is
-		// exactly that: hs.entry is still the FIRE sequence's, un-reset (it
-		// only resets when hs.entry is already null), so the reload runs
-		// entirely under a stale liveSeq=="fire" -- elapsed and ammoAtEntry
-		// both still belong to the shot that already happened. The model
-		// sits wherever the fire clip's last frame was while the mod's own
-		// reload timer and sound run underneath it, which is indistinguishable
-		// from no animation at all. Reloading from empty dodges this only by
-		// accident: there is naturally more than a glue window's worth of
-		// pause between running dry and pressing reload.
-		//
-		// Ammo direction is the tell, and it needs no state-walking to read.
-		// A continuing fire session can only hold ammoAtEntry's baseline or
-		// fall further below it -- every shot is a decrement, and
-		// ammoAtEntry is fixed at whatever the count was BEFORE the first
-		// shot of the session, refires included. Ammo rising back above
-		// that baseline is proof a reload started, on whatever tic that
-		// happens to be, glue window or not.
-		if (hs.entry && (hs.liveSeq == "fire" || hs.liveSeq == "altfire"))
+		for (let psp = pi.psprites; psp != null; psp = psp.Next)
 		{
-			int a1n = (w.Ammo1 ? w.Ammo1.Amount : -1);
-			int a2n = (w.Ammo2 ? w.Ammo2.Amount : -1);
-			if ((hs.ammoAtEntry  >= 0 && a1n > hs.ammoAtEntry)
-			 || (hs.ammo2AtEntry >= 0 && a2n > hs.ammo2AtEntry))
+			int id = psp.ID;
+			if (id == PSP_WEAPON || id == PSP_OFFHANDWEAPON) continue;
+			if (id >= PSP_TARGETCENTER) continue;    // reticles, not animation
+
+			Actor c = psp.Caller;
+			if (c == null) continue;
+			// A weapon's own flash layer has the weapon as its caller. That
+			// layer is the muzzle flash, not the gun, and painting the gun's
+			// mesh onto it would draw the weapon twice.
+			if (c == pi.ReadyWeapon || c == pi.OffhandWeapon) continue;
+
+			string arch = RS_ForeignScanner.OverlayArchetype(("" .. c.GetClassName()).MakeLower());
+			if (arch.Length() == 0) continue;
+
+			string mcls, anchor; int heldFrame, restFrame, frameCount;
+			if (!mShelf.Get(arch, 0, mcls, anchor, heldFrame, restFrame, frameCount))
+				continue;
+
+			bool fresh = true;
+			for (int i = 0; i < mOvlBound.Size(); ++i)
+				if (mOvlBound[i] == c) { fresh = false; break; }
+
+			if (fresh)
 			{
-				Commit(hs, w);
-				hs.entry = null;
-			}
-		}
-
-		// A JUMP OUT OF GLUE IS A NEW ACTION, and the glue must not eat it.
-		//
-		// The glue exists to bridge idle blips INSIDE one action. But any
-		// button pressed within the glue window landed in the same bridge:
-		// fire, then reload half a second later, and the reload ran as a
-		// continuation of the dead fire sequence -- its animation never
-		// selected, the model parked on the fire clip's last frame. Hence
-		// "I have to wait a beat and press deliberately or nothing plays":
-		// waiting let the glue expire; fight-paced input never did. Running
-		// dry made it a certainty, because an empty-mag reload is always
-		// pressed tics after the shot that emptied it.
-		//
-		// The state table itself is the tell. Natural progression --
-		// including Goto loops, which are encoded as NextState -- walks
-		// forward from the parked state. A button-initiated action is a
-		// JUMP the table does not predict: the engine sets the psprite to
-		// the Fire/Reload/Zoom label directly. So on the tic the weapon
-		// leaves idle-glue, walk the parked state's NextState chain; if the
-		// current state is not on it, something redirected the weapon --
-		// that is a boundary, on exactly the tic it happened. The old
-		// sequence commits, and the fresh one lands on its own (usually
-		// already-learned) entry, so the right clip plays from tic one.
-		//
-		// Runtime A_Jump* side-effects are also invisible to NextState, but
-		// they cannot false-positive here: this test only runs on the
-		// glue-exit tic, and a state parked in glue is parked precisely
-		// because it is calling A_WeaponReady and waiting -- the jumps such
-		// states take are button-driven by design. (BD's fire-to-cancel
-		// mid-reload is a jump AND a genuinely new action: ending the
-		// sequence there is correct, not collateral.)
-		if (hs.entry && !idle && hs.idleRun > 0 && cur != null && hs.lastState != null
-		 && !ReachableFrom(hs.lastState, cur, 24))
-		{
-			Commit(hs, w);
-			hs.entry = null;
-		}
-
-		if (psp.Caller != hs.lastCaller)
-		{
-			// Different weapon entirely; whatever was running is not ours.
-			hs.Reset();
-			hs.lastCaller = psp.Caller;
-		}
-		else if (idle && hs.entry)
-		{
-			// GAP GLUE -- do not end a sequence on the first idle tic.
-			//
-			// Brutal Doom's shotgun calls A_WeaponReady for five tics inside
-			// EVERY shell insertion. Treating that as the end meant an
-			// eight-shell reload was eight sequences: the model replayed the
-			// first fifth of the reload clip eight times and snapped back to
-			// rest between each. Trailblazer's ChromeJustice does it ten
-			// times. A brief idle gap is part of the action, not the end of
-			// it.
-			//
-			// The cost is that a real return to idle is noticed six tics
-			// late, so the ready pose starts a fifth of a second after the
-			// action finishes. Invisible next to an eightfold stutter.
-			hs.idleRun++;
-			hs.elapsed++;
-			if (hs.idleRun >= 6)
-			{
-				Commit(hs, w);
-				hs.entry = null;
-			}
-		}
-		else if (!idle && !hs.entry)
-		{
-			// Left idle: a sequence begins here, and THIS state identifies it
-			// for as long as the mod exists.
-			hs.entry         = cur;
-			hs.elapsed       = 0;
-			hs.sawBrightAt   = -1;
-			hs.liveSeq       = "";
-			hs.idleRun       = 0;
-			hs.ammoAtEntry   = (w.Ammo1 ? w.Ammo1.Amount : -1);
-			hs.ammo2AtEntry  = (w.Ammo2 ? w.Ammo2.Amount : -1);
-			hs.ammoMark      = hs.ammoAtEntry;
-
-			// Cleared, not carried over. liveSeq takes a few tics to resolve,
-			// and until it does, a stale expectedUnits left over from the
-			// PREVIOUS reload (a full reload's "8", say) would rate-scale
-			// this new sequence's duration before its own amount is known --
-			// wrong for exactly the tics it takes liveSeq to catch up.
-			hs.expectedUnits = 0;
-
-			// Alt-fire held at the start is the only thing that separates an
-			// alt-fire from a primary when both leave idle identically. The
-			// clip table already carries eleven altfire rows that nothing
-			// could reach until now.
-			hs.altHeld = (pi.cmd.buttons & BT_ALTATTACK) != 0;
-		}
-		else if (!idle && hs.entry)
-		{
-			hs.idleRun = 0;   // still going; any glue accrued was a gap
-		}
-
-		if (hs.entry && !idle)
-		{
-			hs.elapsed++;
-			if (cur && cur.bFullbright && hs.sawBrightAt < 0) hs.sawBrightAt = hs.elapsed;
-
-			// RE-TRIGGER, DO NOT SMEAR.
-			//
-			// Held fire never returns to idle: A_Refire and its hand-rolled
-			// equivalents keep one sequence running for as long as the trigger
-			// is down. Stretching one clip across that ran an eight-frame
-			// recoil over five seconds -- the chaingun kicking in visible slow
-			// motion, once, while the real weapon cycled ten times a second.
-			//
-			// A fresh ammo decrement is a fresh shot. Restart the clip on it
-			// and held fire becomes a repeating cycle at the mod's own
-			// cadence, which is what it looks like.
-			int nowAmmo = (w.Ammo1 ? w.Ammo1.Amount : -1);
-			if (hs.liveSeq == "fire" && nowAmmo >= 0 && hs.ammoMark >= 0
-			 && nowAmmo < hs.ammoMark && hs.elapsed > 2)
-			{
-				hs.elapsed     = 1;
-				hs.sawBrightAt = -1;
-			}
-			if (nowAmmo >= 0) hs.ammoMark = nowAmmo;
-
-			// SETTLE THE SEQUENCE WHILE IT IS STILL RUNNING.
-			//
-			// The prior used to be read only at the END, which meant the very
-			// FIRST reload of every weapon played the fire animation -- there
-			// was nothing learned yet, so it fell back to a guess, and by the
-			// time we knew better the reload was over.
-			//
-			// Ammo rising is a reload no matter what the sequence is called,
-			// and it is observable the tic it happens. Reading it live means
-			// the first reload looks right too.
-			if (hs.liveSeq.Length() == 0)
-			{
-				int a1 = (w.Ammo1 ? w.Ammo1.Amount : -1);
-				int a2 = (w.Ammo2 ? w.Ammo2.Amount : -1);
-				if ((hs.ammoAtEntry  >= 0 && a1 > hs.ammoAtEntry)
-				 || (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry))
-				{
-					hs.liveSeq = "reload";
-
-					// Predict THIS run's total restore now, while it is still
-					// knowable -- capacity minus what the weapon had when the
-					// reload began. Ammo1 preferred, matching the precedence
-					// the rest of the classifier already uses; falls back to
-					// Ammo2 only when Ammo1 is the one that did not rise.
-					if (hs.ammoAtEntry >= 0 && a1 > hs.ammoAtEntry && w.Ammo1)
-						hs.expectedUnits = w.Ammo1.MaxAmount - hs.ammoAtEntry;
-					else if (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry && w.Ammo2)
-						hs.expectedUnits = w.Ammo2.MaxAmount - hs.ammo2AtEntry;
-					if (hs.expectedUnits < 1) hs.expectedUnits = 1;
-				}
-				else if ((hs.ammoAtEntry  >= 0 && a1 < hs.ammoAtEntry)
-				      || (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry))
-					hs.liveSeq = hs.altHeld ? "altfire" : "fire";
-			}
-		}
-		hs.lastState  = cur;
-		hs.lastTics   = psp.Tics;
-		hs.lastCaller = psp.Caller;
-
-		// ---- pick the clip ----
-		string seq = "ready";
-		int D = 0;
-		int shotTic = -1;
-		int restoreUnits = 0;   // paired with D -- see rate scaling, below
-
-		// The rate is EVIDENCE-GATED, and the gate runs at lock -- so a
-		// rate read off an entry that has not locked yet is an unproven
-		// guess, and applying it was the bug that looked like "it has to
-		// learn every fill level separately": play 1 records duration and
-		// restored-amount, plays 2 and 3 scaled by that ratio before the
-		// gate ever ran, so a fixed-length mag swap at any OTHER fill got
-		// stretched or crushed by a correlation nobody had checked.
-		// Trust the rate only from a locked entry (the gate has run) or
-		// from the archive (only ever written at lock).
-		bool rateTrusted = false;
-
-		if (hs.entry)
-		{
-			int li = FindLearned(w.GetClassName(), hs.entry);
-			if (li >= 0)
-			{
-				seq = mLearned[li].seq; D = mLearned[li].observedTics;
-				shotTic = mLearned[li].brightTic; restoreUnits = mLearned[li].restoreUnits;
-				rateTrusted = (mLearned[li].plays >= LOCK_AFTER);
-			}
-			else
-			{
-				// UNLEARNED AND NOTHING PROVEN YET -- hold the rest pose.
-				//
-				// This used to default to "fire", which meant every melee
-				// swing, kick, taunt, scope-in and mode toggle played the
-				// firing animation the first time it was ever seen -- and
-				// then Commit() learned "fire" for it permanently. Brutal
-				// Doom alone inherits kick, slide attack, taunt and execution
-				// onto all 37 of its weapons.
-				//
-				// A weapon at rest during an action we cannot identify is
-				// wrong quietly. A weapon miming a gunshot while you kick
-				// something is wrong loudly, and then stays wrong.
-				seq = "ready";
+				c.A_ChangeModel(mcls);
+				let map = MapFor(c, mcls, frameCount, restFrame);
+				RS_Fork.ClearRows(c);
+				int pushed = 0;
+				for (int i = 0; i < map.mStates.Size(); ++i)
+					if (RS_Fork.RegisterRow(c, map.mStates[i], map.mMesh[i], map.mMeshNext[i]))
+						pushed++;
+				mOvlBound.Push(c);
+				if (RS_ForeignRemap.DebugOn())
+					Console.Printf("[RSRM] overlay layer %d: %s (%s) -> %s, %d/%d rows",
+						id, c.GetClassName(), arch, mcls, pushed, map.mStates.Size());
 			}
 
-			// FIRST RUN OF A SESSION, ON A WEAPON WE ALREADY KNOW.
-			//
-			// The runtime entry does not exist until this sequence has
-			// finished once, so without this the very first reload after
-			// loading the game plays at natural rate even though the timing
-			// was worked out days ago. The archive is keyed by name rather
-			// than by pointer precisely so it can be consulted here, before
-			// any pointer has been associated with anything.
-			if (li < 0 && D <= 0 && mPersist && hs.liveSeq.Length() > 0)
-			{
-				int pd, pb, pr;
-				if (mPersist.Get(w.GetClassName(), hs.liveSeq, pd, pb, pr))
-				{
-					seq = hs.liveSeq; D = pd; shotTic = pb; restoreUnits = pr;
-					rateTrusted = true;   // archive rows are written at lock, post-gate
-				}
-			}
-
-			// What the weapon has actually DONE this run outranks anything
-			// remembered from a previous one. A weapon whose fire and reload
-			// share an entry state -- common where reload is reached by a
-			// conditional jump out of Fire -- would otherwise be stuck with
-			// whichever one it did first, forever.
-			if (hs.liveSeq.Length() > 0 && hs.liveSeq != seq)
-			{
-				seq          = hs.liveSeq;
-				D            = 0;           // learned duration was for the other sequence
-				shotTic      = -1;
-				restoreUnits = 0;
-				rateTrusted  = false;
-				int lj = FindLearned(w.GetClassName(), hs.entry);
-				if (lj >= 0 && mLearned[lj].seq == seq)
-				{
-					D            = mLearned[lj].observedTics;
-					shotTic      = mLearned[lj].brightTic;
-					restoreUnits = mLearned[lj].restoreUnits;
-					rateTrusted  = (mLearned[lj].plays >= LOCK_AFTER);
-				}
-			}
-
-			// RATE-SCALE A RELOAD TO HOW MUCH IT IS ACTUALLY RESTORING.
-			//
-			// D above is a duration measured on ONE past run. Locking that
-			// number for every future reload of the weapon was the original
-			// design and it is exactly what makes reload timing inconsistent:
-			// a six-shell tube reload and a one-shell top-up can share an
-			// entry state and be wildly different lengths, and only one of
-			// them can match a fixed D. The other either finishes early and
-			// holds, or overruns into the 1.15x stretch below.
-			//
-			// restoreUnits is how much ammo THAT locked run restored --
-			// paired with D, that is a rate (tics per unit). hs.expectedUnits
-			// is how much THIS run is predicted to restore, known from the
-			// moment liveSeq resolves to "reload" (see Animate(), above).
-			// D * expectedUnits / restoreUnits times the duration to how much
-			// THIS reload is actually missing, instead of to whatever the
-			// first three observed runs happened to be.
-			//
-			// restoreUnits <= 0 means no rate was ever learned for this
-			// entry -- predates rate learning, or it is not a reload at all
-			// (fire's ammo delta is a decrease) -- and D is used exactly as
-			// measured, same as before this existed.
-			if (D > 0 && rateTrusted && restoreUnits > 0 && hs.expectedUnits > 0)
-				D = max(1, D * hs.expectedUnits / restoreUnits);
+			int si = Actor.GetSpriteIndex(anchor);
+			if (si < 0) continue;
+			psp.Sprite = si;
+			psp.Frame  = heldFrame;
+			RS_Fork.ReleaseFrames(psp);
 		}
-
-		Array<int> frames; int markFire;
-		if (!mClips.Get(donor, seq, frameCount, frames, markFire)
-		 || frames.Size() == 0)
-		{
-			// No clip for this sequence on this donor: hold the rest pose.
-			int rf = restFrame;
-			if (frameCount > 0 && rf >= frameCount) rf = frameCount - 1;
-			if (rf < 0) rf = 0;
-			psp.ModelFrame     = rf;
-			psp.ModelFrameNext = rf;
-			psp.ModelFrameLerp = 0;
-			return;
-		}
-
-		int N = frames.Size();
-		double ct;
-
-		// TIME-MATCHED AND DETERMINISTIC -- these were never in conflict.
-		//
-		// The warp is a pure function of elapsed tics and the learned
-		// duration: the same tick of the same sequence yields the same frame,
-		// every time. What made the animation vary was the DURATION moving
-		// underneath it, refitted on every play. Commit() locks it after a
-		// few observations, so from then on this is fixed.
-		//
-		// Until it locks, natural rate -- honest about not knowing yet, rather
-		// than guessing at a fit that will change.
-		//
-		// rs_foreignmodels_natural forces natural rate permanently for anyone
-		// who prefers the authored pacing to a matched one.
-		bool natural = false;
-		{
-			CVar nc = CVar.FindCVar("rs_foreignmodels_natural");
-			natural = (nc && nc.GetBool());
-		}
-
-		if (natural || D <= 0)
-		{
-			// Natural rate: one clip tic per game tic, exactly as authored.
-			// Identical on every play, on every weapon, forever.
-			ct = hs.elapsed - 1;
-		}
-		else
-		{
-			// Stretch or compress our clip across the duration they took.
-			//
-			// RUNNING LONGER THAN EXPECTED IS NORMAL, NOT AN ERROR. A reload
-			// takes longer when more rounds are missing -- a six-shell tube
-			// reload can be several times a one-shell top-up, off the same
-			// entry state. Fitting a fixed duration meant the animation
-			// finished in a fraction of the time and then FROZE, in full view,
-			// for the rest of it. That is the "off" reload.
-			//
-			// D has already been rate-scaled to how much THIS reload is
-			// predicted to restore, above -- that is the primary fix for the
-			// six-shell-vs-one-shell case, not this. What is left here is the
-			// residual: a prediction that undershoots (ammo capacity read
-			// wrong, a top-up that keeps going further than expected) or a
-			// weapon with no rate learned yet. So the target still stretches
-			// as the run outlives the estimate, same as before rate-scaling
-			// existed -- a safety net now, not the whole mechanism.
-			double dEff = D;
-			if (hs.elapsed > D) dEff = double(hs.elapsed) * 1.15;
-
-			double e  = double(hs.elapsed - 1);
-			double bt = double(shotTic - 1);          // sawBrightAt counts from 1
-			double mf = double(markFire);
-
-			// ANCHOR THE RECOIL TO THEIR SHOT.
-			//
-			// A proportional warp puts our animation in roughly the right
-			// place; it does not put the KICK on the bang. Our clip knows
-			// which of its own frames is the shot (markFire, authored from
-			// the donor's own states) and watching taught us which tic of
-			// their sequence the muzzle flash landed on. Pin those two
-			// together and interpolate on either side, and the recoil hits
-			// the frame the round leaves the barrel rather than merely near
-			// it.
-			//
-			// Two segments: run-up compressed or stretched to reach the kick
-			// exactly on time, then the recovery spread across whatever is
-			// left. Falls back to the straight proportional warp when either
-			// anchor is missing -- no flash seen, or a clip with no marked
-			// shot, which is every reload.
-			if (bt > 0 && mf > 0 && bt < dEff - 1 && mf < N - 1)
-			{
-				if (e <= bt) ct = e * mf / bt;
-				else         ct = mf + (e - bt) * (double(N - 1) - mf) / (dEff - bt);
-			}
-			else
-			{
-				ct = e * double(N) / dEff;
-			}
-		}
-
-		// Past the end -- held triggers and A_ReFire both do this -- hold.
-		if (ct > N - 1) ct = N - 1;
-		if (ct < 0) ct = 0;
-
-		int i0 = int(ct);
-		int i1 = (i0 + 1 < N) ? i0 + 1 : i0;
-
-		psp.ModelFrame     = frames[i0];
-		psp.ModelFrameNext = frames[i1];
-		// Sub-tic blend: the model moves at display rate instead of stepping
-		// at 35Hz. Lerp 0 with next == current is also the hard-frame case,
-		// which is what a 1-frame clip (every `ready`) resolves to.
-		psp.ModelFrameLerp = (frames[i0] == frames[i1]) ? 0 : (ct - i0);
 	}
 
-	// Learn from the sequence that just ended.
-	void Commit(RS_ForeignHand hs, Weapon w)
+	RS_ForeignRemap MapFor(Actor w, string donor, int frameCount, int restFrame)
 	{
-		if (!hs.entry || hs.elapsed <= 0) return;
+		string cn = w.GetClassName();
+		for (int i = 0; i < mMaps.Size(); ++i)
+			if (mMaps[i].clsName == cn && mMaps[i].donor == donor) return mMaps[i];
 
-		int li = FindLearned(w.GetClassName(), hs.entry);
-		if (li < 0)
-		{
-			let L = new("RS_ForeignLearned");
-			L.clsName = w.GetClassName();
-			L.entry   = hs.entry;
-			L.seq     = GuessSeq(hs, w);
-			L.plays   = 0;
-
-			// Seen this weapon's sequence in a previous session? Then it is
-			// already known and arrives locked -- no relearning, no first few
-			// reloads at the wrong pace.
-			if (mPersist)
-			{
-				int pd, pb, pr;
-				if (mPersist.Get(L.clsName, L.seq, pd, pb, pr))
-				{
-					L.observedTics  = pd;
-					L.brightTic     = pb;
-					L.restoreUnits  = pr;
-					L.plays         = 3;   // already locked
-				}
-			}
-
-			mLearned.Push(L);
-			li = mLearned.Size() - 1;
-		}
-		else if (hs.liveSeq.Length() > 0 && mLearned[li].seq != hs.liveSeq)
-		{
-			// The run proved itself something other than what we had recorded.
-			// Believe the run. The old label was a guess from an earlier one,
-			// and a duration learned under the wrong label is meaningless, so
-			// it starts over.
-			mLearned[li].seq          = hs.liveSeq;
-			mLearned[li].observedTics = 0;
-			mLearned[li].brightTic    = -1;
-			mLearned[li].restoreUnits = 0;
-		}
-		// REJECT RUNS THAT WERE NOT REAL.
-		//
-		// The estimate is the shortest run seen, which makes it exactly as
-		// good as the worst outlier. A reload cancelled two tics in by
-		// switching weapons, or a fire loop clipped by running out of ammo,
-		// would become the new "shortest" and every subsequent play would be
-		// crushed into a fraction of its proper length.
-		//
-		// Two guards. A run has to be long enough to be plausible at all, and
-		// once an estimate exists a run has to be within reach of it -- a
-		// quarter is generous for genuine variation (a one-shell top-up
-		// against a full tube reload) and still rejects a cancel.
-		// The trailing idle gap that the glue kept alive is not part of the
-		// action; counting it would inflate every learned duration by six.
-		if (hs.idleRun > 0) hs.elapsed -= hs.idleRun;
-
-		if (hs.elapsed < 3) { mLearned[li].plays++; return; }
-		if (mLearned[li].observedTics > 0
-		 && hs.elapsed * 4 < mLearned[li].observedTics)
-		{
-			mLearned[li].plays++;
-			return;
-		}
-
-		// LEARN, THEN LOCK.
-		//
-		// The timing used to be refitted on every single play, and THAT is
-		// what made the animation different every time -- not the warp, which
-		// is a pure function of elapsed tics and duration and yields the same
-		// frame for the same tick, always. A moving duration was the entire
-		// source of "it worked once and then it didn't".
-		//
-		// So: watch the first few runs, take the SHORTEST of them, and never
-		// move it again. Shortest rather than average because a run that
-		// outlives the estimate is handled gracefully -- the clip stretches
-		// and keeps moving -- while one that ends early is cut off mid-motion,
-		// which is the failure that looks broken.
-		//
-		// After LOCK_AFTER plays the animation for that sequence is fixed
-		// forever: time-matched to how that weapon actually behaves, and
-		// identical on the hundredth reload as on the fourth.
-		//
-		// PAIRED WITH A RATE, NOT JUST A NUMBER, for reloads that actually
-		// scale with how much ammo is missing. What ammo THIS run restored,
-		// read now while it is still fresh, is recorded alongside the run's
-		// duration below. A fire/altfire run has ammo going DOWN, so
-		// restored stays 0 and nothing here applies -- exactly the old
-		// flat-duration behavior, unchanged.
-		int restored = 0;
-		int a1now = (w.Ammo1 ? w.Ammo1.Amount : -1);
-		int a2now = (w.Ammo2 ? w.Ammo2.Amount : -1);
-		if (hs.ammoAtEntry >= 0 && a1now > hs.ammoAtEntry)
-			restored = a1now - hs.ammoAtEntry;
-		else if (hs.ammo2AtEntry >= 0 && a2now > hs.ammo2AtEntry)
-			restored = a2now - hs.ammo2AtEntry;
-
-		if (mLearned[li].plays < LOCK_AFTER)
-		{
-			if (mLearned[li].observedTics <= 0 || hs.elapsed < mLearned[li].observedTics)
-			{
-				mLearned[li].observedTics = hs.elapsed;
-				mLearned[li].restoreUnits = restored;   // paired with the run above
-			}
-
-			// EVIDENCE FOR THE LOCK DECISION, tracked separately from which
-			// run anchors the rate. A single (duration, restored) pair can't
-			// tell a reload that scales with ammo missing apart from one
-			// that always takes the same time and happened to restore that
-			// much -- most fixed-magazine weapons (pistols, SMGs, rifles:
-			// eject whatever's left, load a fresh mag, same motion either
-			// way) are the second kind, and scaling THEM would predict a
-			// short partial reload's duration from a long full one, rushing
-			// the clip through early and then freezing for what's left --
-			// worse than the flat duration this is meant to improve on.
-			// Two runs that actually restored different amounts, with
-			// duration moving the same direction, is the bar for evidence.
-			if (restored > 0)
-			{
-				if (mLearned[li].minRestore <= 0 || restored < mLearned[li].minRestore)
-				{
-					mLearned[li].minRestore     = restored;
-					mLearned[li].minRestoreTics = hs.elapsed;
-				}
-				if (restored > mLearned[li].maxRestore)
-				{
-					mLearned[li].maxRestore     = restored;
-					mLearned[li].maxRestoreTics = hs.elapsed;
-				}
-			}
-		}
-		else if (mLearned[li].plays == LOCK_AFTER && mPersist)
-		{
-			// Reject the rate at the moment of locking unless the evidence
-			// actually supports it: a real difference in restored amount
-			// (2, not 1 -- filters a single stray round from counting as
-			// "variation") whose duration moved the same direction. Anything
-			// less -- every observed reload restored about the same amount,
-			// or duration didn't track the amount that did vary -- and this
-			// entry keeps the flat duration it would have had before rate
-			// learning existed, permanently, same as a weapon whose ammo
-			// never went up at all.
-			// The direction check alone was too easy to pass: durations are
-			// measured with a tic or two of jitter (glue timing, branch
-			// differences inside the mod's own reload), so two runs that
-			// restored different amounts and happened to differ by ONE tic
-			// read as correlation. Demand a difference that noise can't
-			// fake: at least 4 tics AND at least a fifth of the shorter
-			// run. A real per-shell reload clears both bars trivially; a
-			// mag swap's jitter clears neither.
-			int td = mLearned[li].maxRestoreTics - mLearned[li].minRestoreTics;
-			bool scales = (mLearned[li].maxRestore - mLearned[li].minRestore >= 2)
-			           && (td >= 4)
-			           && (td * 5 >= mLearned[li].minRestoreTics);
-			if (!scales) mLearned[li].restoreUnits = 0;
-
-			// Just locked: archive it, keyed by something that survives a
-			// restart. Written once per sequence, ever.
-			mPersist.Store(mLearned[li].clsName, mLearned[li].seq,
-			               mLearned[li].observedTics, mLearned[li].brightTic,
-			               mLearned[li].restoreUnits);
-		}
-
-		if (hs.sawBrightAt >= 0) mLearned[li].brightTic = hs.sawBrightAt;
-		mLearned[li].plays++;
-	}
-
-	// The PRIOR. Behaviour, not names -- what the weapon DID over the
-	// sequence, because what it is called is unreliable across mods.
-	//   ammo went DOWN -> they shot
-	//   clip went UP    -> they reloaded
-	//   a bright frame appeared and it was short -> they shot
-	// It is allowed to be wrong. The picker is the correction path.
-	string GuessSeq(RS_ForeignHand hs, Weapon w)
-	{
-		int a1 = (w.Ammo1 ? w.Ammo1.Amount : -1);
-		int a2 = (w.Ammo2 ? w.Ammo2.Amount : -1);
-
-		// Anything the run PROVED outranks a fresh reading -- liveSeq already
-		// applied the alt-fire distinction and the UP-before-DOWN priority.
-		if (hs.liveSeq.Length() > 0) return hs.liveSeq;
-
-		if (hs.ammoAtEntry >= 0 && a1 > hs.ammoAtEntry)  return "reload";
-		if (hs.ammo2AtEntry >= 0 && a2 > hs.ammo2AtEntry) return "reload";
-		if (hs.ammoAtEntry >= 0 && a1 < hs.ammoAtEntry)  return hs.altHeld ? "altfire" : "fire";
-		if (hs.ammo2AtEntry >= 0 && a2 < hs.ammo2AtEntry) return hs.altHeld ? "altfire" : "fire";
-		if (hs.sawBrightAt >= 0) return "fire";
-		return "ready";
-	}
-
-	int FindLearned(string cls, State entry) const
-	{
-		for (int i = 0; i < mLearned.Size(); ++i)
-			if (mLearned[i].entry == entry && mLearned[i].clsName == cls) return i;
-		return -1;
+		let m = RS_ForeignRemap.Build(w.GetClass(), donor,
+		                              mClips, frameCount, restFrame);
+		mMaps.Push(m);
+		return m;
 	}
 
 	// Release every weapon we bound. A_ChangeModel with an empty modeldef name
@@ -1785,23 +1661,26 @@ class RS_ForeignModelHandler : StaticEventHandler
 		if (mLastMain) mLastMain.A_ChangeModel("");
 		if (mLastOff)  mLastOff.A_ChangeModel("");
 
+		// Overlay callers are inventory items the player keeps, so an unbind
+		// that skipped them would leave a boot bound to a leg forever.
+		for (int i = 0; i < mOvlBound.Size(); ++i)
+			if (mOvlBound[i]) mOvlBound[i].A_ChangeModel("");
+		mOvlBound.Clear();
+
 		// Hand the psprites back too. ModelFrame persists on the layer and is
 		// serialised, so leaving it set would keep forcing a frame number onto
 		// whatever the weapon renders next.
 		if (playeringame[consolePlayer] && players[consolePlayer].mo)
 		{
 			let pi = players[consolePlayer];
-			for (int lay = 0; lay < 2; ++lay)
-			{
-				let psp = pi.FindPSprite(lay == 0 ? PSP_WEAPON : PSP_OFFHANDWEAPON);
-				if (!psp) continue;
-				psp.ModelFrame     = -1;
-				psp.ModelFrameNext = -1;
-				psp.ModelFrameLerp = -1;
-			}
+			// Every layer, not just the two hands -- an overlay we painted
+			// carries the same serialised ModelFrame and would keep forcing a
+			// frame number onto whatever draws there next.
+			for (let psp = pi.psprites; psp != null; psp = psp.Next)
+				RS_Fork.ReleaseFrames(psp);
 		}
 
-		mLastMain = null; mLastOff = null;
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();
 		mBound    = false;
 	}
 
@@ -1821,7 +1700,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			"pistol", "revolver", "smg", "rifle", "shotgun", "supershotgun",
 			"chaingun", "rocket", "plasma", "railgun", "flamethrower",
 			"bfg", "melee", "saw", "grenade", "sniper",
-			"machinegun", "launcher", "unmaker", "axe",
+			"machinegun", "launcher", "unmaker", "axe", "kick",
 			// Last, so cycling forward through the sensible families reaches
 			// it only after they are exhausted -- but it is one step BACK
 			// from "pistol", which is where most weapons start.
@@ -1888,9 +1767,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 	// ----- the ONE write path -----
 	//   netevent: rs-fm-cycle <row> <selector> <dir>
-	//   selector 0 = family, 1 = mainhand model, 2 = offhand model
-	// Three int args is exactly what SendNetworkEvent carries, so a row's
-	// three selectors need no packing.
+	//   selector 0 = family, 1 = model (one model, both hands)
+	// Three int args is exactly what SendNetworkEvent carries.
 	override void NetworkProcess(ConsoleEvent e)
 	{
 		// Re-run the scan without reloading the map. Pinned rows keep their
@@ -1904,21 +1782,19 @@ class RS_ForeignModelHandler : StaticEventHandler
 			return;
 		}
 
-		// Throw away every learned timing, this session's and the archive's.
-		// For when a mod is updated and its weapons no longer behave the way
-		// they did when this was measured.
-		if (e.name == "rs-fm-forget")
+		// Themed loadout: every visible weapon wears one set, families kept.
+		// arg 0: 0 VanAlek, 1 Bv21, 2 MeatG, 3 BWolf.
+		if (e.name == "rs-fm-assign-set")
 		{
-			mLearned.Clear();
-			if (mPersist) mPersist.Forget();
-			if (mHandMain) mHandMain.Reset();
-			if (mHandOff)  mHandOff.Reset();
+			if (multiplayer) return;
+			int setIdx = e.args[0];
+			if (setIdx < 0 || setIdx > 3) return;
+			AssignSet(setIdx);
 			return;
 		}
 
-		// Separate from the above on purpose -- timing is a measured fact,
-		// picks are a deliberate choice, and clearing one should never
-		// silently take the other with it.
+		// (rs-fm-forget is gone: the remap engine learns nothing, so there
+		// is nothing to forget. Model choices are still clearable below.)
 		if (e.name == "rs-fm-forget-picks")
 		{
 			if (mPicks) mPicks.Forget();
@@ -1934,14 +1810,12 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int sel = e.args[1];
 		int dir = e.args[2];
 		if (row < 0 || row >= mEntries.Size()) return;
-		// Netevent args are attacker-controlled in principle and unvalidated
-		// sel fell through to CyclePick, which treats anything != 2 as the
-		// mainhand.
-		if (sel < 0 || sel > 2) return;
+		// Netevent args are attacker-controlled in principle; validate.
+		if (sel < 0 || sel > 1) return;
 		if (dir != 1 && dir != -1) return;
 
 		if (sel == 0) CycleArchetype(row, dir);
-		else          CyclePick(row, sel, dir);
+		else          CyclePick(row, dir);
 	}
 
 	void CycleArchetype(int i, int dir)
@@ -1958,15 +1832,23 @@ class RS_ForeignModelHandler : StaticEventHandler
 		SetArchetype(i, a[v]);
 	}
 
+	// Applies to the whole GROUP -- every class sharing this weapon's slot
+	// position. One assignment covers a mod's tiers/modes of one gun. See
+	// GroupKey.
 	void SetArchetype(int i, string a)
 	{
 		if (i < 0 || i >= mEntries.Size()) return;
-		mEntries[i].archetype  = a;
-		mEntries[i].modelPick1 = 0;
-		mEntries[i].modelPick2 = 0;
-		mEntries[i].pinned     = true;
-		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
-		SavePick(i);
+		string k = GroupKey(i);
+		for (int j = 0; j < mEntries.Size(); ++j)
+		{
+			if (GroupKey(j) != k) continue;
+			mEntries[j].archetype  = a;
+			mEntries[j].modelPick1 = 0;
+			mEntries[j].modelPick2 = 0;
+			mEntries[j].pinned     = true;
+			SavePick(j);
+		}
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();      // force a re-bind on both hands
 	}
 
 	// The one place a pick reaches the archive. Called after every write to
@@ -1979,23 +1861,34 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mEntries[i].modelPick1, mEntries[i].modelPick2);
 	}
 
-	void CyclePick(int i, int hand, int dir)
+	// ONE MODEL PER WEAPON, not per hand. Whichever hand is holding it, it
+	// wears the same donor -- modelPick1 and modelPick2 are kept mirrored
+	// rather than removing the second field outright, so the persistence
+	// format (class:archetype:pick1:pick2) and ApplyHand's per-hand reads
+	// need no changes; they simply always agree now.
+	void CyclePick(int i, int dir)
 	{
 		if (i < 0 || i >= mEntries.Size()) return;
 		if (!mShelf) return;
 		int n = mShelf.Count(mEntries[i].archetype);
 		if (n <= 0) return;
 
-		int cur = (hand == 2) ? mEntries[i].modelPick2 : mEntries[i].modelPick1;
-		int v = (cur + dir) % n;
+		int v = (mEntries[i].modelPick1 + dir) % n;
 		if (v < 0) v += n;
 
-		if (hand == 2) mEntries[i].modelPick2 = v;
-		else           mEntries[i].modelPick1 = v;
-
-		mEntries[i].pinned = true;
-		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
-		SavePick(i);
+		// Whole group, same as SetArchetype: the tiers and modes of one
+		// weapon move together, because only one of them is ever the gun
+		// in your hands.
+		string k = GroupKey(i);
+		for (int j = 0; j < mEntries.Size(); ++j)
+		{
+			if (GroupKey(j) != k) continue;
+			mEntries[j].modelPick1 = v;
+			mEntries[j].modelPick2 = v;
+			mEntries[j].pinned     = true;
+			SavePick(j);
+		}
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();      // force a re-bind on both hands
 	}
 
 	// One-button "give everything a one-handed model" -- pistol, revolver or
@@ -2005,10 +1898,19 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// same as if the player had dialled in each one by hand.
 	void RandomizeOneHanded()
 	{
-		if (!mShelf) return;
+		if (!mShelf || !mPicks) return;
 
+		int touched = 0;
 		for (int i = 0; i < mEntries.Size(); ++i)
 		{
+			// Only rows the picker shows: the loaded mod's weapons. The
+			// engine compiles in hundreds of arsenal classes (Heretic,
+			// Hexen, Strife, Chex) that are not part of any loaded mod --
+			// randomizing those poisoned the picks archive with junk rows
+			// forever, and the per-row save across ~500 entries was the
+			// quadratic stall that took a whole VR session down.
+			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+
 			string arch;
 			switch (random[MSRandomize](0, 2))
 			{
@@ -2019,14 +1921,76 @@ class RS_ForeignModelHandler : StaticEventHandler
 			int n = mShelf.Count(arch);
 			if (n <= 0) continue;   // standalone build dropped every donor for this row
 
+			int pick = random[MSRandomize](0, n - 1);
 			mEntries[i].archetype  = arch;
-			mEntries[i].modelPick1 = random[MSRandomize](0, n - 1);
-			mEntries[i].modelPick2 = random[MSRandomize](0, n - 1);
+			mEntries[i].modelPick1 = pick;
+			mEntries[i].modelPick2 = pick;   // one model per weapon, both hands
 			mEntries[i].pinned     = true;
-			SavePick(i);
+			mPicks.Store(mEntries[i].clsName, arch, pick, pick, false);
+			touched++;
 		}
 
-		mLastMain = null; mLastOff = null;
+		// One save for the whole batch, not one per row.
+		mPicks.Save();
+		Console.Printf("[RSRM] randomized %d weapons", touched);
+
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();
+	}
+
+	// Which SET a donor class belongs to -- same prefix logic the picker's
+	// Pretty() uses for display, minus the formatting. 0 VanAlek, 1 Bv21,
+	// 2 MeatG, 3 BWolf.
+	static int SetOfDonor(string cls)
+	{
+		// sideloaded, supplies its own classes under that prefix and the
+		// shelf keeps rows for them -- they are the same guns, so they
+		// belong on the same button.
+		if (cls.IndexOf("MS_MG_") == 0 || cls.IndexOf("RS_PS_") == 0) return 2;
+		if (cls.IndexOf("MS_BW_") == 0)                               return 3;
+		return 0;   // VanAlek: the plain MS_/VR_ donors
+	}
+
+	// One press: every visible weapon wears the chosen set, KEEPING its
+	// family -- a shotgun gets that set's shotgun. Rows whose family has no
+	// model in the requested set keep their current pick untouched: a
+	// missing model honestly absent beats a wrong one silently present.
+	// Batch-saved for the same reason Randomize is.
+	void AssignSet(int setIdx)
+	{
+		if (!mShelf || !mPicks) return;
+
+		int assigned = 0, missing = 0;
+		for (int i = 0; i < mEntries.Size(); ++i)
+		{
+			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+
+			string arch = mEntries[i].archetype;
+			int have = mShelf.Count(arch);
+			if (have <= 0) continue;
+
+			int found = -1;
+			for (int p = 0; p < have; ++p)
+			{
+				string mcls, anchor; int hf, rf, fc;
+				if (!mShelf.Get(arch, p, mcls, anchor, hf, rf, fc)) continue;
+				if (SetOfDonor(mcls) == setIdx) { found = p; break; }
+			}
+			if (found < 0) { missing++; continue; }
+
+			mEntries[i].modelPick1 = found;
+			mEntries[i].modelPick2 = found;
+			mEntries[i].pinned     = true;
+			mPicks.Store(mEntries[i].clsName, arch, found, found, false);
+			assigned++;
+		}
+		mPicks.Save();
+
+		string setName = setIdx == 1 ? "Bv21" : setIdx == 2 ? "MeatG"
+		               : setIdx == 3 ? "BWolf" : "VanAlek";
+		Console.Printf("[RSRM] assigned %d weapons to %s (%d families had no %s model, left as-is)",
+			assigned, setName, missing, setName);
+
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();
 	}
 
 	void Dump()

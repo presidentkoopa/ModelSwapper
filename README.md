@@ -24,18 +24,26 @@ Built for VR, where a flat sprite welded to your view is the thing you notice mo
 | | |
 |---|---|
 | **Enable** | Master switch. On by default. |
-| **Choose Models** | One row per weapon in the loaded mod. Three fields: family, mainhand model, offhand model. Left/Right cycles the highlighted one, Enter moves the highlight. |
+| **Choose Models** | One row per weapon in the loaded mod. Two fields: family and model. Left/Right cycles the highlighted one, Enter moves the highlight. |
 | **Scan Report** | Everything found, and why it was classified the way it was. |
 | **Rescan Now** | Re-reads the loaded mod without a map reload. Your picks are kept. |
 | **Randomize — One-Handed** | Slaps a random pistol, revolver or smg model on every weapon in the list in one press — a varied loadout instead of dialling in each one by hand. |
-| **Forget Learned Timing** | Clears measured animation timing. Use it if a mod update changed how a weapon moves. |
+| **Assign All — VanAlek / Bv21 / MeatG / BWolf** | Dresses the whole arsenal in one set, keeping each weapon's family: a shotgun gets that set's shotgun. Families the set has no model for keep whatever they had. |
 | **Forget Saved Models** | Clears saved model choices, back to auto-picked everywhere. |
 | **List Unbound Weapons** | Shows weapons with no slot binding — normally the Heretic, Hexen, Strife and Chex arsenals the engine compiles into every session. |
+
+**One model per weapon, not per hand.** Whichever hand ends up holding a gun, it wears
+the same donor — there is no separate mainhand/offhand pick to keep in sync.
 
 Models swap in your hands as you cycle, so choosing is looking rather than guessing.
 
 Set the family to **`any`** to pick from all fifty models regardless of archetype. A
 chainsaw on a rocket launcher is a legitimate thing to want.
+
+Weapons you never touch don't all end up wearing the same mesh: an auto-guessed pick is
+seeded by hashing the weapon's class name, so two pistols in the same mod get different
+models — and the *same* weapon gets the *same* model every session, since the hash is
+deterministic rather than rolled.
 
 **Picks are remembered between sessions, per mod, with no profile system to manage.**
 Every choice — yours or Randomize's — is saved keyed on the foreign weapon's class name.
@@ -43,8 +51,8 @@ Since only one mod's weapon classes exist in the world at a time, that name is a
 scoped to whichever mod is loaded: load Ashes, pick models, quit; load Golden Souls, pick
 different ones; go back to Ashes next week and its picks are still there, because Golden
 Souls never wrote an entry under Ashes' class names. (Two different mods reusing an
-identical class name would collide — the same tradeoff the learned-timing archive already
-makes, and for the same reason: rare enough in practice that neither guards against it.)
+identical class name would collide — rare enough in practice that this doesn't guard
+against it.)
 
 ---
 
@@ -90,25 +98,41 @@ tick because the foreign weapon's own states re-set the sprite every frame.
 bypassing the sprite encoding and its 29-frame ceiling, with `ModelFrameNext` and
 `ModelFrameLerp` blending at display rate.
 
-### Animation — identity without names
+### Animation — their state machine is the clock
 
-A sequence is **everything from leaving idle until returning to it** — not the gap
-between two state changes. `WF_WEAPONREADY` marks that boundary exactly:
-`A_WeaponReady` sets it and the engine clears it every tick, so it is true precisely
-while a weapon is idle, in any mod, because calling `A_WeaponReady` is what makes a
-weapon usable at all.
+The weapon already broadcasts its complete animation state every tic: which state its
+psprite is in. Everything else follows from reading it.
 
-The state you land on when you leave idle *is* the sequence's identity —
-`(weaponClass, entryState)`. It never has to be **named**, only recognised again.
+**At bind time, once per (weapon, donor):** walk the weapon's labeled state sequences —
+`Ready`, `Fire`, `AltFire`, `Reload`, `Zoom`, `User1-4`, and the rest. Those labels are
+engine-structural, not conventions: the engine's own button code jumps to them by name,
+so any weapon that answers a button has them. Collect each sequence's states in order
+with their tic durations (`Goto` is encoded in `NextState`, so the walk follows the real
+authored flow), and distribute the donor clip's frames across that timeline
+proportionally. The result is a lookup table: **their state → our mesh frame**.
 
-Which clip to play is read from **behaviour, live**: ammo up is a reload, ammo down is
-a shot, a bright frame on a short sequence is a shot. Names are never consulted,
-because names are the one thing that doesn't generalise.
+**At runtime, per tic:** one table lookup. Their conditionals, branches, per-shell
+loops, refires, and empty-mag auto-reloads all just happen — whatever state their logic
+lands in, the mapped frame shows. Timing cannot drift from theirs because there is no
+timing of ours. A partial reload displays fewer of their states than a full one, and the
+mesh follows exactly. Nothing is learned, so nothing has a learning period: **the first
+shot of the first session is already right.**
 
-Playback is at natural rate — one clip tic per game tic, exactly as authored,
-identical on every play. An animation that is right every time beats one that is
-occasionally better timed and never predictable. `rs_foreignmodels_warp` enables
-time-matching to the observed duration for anyone who wants it.
+The recoil lands on the bang **statically**: their fire states carry `bFullbright`, our
+clip knows which of its frames is the shot, and the walk pins those together at build
+time — no observation needed.
+
+Sequences claim states in priority order (Ready first, Reload before Fire), so shared
+tails park on the rest pose and an empty-mag `Fire → Goto Reload` shows the reload
+mapping the moment its states are entered. States reachable only through runtime
+`A_Jump` side effects are absent from the table; the runtime holds the last mapped pose
+until their logic returns to mapped territory — a pause, never garbage.
+
+An earlier design predicted instead of reading: it learned durations by observation,
+locked them, scaled them by ammo-rates, gated the rates on evidence, and glued idle gaps
+to find sequence boundaries. Every mechanism in that list existed to reconstruct
+information the state table already carries, and every one of them hosted bugs. The
+remap replaced all of it and deleted more code than it added.
 
 ### Classification
 
@@ -188,26 +212,12 @@ Results and per-mod fixes will be recorded here as they land.
 
 ## Known limits
 
-**Reload timing is rate-scaled, not just fitted.** A single locked duration used to mean
-a six-shell tube reload and a one-shell top-up — the same entry state, wildly different
-real lengths — couldn't both look right off one number; whichever kind got observed
-first is the one that matched. Reload durations now carry the ammo the locked run
-actually restored alongside the tic count, so a future reload scales that duration by how
-much *it* is missing rather than replaying a fixed length regardless.
-
-Not every reload scales with how much ammo is gone. Most fixed-magazine weapons —
-pistols, SMGs, rifles — eject whatever's left and load a fresh mag either way, same
-motion, same duration, whether one round or the whole mag was missing. Scaling *those*
-would predict a short partial reload from a long full one and rush the model through the
-clip early, then leave it frozen for what's left — worse than not scaling at all. So the
-rate is never assumed from one observed reload; it has to be **earned**, across the
-learning window, by two runs that actually restored different amounts *and* took
-different amounts of time to do it. No such evidence, on a fixed-mag weapon or a
-shotgun-style one the player just always ran dry before reloading — and that entry keeps
-flat-duration timing permanently, same as before rate scaling existed. This is derived
-from behavior alone, never from what kind of weapon it is; nothing here knows or asks
-whether something is a shotgun. Fire and altfire never scale this way regardless — ammo
-drops there, it doesn't rise, so nothing about this touches them.
+**States reached only by runtime jumps are unmapped.** The sequence walk follows
+`NextState` (which encodes `Goto`), but a state entered *only* through an `A_Jump*`
+side effect — a reload-done tail behind an inventory check, a mod-custom combo label —
+is invisible to it. The model holds its last mapped pose through such states and resumes
+the moment their logic returns to mapped territory. In practice these are short tails;
+a held pose reads as a pause.
 
 **Eighteen of the fifty donors have no reload animation.** Knives, chainsaws, fists, the
 shorter MeatGrinder meshes: the mesh has no such frames. Bound to a weapon that reloads
@@ -349,8 +359,10 @@ Time X's own player-speed options, or this will overwrite them.
 ```
 zscript.txt                  donor stubs + includes
 zscript/
-  RS_ForeignModels.zs        scanner, classifier, binder, animation driver
+  RS_ForeignModels.zs        scanner, classifier, binder, telemetry
+  RS_ForeignRemap.zs         label walk, group mapping, self-healing table
   RS_ForeignAnim.zs          clip table, expansion, per-hand state
+  RS_ForeignPersist.zs       the picks archive
   RS_ForeignModelsMenu.zs    picker + scan report
   RS_ForeignBallistic.zs     hitscan -> projectile, and the round itself
   RS_ForeignBulletTime.zs    Bullet Time X compensation (inert without it)
@@ -384,7 +396,10 @@ resolving, no duplicate donor blocks, no donor without a stub.
 
 ## The engine change
 
-Frame-accurate animation needed one thing stock GZDoom can't do.
+Frame-accurate animation needs things stock GZDoom can't do. There are **three**
+additions, and they build on each other.
+
+### 1. Direct model frame addressing (`ModelFrame`)
 
 A HUD model's frame arrives *through the sprite*: `psp->Frame` is a sprite letter index,
 MODELDEF maps that letter to a model frame. That channel is one character wide —
@@ -400,17 +415,86 @@ So the fork skips the encoding instead of stretching it: `int ModelFrame` on `DP
 read directly by the HUD path, with `ModelFrameNext` and `ModelFrameLerp` for sub-tic
 blending.
 
-**[`ENGINE_CHANGES.md`](ENGINE_CHANGES.md) is the full patch** — every file, every
+### 2. Native state remap — the animation clock
+
+Writing a frame number every tic from script makes the *script* the animation clock, with
+everything that implies: tick ordering, event timing, and silent failure when any link
+breaks. Instead the engine owns a per-instance table.
+
+- **`DActorModelData` gains `TMap<intptr_t, int64_t> stateRemap`** — `FState*` keyed,
+  mapping to two packed non-negative int32s, `(frame << 32) | next`. Not serialized;
+  binds re-register it.
+- **Two ZScript natives on `Actor`:** `RegisterModelStateFrame(State, int, int)` and
+  `ClearModelStateFrames()`. Registration requires `modelData`, so `A_ChangeModel` must
+  run first.
+- **Two consult points in `models.cpp`,** both shared by VR and flat, mainhand and
+  offhand. `CalcModelFrame` derives interpolation from the state's own tic countdown plus
+  the renderer's frame fraction — display rate, not 35Hz. `CalcModelOverrides` resolves
+  the frame numbers from the table, placed *after* the §1 fields so a live table beats
+  stale serialized values.
+- **`rs_remap_dump` ccmd** — per hand: weapon class, table size, and whether the state in
+  the psprite *right now* resolves.
+
+### 3. Full state-label enumeration
+
+`FindState` can only probe label names known in advance, which makes every mod-custom
+label invisible to a script-side walk — and DECORATE-era mods keep their real animations
+behind exactly those. The class's own label table has all of them:
+
+```
+clearscope native static int CountStateLabels(class<Actor> cls);
+clearscope native static Name, State GetStateLabelAt(class<Actor> cls, int index);
+```
+
+Returned **sorted by state address**, which is source declaration order. That ordering is
+the whole point: it lets the walker attribute each custom label to the standard label it
+was written under, with no name heuristics. `clearscope` because these are pure reads of
+static class data — play scope fails to compile from the builder's data context.
+
+**[`ENGINE_CHANGES.md`](ENGINE_CHANGES.md) is the full patch** for §1 — every file, every
 function, the exact code, and the one signature change that fails as a *link* error
-rather than a compile error if you miss it. Five edits across six files, all confined to
-the HUD path; world models are untouched. It's written so someone can apply it to their
-own GZDoom build without reading this mod's source.
+rather than a compile error if you miss it. §2 and §3 are documented in the fork's own
+`FORK_CHANGES.md` under "Native state remap".
+
+---
+
+## Running on stock GZDoom or QuestZDoom — the static-model port
+
+None of the above is needed if you don't need *animation*. The binding half — putting the
+right 3D model in your hands on any mod's weapons — is **stock-compatible**, and that's
+the whole feature for a Quest build where a static model beats a flat sprite regardless.
+
+`A_ChangeModel` is stock as of GZDoom 4.11, so the parts that already work anywhere are:
+the scanner, the archetype classifier, provenance filtering, the picker menu, pick
+persistence, Assign All / Randomize, and the per-instance model bind itself.
+
+What to strip for a static port:
+
+| Remove | Why |
+|---|---|
+| `zscript/RS_ForeignRemap.zs` | The whole remap engine — needs §2 and §3. |
+| `RS_ForeignRemap` calls in `ApplyHand` | Table build/registration and the health telemetry. |
+| `psp.ModelFrame*` writes | Fork-only fields (§1). Referencing them is a compile error, not a graceful skip. |
+| `Actor.hasmodel` read in `HasOwnModel` | Fork export. Return `false` and accept that a mod shipping its own 3D weapons gets painted over. |
+
+Keep the psprite pin (`psp.Sprite`/`psp.Frame` set to the donor's anchor) — that's what
+makes `FindModelFrame` resolve, and it's stock behavior. Each donor then renders at its
+anchored rest frame permanently: a correct, well-oriented 3D weapon that doesn't move.
+
+Ballistics and Bullet Time X compensation are stock-safe as-is — `WorldHitscanPreFired`
+is stock and cancellable, and the BT hook only reads and writes cvars.
+
+The mesh data is the real budget question on a Quest, not the code: 51 donors at ~78 MB
+is a desktop-sized pk3. A phone-class build wants a trimmed donor set — one or two models
+per family instead of four to six — which the shelf table supports by simply having fewer
+rows.
 
 ---
 
 ## Requirements
 
-GZDoom 4.11+ for `A_ChangeModel`. The DoomXR fork for animation.
+GZDoom 4.11+ for `A_ChangeModel` — enough for static models. The DoomXR fork for
+animation.
 
 ## Asset licensing
 

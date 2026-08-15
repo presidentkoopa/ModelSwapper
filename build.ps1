@@ -4,12 +4,24 @@
 # Windows PowerShell writes BACKSLASHES, which GZDoom cannot read -- so this
 # builds the archive entry by entry instead.
 
+param(
+    # Build the stock-GZDoom / QuestZDoom package instead of the desktop
+    # one: zscript/static/RS_ForeignFork.zs is shipped in place of
+    # zscript/RS_ForeignFork.zs, which is the ONLY file that differs.
+    # Static models, no animation, no fork required.
+    [switch]$Static
+)
+
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $root = $PSScriptRoot
-$out  = Join-Path $root 'ModelSwapper.pk3'
+# Deliberately NOT named ModelSwapper.pk3. Two identically named pk3s in
+# two folders is how a test session silently loads the wrong engine and
+# produces results that test nothing. The name in the load order is the
+# proof of which build ran.
+$out  = Join-Path $root $(if ($Static) { 'ModelSwapper-QUEST.pk3' } else { 'ModelSwapper-REMAP.pk3' })
 
 # Everything that belongs in the pk3. Anything else in the repo (README, this
 # script, .git) stays out.
@@ -29,13 +41,26 @@ foreach ($d in $dirs) {
     if (Test-Path $p) { $files += Get-ChildItem $p -Recurse -File } else { Write-Warning "missing: $d/" }
 }
 
+# zscript/static/ is the alternate fork shim, never shipped as itself --
+# it is either substituted for zscript/RS_ForeignFork.zs (-Static) or
+# left out entirely. Two RS_Fork classes in one pk3 would not compile.
+$files = $files | Where-Object { $_.FullName -notmatch '\\zscript\\static\\' }
+
 $fs  = [System.IO.File]::Open($out, 'Create')
 $zip = New-Object System.IO.Compression.ZipArchive($fs, [System.IO.Compression.ZipArchiveMode]::Create)
 foreach ($f in $files) {
     $rel = ($f.FullName.Substring($root.Length + 1)) -replace '\\', '/'
+    $src = $f.FullName
+
+    # The one substitution that makes the static build a build flag
+    # rather than a second codebase.
+    if ($Static -and $rel -eq 'zscript/RS_ForeignFork.zs') {
+        $src = Join-Path $root 'zscript/static/RS_ForeignFork.zs'
+    }
+
     $e   = $zip.CreateEntry($rel, [System.IO.Compression.CompressionLevel]::Optimal)
     $st  = $e.Open()
-    $b   = [System.IO.File]::ReadAllBytes($f.FullName)
+    $b   = [System.IO.File]::ReadAllBytes($src)
     $st.Write($b, 0, $b.Length)
     $st.Close()
 }
@@ -89,7 +114,7 @@ $mb = [math]::Round((Get-Item $out).Length / 1MB, 1)
 $n  = $z.Entries.Count
 $z.Dispose()
 
-Write-Host "ModelSwapper.pk3  --  $n entries, $mb MB"
+Write-Host "$(Split-Path $out -Leaf)  --  $n entries, $mb MB$(if ($Static) { '  [STATIC / stock GZDoom]' })"
 Write-Host "  backslash entries : $bad"
 Write-Host "  asset refs        : $refs checked, $miss unresolved"
 Write-Host "  donors            : $($donors.Count), $($dupes.Count) duplicate, $($nostub.Count) unstubbed"

@@ -1,8 +1,10 @@
 // =====================================================================
 // RS_ForeignModelsMenu -- THE WEAPON MODEL PICKER.
 //
-// Left column: every foreign weapon the scanner found. Right: three
-// cycling selectors per row -- FAMILY, MAINHAND model, OFFHAND model.
+// Left column: every foreign weapon the scanner found. Right: two cycling
+// selectors per row -- FAMILY, and MODEL. One model per weapon, worn in
+// whichever hand is holding it; there is no separate mainhand/offhand
+// pick to manage.
 //
 // The classifier only guesses the FAMILY, and it is wrong roughly a
 // quarter of the time (a trumpet that fires musical notes has no Doom
@@ -16,7 +18,7 @@
 // write goes out as the netevent
 //
 //     rs-fm-cycle <row> <selector> <dir>
-//        selector 0 = family, 1 = mainhand model, 2 = offhand model
+//        selector 0 = family, 1 = model
 //
 // which RS_ForeignModelHandler.NetworkProcess applies play-side. Calling
 // the handler's mutators directly from here is what produced the
@@ -76,6 +78,13 @@ class RS_Menu_ForeignModels : OptionMenu
 		// UNSURE FIRST. The rows that fell through to the slot fallback are
 		// the ones the classifier is admitting it could not read; everything
 		// below them is a confident guess that probably needs no attention.
+		//
+		// ONE ROW PER GROUP. A mod's tiers and modes of the same gun share a
+		// slot position and collapse to a single row -- see
+		// RS_ForeignModelHandler.GroupKey. The first entry of each group is
+		// the one that gets a row; the handler fans every write out to the
+		// rest, so picking on the row assigns all of them.
+		Array<string> seenGroups;
 		int shown = 0;
 		for (int pass = 0; pass < 2; ++pass)
 		{
@@ -92,6 +101,13 @@ class RS_Menu_ForeignModels : OptionMenu
 				// mods whose slots live on a player class that never spawns,
 				// the case that makes located alone return an empty menu.
 				if (!showAll && !h.EntryLocated(i) && !h.EntryModDefined(i)) continue;
+
+				string gk = h.GroupKey(i);
+				bool dupe = false;
+				for (int g = 0; g < seenGroups.Size(); ++g)
+					if (seenGroups[g] == gk) { dupe = true; break; }
+				if (dupe) continue;
+				seenGroups.Push(gk);
 
 				desc.mItems.Push(new("OptionMenuItemRS_ForeignRow").InitRow(i));
 				shown++;
@@ -110,16 +126,16 @@ class RS_Menu_ForeignModels : OptionMenu
 }
 
 // ---------------------------------------------------------------------
-// One weapon. Three selectors, one focus cursor.
+// One weapon. Two selectors, one focus cursor.
 //
-// Focus order is MAIN -> OFF -> FAMILY, not family-first: swapping the
-// model you are actually holding is the common action, and changing the
-// family is the rarer repair. The common case costs zero keypresses.
+// Focus order is MODEL -> FAMILY, not family-first: swapping the model
+// you are actually holding is the common action, and changing the family
+// is the rarer repair. The common case costs zero keypresses.
 // ---------------------------------------------------------------------
 class OptionMenuItemRS_ForeignRow : OptionMenuItem
 {
 	int mRow;        // index into the handler's entry list (NOT the display order)
-	int mFocus;      // 0 = mainhand, 1 = offhand, 2 = family
+	int mFocus;      // 0 = model, 1 = family
 
 	OptionMenuItemRS_ForeignRow InitRow(int row)
 	{
@@ -131,11 +147,10 @@ class OptionMenuItemRS_ForeignRow : OptionMenuItem
 
 	override bool Selectable() { return true; }
 
-	// Selector id as NetworkProcess understands it: 0 family, 1 main, 2 off.
+	// Selector id as NetworkProcess understands it: 0 family, 1 model.
 	int SelectorId()
 	{
-		if (mFocus == 2) return 0;
-		return mFocus + 1;
+		return (mFocus == 1) ? 0 : 1;
 	}
 
 	override bool MenuEvent(int mkey, bool fromcontroller)
@@ -150,7 +165,7 @@ class OptionMenuItemRS_ForeignRow : OptionMenuItem
 		if (mkey == Menu.MKey_Enter)
 		{
 			Menu.MenuSound("menu/cursor");
-			mFocus = (mFocus + 1) % 3;
+			mFocus = (mFocus + 1) % 2;
 			return true;
 		}
 		return Super.MenuEvent(mkey, fromcontroller);
@@ -201,13 +216,21 @@ class OptionMenuItemRS_ForeignRow : OptionMenuItem
 		if (tag.Length() == 0) tag = h.EntryName(mRow);
 		bool   unsure = h.EntryUnsure(mRow);
 		string fam    = h.EntryArchetype(mRow);
+		// One model, both hands -- modelPick1/2 are kept mirrored, so either
+		// index reads the same value; 1 is as good as 2.
 		string m1     = Pretty(h.EntryModelName(mRow, 1));
-		string m2     = Pretty(h.EntryModelName(mRow, 2));
 
 		// A model with no reload animation can only hold its rest pose while
 		// the weapon reloads. Worth seeing before you pick it, not after.
 		if (!h.EntryModelHasReload(mRow, 1)) m1 = m1 .. " \c[Brick]*\c-";
-		if (!h.EntryModelHasReload(mRow, 2)) m2 = m2 .. " \c[Brick]*\c-";
+
+		// A collapsed row says so. Three weapon tiers behind one row is the
+		// point of grouping, but it should not look like two of them went
+		// missing. In family mode the row IS the family, so name it that
+		// way rather than picking one member's tag to stand for 40 guns.
+		int gsize = h.GroupSize(mRow);
+		if (h.ByFamily()) tag = "all " .. fam;
+		if (gsize > 1) tag = tag .. " \c[DarkGray]x" .. gsize .. "\c-";
 
 		string label = (unsure ? "\c[Brick]?\c- " : "  ") .. tag;
 		mLabel = label;
@@ -215,11 +238,10 @@ class OptionMenuItemRS_ForeignRow : OptionMenuItem
 		                                      : OptionMenuSettings.mFontColor);
 
 		// Bracket whichever field Left/Right will move.
-		string sf = (selected && mFocus == 2) ? "\c[Gold]" : "\c[White]";
+		string sf = (selected && mFocus == 1) ? "\c[Gold]" : "\c[White]";
 		string s1 = (selected && mFocus == 0) ? "\c[Gold]" : "\c[White]";
-		string s2 = (selected && mFocus == 1) ? "\c[Gold]" : "\c[White]";
 
-		string val = sf .. fam .. "\c-  " .. s1 .. m1 .. "\c-  \c[DarkGray]/\c- " .. s2 .. m2 .. "\c-";
+		string val = sf .. fam .. "\c-  " .. s1 .. m1 .. "\c-";
 		drawValue(indent, y, OptionMenuSettings.mFontColorValue, val, false, false);
 		return indent;
 	}
