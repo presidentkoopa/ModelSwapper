@@ -1,4 +1,4 @@
-﻿// =====================================================================
+// =====================================================================
 // RS_ForeignModels -- OUR MODELS ON THEIR WEAPONS.
 //
 // Scans every weapon class loaded alongside us (any wad/pk3), guesses an
@@ -131,35 +131,36 @@ class RS_ForeignShelf
 
 			// The complete BD21 set -- generated, see modeldef.
 			"shotgun|MS_BD_AssaultShotgun|SHTG|0|0|32",
-			"grenade|MS_BD_nade|MISG|0|0|16",
+			"grenade|MS_BD_nade|MISG|0|0|27",
 			"kick|MS_BD_Boot|PUNG|0|0|58",
 			"melee|MS_BD_fistclosed|PUNG|0|0|75",
-			"bfg|MS_BD_BFG|BFGG|0|0|7",
-			"bfg|MS_BD_BFG_10k|BFGG|0|6|11",
+			"bfg|MS_BD_BFG|BFGG|0|0|16",
+			"bfg|MS_BD_BFG_10k|BFGG|0|6|21",
 			"axe|MS_BD_BrutalAxe|PUNG|0|0|15",
-			"saw|MS_BD_Chain_saw|SAWG|0|0|61",
-			"chaingun|MS_BD_Minigun|CHGG|0|0|12",
-			"pistol|MS_BD_BrutalPistol|PISG|0|0|7",
-			"plasma|MS_BD_Plasma|PLSG|0|0|18",
-			"rocket|MS_BD_RPG|MISG|0|0|16",
-			"shotgun|MS_BD_Shotgun|SHTG|0|0|19",
-			"smg|MS_BD_BrutalSMG|CHGG|0|0|7",
-			"supershotgun|MS_BD_SSG|SHT2|0|0|46",
+			"saw|MS_BD_Chain_saw|SAWG|0|0|65",
+			"axe|MS_BD_DSweap|PUNG|0|5|10",
+			"melee|MS_BD_DSweap|PUNG|0|5|10",
 			"flamethrower|MS_BD_FlameCannon|PLSG|0|0|8",
-			"flamethrower|MS_BD_Flamethrower2|PLSG|0|0|5",
+			"flamethrower|MS_BD_Flamethrower2|PLSG|0|0|6",
 			"rocket|MS_BD_HellishMissile|MISG|0|0|10",
 			"saw|MS_BD_HitlersBuzzsaw|SAWG|0|0|3",
 			"launcher|MS_BD_M79|MISG|0|0|33",
 			"machinegun|MS_BD_Machinegun|CHGG|0|0|36",
+			"chaingun|MS_BD_Minigun|CHGG|0|0|16",
 			"smg|MS_BD_MP40|CHGG|0|0|14",
-			"smg|MS_BD_Dual_MP40|CHGG|0|0|21",
+			"smg|MS_BD_Dual_MP40|CHGG|0|0|20",
+			"pistol|MS_BD_BrutalPistol|PISG|0|0|38",
+			"plasma|MS_BD_Plasma|PLSG|0|0|30",
 			"railgun|MS_BD_RailGun|PLSG|0|0|37",
-			"railgun|MS_BD_SnipaRG|PLSG|0|0|37",
 			"revolver|MS_BD_Revolver|PISG|0|0|33",
 			"rifle|MS_BD_Rifle|CHGG|0|0|32",
 			"rifle|MS_BD_Rifle_Dual|CHGG|0|0|40",
-			"rocket|MS_BD_SnipaRPG|MISG|0|0|5",
-			"smg|MS_BD_DualSMG|CHGG|0|0|48",
+			"rocket|MS_BD_RPG|MISG|0|0|39",
+			"rocket|MS_BD_SnipaRPG|MISG|0|0|41",
+			"shotgun|MS_BD_Shotgun|SHTG|0|0|36",
+			"smg|MS_BD_BrutalSMG|CHGG|0|0|27",
+			"smg|MS_BD_DualSMG|CHGG|0|0|27",
+			"supershotgun|MS_BD_SSG|SHT2|0|47|52",
 			"unmaker|MS_BD_Unmaker|BFGG|0|4|16",
 
 			"melee|RS_PS_Fist|FSTZ|0|0|9",
@@ -204,8 +205,6 @@ class RS_ForeignShelf
 			// The Dragonslayer, Brutal Doom's greatsword. It sits on melee as
 			// well as axe: a mod whose slot 1 is a blade of any size reads
 			// better wearing this than a fist.
-			"axe|MS_BD_DSweap|PUNG|0|5|9",
-			"melee|MS_BD_DSweap|PUNG|0|5|9",
 
 			// ---- thrown explosives ----
 			// A hand grenade is not a rocket launcher. Every mod with a frag
@@ -269,7 +268,6 @@ class RS_ForeignShelf
 			// the long scoped option for a sci-fi mod.
 			"sniper|MS_BW_Kar98|CHGG|0|1|44",
 			"sniper|MS_BW_Garand|CHGG|0|1|36",
-			"sniper|MS_BD_SnipaRG|PLSG|0|0|37",
 
 			"smg|MS_SMG|CHGG|0|3|27"
 		};
@@ -676,7 +674,7 @@ class RS_ForeignScanner
 	//
 	// hasmodel is set on the CLASS DEFAULTS by the MODELDEF parser and is the
 	// same flag FindModelFrameRaw gates on, so it answers exactly the right
-	// question. It is an RS-fork export (FORK_CHANGES.md Â§15); on stock GZDoom
+	// question. It is an RS-fork export (FORK_CHANGES.md Ã‚Â§15); on stock GZDoom
 	// this is not answerable from ZScript at all.
 	//
 	// READ IT OFF THE DEFAULTS, NEVER OFF A LIVE ACTOR. A_ChangeModel sets
@@ -1842,11 +1840,9 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// 2 MeatG, 3 BWolf.
 	static int SetOfDonor(string cls)
 	{
-		// MS_BD_ is the Bv21 set. RS_GH_ stays because RS_Main, when it is
 		// sideloaded, supplies its own classes under that prefix and the
 		// shelf keeps rows for them -- they are the same guns, so they
 		// belong on the same button.
-		if (cls.IndexOf("MS_BD_") == 0 || cls.IndexOf("RS_GH_") == 0) return 1;
 		if (cls.IndexOf("MS_MG_") == 0 || cls.IndexOf("RS_PS_") == 0) return 2;
 		if (cls.IndexOf("MS_BW_") == 0)                               return 3;
 		return 0;   // VanAlek: the plain MS_/VR_ donors

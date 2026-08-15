@@ -50,7 +50,9 @@ class MS_SuperShotgun : Actor {}
 // stock-GZDoom/QuestZDoom stub from zscript/static/. Nothing else in the
 // pk3 differs between the two builds. See zscript/RS_ForeignFork.zs.
 // The complete Brutal Doom v21 set (see modeldef), generated from BD's
-// own MODELDEFs -- one class per MESH, so Boot and nade are their own.
+// own MODELDEFs by tools_gen_bd21.ps1 -- one class per MESH, so Boot,
+// nade and the Dragonslayer are their own models rather than being folded
+// into whichever gun's file they happened to be declared in.
 class MS_BD_AssaultShotgun : Actor {}
 class MS_BD_nade : Actor {}
 class MS_BD_Boot : Actor {}
@@ -59,33 +61,29 @@ class MS_BD_BFG : Actor {}
 class MS_BD_BFG_10k : Actor {}
 class MS_BD_BrutalAxe : Actor {}
 class MS_BD_Chain_saw : Actor {}
-class MS_BD_Minigun : Actor {}
-class MS_BD_BrutalPistol : Actor {}
-class MS_BD_Plasma : Actor {}
-class MS_BD_RPG : Actor {}
-class MS_BD_Shotgun : Actor {}
-class MS_BD_BrutalSMG : Actor {}
-class MS_BD_SSG : Actor {}
+class MS_BD_DSweap : Actor {}
 class MS_BD_FlameCannon : Actor {}
 class MS_BD_Flamethrower2 : Actor {}
 class MS_BD_HellishMissile : Actor {}
 class MS_BD_HitlersBuzzsaw : Actor {}
 class MS_BD_M79 : Actor {}
 class MS_BD_Machinegun : Actor {}
+class MS_BD_Minigun : Actor {}
 class MS_BD_MP40 : Actor {}
 class MS_BD_Dual_MP40 : Actor {}
+class MS_BD_BrutalPistol : Actor {}
+class MS_BD_Plasma : Actor {}
 class MS_BD_RailGun : Actor {}
-class MS_BD_SnipaRG : Actor {}
 class MS_BD_Revolver : Actor {}
 class MS_BD_Rifle : Actor {}
 class MS_BD_Rifle_Dual : Actor {}
+class MS_BD_RPG : Actor {}
 class MS_BD_SnipaRPG : Actor {}
+class MS_BD_Shotgun : Actor {}
+class MS_BD_BrutalSMG : Actor {}
 class MS_BD_DualSMG : Actor {}
+class MS_BD_SSG : Actor {}
 class MS_BD_Unmaker : Actor {}
-// The Dragonslayer. BD ships it under a folder name our importer's map did
-// not know, so it rode along in the pk3 for a release with nothing pointing
-// at it. It carries real frame data, so it is a model, not ballast.
-class MS_BD_DSweap : Actor {}
 
 #include "zscript/RS_ForeignFork.zs"
 #include "zscript/RS_ForeignPersist.zs"

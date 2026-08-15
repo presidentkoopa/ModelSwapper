@@ -79,9 +79,9 @@ Model MS_SuperShotgun
 
 Model MS_Chaingun
 {
-	Path "Models/Weapons/hud/RS_Weapon/VR_Chaingun"
-	Model 0 "chaingun.md3"
-	Skin 0 "chaingun.png"
+	Path "models/bd21/Minigun"
+	Model 0 "minigun.md3"
+	Skin 0 "Minigun.png"
 	Scale -1.0 1.0 1.0
 	Offset 0.0 0.0 0.0
 	NOINTERPOLATION
@@ -90,7 +90,7 @@ Model MS_Chaingun
 
 Model MS_RocketLauncher
 {
-	Path "Models/Weapons/hud/RS_Weapon/VR_RocketLauncher"
+	Path "models/bd21/RPG"
 	Model 0 "RPG.md3"
 	Skin 0 "RPG.png"
 	Scale -1.0 1.0 1.0
@@ -101,9 +101,9 @@ Model MS_RocketLauncher
 
 Model MS_PlasmaRifle
 {
-	Path "Models/Weapons/hud/RS_Weapon/VR_PlasmaRifle"
-	Model 0 "PlasmaRifle.md3"
-	Skin 0 "PlasmaRifle.png"
+	Path "models/bd21/Plasma_Gun"
+	Model 0 "Plasma.md3"
+	Skin 0 "Plasma.png"
 	Scale -1.0 1.0 1.0
 	Offset 0.0 0.0 0.0
    FrameIndex PLSG A 0 4
@@ -129,7 +129,6 @@ Model MS_Fist
    FrameIndex PUNG A 0 0
 }
 
-
 // A distinct mesh from RS_GH_BFG9000/BFG.md3 above -- confirmed by hash, not
 // assumed. VanAlek had its own BFG the whole time and the shelf skipped
 // straight from Bv21 to MeatG without it.
@@ -142,19 +141,6 @@ Model MS_VR_BFG9000
 	Offset 0.0 0.0 0.0
 	FrameIndex BFGG A 0 6
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 Model MS_MG_Knife
 {
@@ -358,9 +344,9 @@ Model MS_BW_Trenchgun
 
 Model MS_SMG
 {
-	Path "Models/Weapons/hud/RS_Weapon/VR_SMG"
-	Model 0 "SMG.md3"
-	Skin 0 "SMG.png"
+	Path "models/bd21/BrutalSMG"
+	Model 0 "BrutalSMG.md3"
+	Skin 0 "BrutalSMG.png"
 	Scale -1.0 1.0 1.0
 	Offset 0.0 0.0 0.0
 	ZOffset -5
@@ -375,13 +361,6 @@ Model MS_SMG
 	FrameIndex CHGG A 0 3
 }
 
-
-
-
-
-
-
-
 // ===================================================================
 // BD21 -- the complete Brutal Doom v21 weapon set, generated from BD's
 // own per-weapon MODELDEFs by gen_bd21.ps1. This IS the Bv21 set. It
@@ -394,6 +373,7 @@ Model MS_SMG
 // for the grenade toss, selected at runtime by sprite name. Each block is
 // therefore imported as its own model, named after its mesh.
 // ===================================================================
+
 Model MS_BD_AssaultShotgun
 {
 	Path "models/bd21/AssaultShotgun"
@@ -482,81 +462,15 @@ Model MS_BD_Chain_saw
 	FrameIndex SAWG A 0 0
 }
 
-Model MS_BD_Minigun
+Model MS_BD_DSweap
 {
-	Path "models/bd21/Minigun"
-	Model 0 "Minigun.md3"
-	Skin 0 "Minigun.png"
+	Path "models/bd21/DSweap"
+	Model 0 "DSweap.md3"
+	Skin 0 "DSweap.png"
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex CHGG A 0 0
-}
-
-Model MS_BD_BrutalPistol
-{
-	Path "models/bd21/BrutalPistol"
-	Model 0 "BrutalPistol.md3"
-	Skin 0 "BrutalPistol.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex PISG A 0 0
-}
-
-Model MS_BD_Plasma
-{
-	Path "models/bd21/Plasma_Gun"
-	Model 0 "Plasma.md3"
-	Skin 0 "Plasma.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex PLSG A 0 0
-}
-
-Model MS_BD_RPG
-{
-	Path "models/bd21/RPG"
-	Model 0 "RPG.md3"
-	Skin 0 "RPG.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex MISG A 0 0
-}
-
-Model MS_BD_Shotgun
-{
-	Path "models/bd21/Shotgun"
-	Model 0 "Shotgun.md3"
-	Skin 0 "Shotgun.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex SHTG A 0 0
-}
-
-Model MS_BD_BrutalSMG
-{
-	Path "models/bd21/BrutalSMG"
-	Model 0 "BrutalSMG.md3"
-	Skin 0 "BrutalSMG.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex CHGG A 0 0
-}
-
-Model MS_BD_SSG
-{
-	Path "models/bd21/SSG"
-	Model 0 "SSG.md3"
-	Skin 0 "SSG.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex SHT2 A 0 0
+	FrameIndex PUNG A 0 5
 }
 
 Model MS_BD_FlameCannon
@@ -625,6 +539,17 @@ Model MS_BD_Machinegun
 	FrameIndex CHGG A 0 0
 }
 
+Model MS_BD_Minigun
+{
+	Path "models/bd21/Minigun"
+	Model 0 "Minigun.md3"
+	Skin 0 "Minigun.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
+}
+
 Model MS_BD_MP40
 {
 	Path "models/bd21/MP40"
@@ -647,22 +572,33 @@ Model MS_BD_Dual_MP40
 	FrameIndex CHGG A 0 0
 }
 
-Model MS_BD_RailGun
+Model MS_BD_BrutalPistol
 {
-	Path "models/bd21/RailGun"
-	Model 0 "RailGun.md3"
-	Skin 0 "RailGun.png"
+	Path "models/bd21/BrutalPistol"
+	Model 0 "BrutalPistol.md3"
+	Skin 0 "BrutalPistol.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PISG A 0 0
+}
+
+Model MS_BD_Plasma
+{
+	Path "models/bd21/Plasma_Gun"
+	Model 0 "Plasma.md3"
+	Skin 0 "Plasma.png"
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
 	FrameIndex PLSG A 0 0
 }
 
-Model MS_BD_SnipaRG
+Model MS_BD_RailGun
 {
-	Path "models/bd21/Railgun"
-	Model 0 "SnipaRG.md3"
-	Skin 0 "Snipa.png"
+	Path "models/bd21/RailGun"
+	Model 0 "RailGun.md3"
+	Skin 0 "RailGun.png"
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
@@ -702,6 +638,17 @@ Model MS_BD_Rifle_Dual
 	FrameIndex CHGG A 0 0
 }
 
+Model MS_BD_RPG
+{
+	Path "models/bd21/RPG"
+	Model 0 "RPG.md3"
+	Skin 0 "RPG.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex MISG A 0 0
+}
+
 Model MS_BD_SnipaRPG
 {
 	Path "models/bd21/RPG"
@@ -711,6 +658,28 @@ Model MS_BD_SnipaRPG
 	ZOffset -5
 	NoInterpolation
 	FrameIndex MISG A 0 0
+}
+
+Model MS_BD_Shotgun
+{
+	Path "models/bd21/ShotGun"
+	Model 0 "Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex SHTG A 0 0
+}
+
+Model MS_BD_BrutalSMG
+{
+	Path "models/bd21/BrutalSMG"
+	Model 0 "BrutalSMG.md3"
+	Skin 0 "BrutalSMG.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
 }
 
 Model MS_BD_DualSMG
@@ -724,6 +693,17 @@ Model MS_BD_DualSMG
 	FrameIndex CHGG A 0 0
 }
 
+Model MS_BD_SSG
+{
+	Path "models/bd21/SSG"
+	Model 0 "SSG.md3"
+	Skin 0 "ssg.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex SHT2 A 0 47
+}
+
 Model MS_BD_Unmaker
 {
 	Path "models/bd21/Unmaker"
@@ -733,15 +713,4 @@ Model MS_BD_Unmaker
 	ZOffset -5
 	NoInterpolation
 	FrameIndex BFGG A 0 4
-}
-
-Model MS_BD_DSweap
-{
-	Path "models/bd21/DSweap"
-	Model 0 "DSweap.md3"
-	Skin 0 "DSweap.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex PUNG A 0 5
 }

@@ -5,12 +5,14 @@
 # the source rather than guessed. That is the whole reason this is a script and
 # not a hand transcription.
 #
-# Emits three fragments:
+# Emits four fragments:
 #   bd21.modeldef   -- our MODELDEF blocks, re-anchored onto stock Doom sprites
 #   bd21.stubs      -- the bodyless Actor stubs each block needs to exist
 #   bd21.clips      -- clip rows, one per (model, animation section)
+#   bd21.shelf      -- shelf rows, one per (family, model)
 
 $src = "D:\SteamLibrary\steamapps\Common\DooM VR\__Games\BrutalDoom\_BD_1.01_WeaponModels"
+$dst = "E:\ModelSwapper-remap\models\bd21"
 $out = "C:\Users\Command\AppData\Local\Temp\claude\E--ModelSwapper\d584ff43-5514-4c35-8f33-afd790fbe555\scratchpad"
 
 # BD model name -> (our family, anchor sprite). Anchors are stock Doom sprite
@@ -33,6 +35,22 @@ $MAP = @{
   'BFG'             = @('bfg','BFGG')
   'Unmaker'         = @('unmaker','BFGG')
   'Boot'            = @('kick','PUNG')
+  'DSweap'          = @('axe','PUNG')      # the Dragonslayer, BD's greatsword
+}
+
+# A handful of meshes are named differently from the folder they sit in and
+# want their own family rather than the folder's.
+$MESHFAM = @{
+  'Boot'      = @('kick','PUNG')
+  'nade'      = @('grenade','MISG')
+  'DSweap'    = @('axe','PUNG')
+  'fistclosed'= @('melee','PUNG')
+  'BFG_10k'   = @('bfg','BFGG')
+}
+
+# Meshes that earn a place on a second shelf.
+$EXTRAFAM = @{
+  'DSweap' = @('melee')
 }
 
 # section comment -> our clip name. Anything unlisted is ignored.
@@ -48,16 +66,15 @@ function Sect([string]$c){
   return ''
 }
 
-$md = New-Object System.Text.StringBuilder
-$st = New-Object System.Text.StringBuilder
-$cl = New-Object System.Text.StringBuilder
-$rows = @()
-# Several defs point at the SAME mesh folder -- Modeldef.ClassicShotgun.def and
-# Modeldef.Shotgun.def are one model with two sprite mappings. One class per
-# mesh, first definition wins; sorted order puts the non-Classic one first,
-# which is the BD-native mapping we want. A duplicate class is a hard compile
-# error, so this is not optional.
-$seen = @{}
+# MD3 header: ident(4) version(4) name(64) flags(4) num_frames(4) -> offset 76.
+# The mesh itself is the authority on how many frames exist. A def that indexes
+# past the end is a BD authoring artifact and must not become a clip row.
+function MeshFrames([string]$p){
+  if (-not (Test-Path $p)) { return -1 }
+  $fs=[System.IO.File]::OpenRead($p)
+  try { $b=New-Object byte[] 80; $null=$fs.Read($b,0,80); return [BitConverter]::ToInt32($b,76) }
+  finally { $fs.Close() }
+}
 
 # A .def is NOT one model. BD declares the same actor name several times in
 # one file, each block bound to a DIFFERENT mesh -- the gun, plus Boot.md3 for
@@ -65,20 +82,39 @@ $seen = @{}
 # mesh; the frame index selects within it. Parsing a file as a unit merges
 # three meshes' frame numbering into nonsense, so split on block boundaries
 # and treat each as its own model, named after its MESH rather than the folder.
+#
+# ORDER IS LOAD-BEARING. Modeldef.ClassicPistol.def binds the SAME
+# BrutalPistol.md3 as Modeldef.Pistol.def, but stops after the fire frames --
+# the Classic defs exist to drive Brutal Doom's vanilla-sprite mode and do not
+# animate the reload at all. Sorting by filename put Classic* FIRST (C before
+# P), so first-wins silently handed ten weapons their stunted twin and threw
+# the real reload away. Native defs are collected first now; Classic ones only
+# fill meshes nothing else defined.
+$files = @(Get-ChildItem "$src\Modeldef.*.def" | Sort-Object Name)
+$ordered = @($files | Where-Object { $_.Name -notmatch '(?i)^Modeldef\.Classic' }) +
+           @($files | Where-Object { $_.Name -match  '(?i)^Modeldef\.Classic' })
+
 $blocks = @()
-foreach ($f in Get-ChildItem "$src\Modeldef.*.def" | Sort-Object Name) {
+foreach ($f in $ordered) {
   $lines = Get-Content $f.FullName
   $cur = $null
   foreach ($line in $lines) {
     if ($line -match '(?i)^\s*Model\s+\S+\s*$') {
       if ($cur) { $blocks += ,$cur }
-      $cur = [pscustomobject]@{ Lines = New-Object System.Collections.Generic.List[string] }
+      $cur = [pscustomobject]@{ Lines = New-Object System.Collections.Generic.List[string]; Src = $f.Name }
       continue
     }
     if ($cur) { $cur.Lines.Add($line) }
   }
   if ($cur) { $blocks += ,$cur }
 }
+
+$md = New-Object System.Text.StringBuilder
+$st = New-Object System.Text.StringBuilder
+$cl = New-Object System.Text.StringBuilder
+$rows = @()
+$seen = @{}
+$notes = @()
 
 foreach ($b in $blocks) {
   $txt = ($b.Lines -join "`n")
@@ -93,19 +129,26 @@ foreach ($b in $blocks) {
   $meshName = [System.IO.Path]::GetFileNameWithoutExtension($mdl)
   $cls = "MS_BD_$meshName"
   if ($seen.ContainsKey($cls)) { continue }
+
+  # The mesh decides the frame count, not the def.
+  $frameCount = MeshFrames (Join-Path $dst "$leaf\$mdl")
+  if ($frameCount -lt 0) { $notes += "SKIP $cls -- mesh not present: $leaf/$mdl"; continue }
+  # A one-frame mesh is a prop (SnipaRG is a scope, not a rifle). It cannot
+  # carry an animation, and shelving it hands the player a frozen object.
+  if ($frameCount -lt 2) { $notes += "SKIP $cls -- $frameCount-frame mesh, a static prop"; continue }
+
   $seen[$cls] = $true
 
-  # Family/anchor follow the MESH when we know it, else the folder it sat in.
   $fam    = $MAP[$leaf][0]
   $anchor = $MAP[$leaf][1]
-  if ($MAP.ContainsKey($meshName)) { $fam = $MAP[$meshName][0]; $anchor = $MAP[$meshName][1] }
+  if ($MESHFAM.ContainsKey($meshName)) { $fam = $MESHFAM[$meshName][0]; $anchor = $MESHFAM[$meshName][1] }
 
   $skn = if ($txt -match '(?im)^\s*Skin\s+0\s+"([^"]+)"')  { $matches[1] } else { '' }
   $scl = if ($txt -match '(?im)^\s*Scale\s+(\S+)\s+(\S+)\s+(\S+)') { "$($matches[1]) $($matches[2]) $($matches[3])" } else { '-1.0 1.0 1.0' }
   $zof = if ($txt -match '(?im)^\s*ZOffset\s+(\S+)') { $matches[1] } else { '0' }
 
-  $cur2 = ''; $buckets = @{}
-  $maxIdx = 0
+  $cur2 = ''; $buckets = @{}; $over = 0
+  $loose = New-Object System.Collections.Generic.List[int]
   foreach ($line in $b.Lines) {
     $t = $line.Trim()
     if ($t -match '^//') {
@@ -115,30 +158,41 @@ foreach ($b in $blocks) {
     }
     if ($t -match '(?i)^FrameIndex\s+\S+\s+\S+\s+\d+\s+(\d+)') {
       $i = [int]$matches[1]
-      if ($i -gt $maxIdx) { $maxIdx = $i }
+      if ($i -ge $frameCount) { $over++; continue }
+      if (-not $loose.Contains($i)) { $loose.Add($i) }
       if ($cur2) {
         if (-not $buckets.ContainsKey($cur2)) { $buckets[$cur2] = New-Object System.Collections.Generic.List[int] }
         if (-not $buckets[$cur2].Contains($i)) { $buckets[$cur2].Add($i) }
       }
     }
   }
-  if ($maxIdx -eq 0 -and $buckets.Count -eq 0) { continue }
+  if ($over) { $notes += "$cls -- dropped $over frame refs past the mesh's $frameCount frames" }
 
-  $frameCount = $maxIdx + 1
+  # Some blocks carry frames under no section header at all -- Boot.md3 (the
+  # kick) is written that way in every def that includes it, as is the
+  # Buzzsaw. Those frames are not nothing; they are one unlabelled animation.
+  # Reading them as the fire clip is what a kick or a saw swing IS, and beats
+  # dropping the only model a family has.
+  if ($buckets.Count -eq 0 -and $loose.Count -gt 0) {
+    $buckets['fire'] = $loose
+    $notes += "$cls -- $($loose.Count) unsectioned frames read as the fire clip"
+  }
+  if ($buckets.Count -eq 0) { $notes += "SKIP $cls -- no frames at all"; $seen.Remove($cls); continue }
+
   $rest = if ($buckets.ContainsKey('ready') -and $buckets['ready'].Count) { ($buckets['ready'] | Sort-Object)[0] } else { 0 }
 
   # BD only comments some sections, so a mesh can carry a full reload with no
-  # //Reload header above it. Where that happens, infer it the same way the
-  # original tables were derived: the frames past the end of the fire range
-  # are the reload. Requires a real run (>=4 frames) so a couple of stray
-  # indices do not masquerade as an animation.
+  # //Reload header above it. Where that happens, infer it: the frames past the
+  # end of every named section are the reload. Requires a real run (>=4 frames)
+  # so a couple of stray indices do not masquerade as an animation.
   if (-not $buckets.ContainsKey('reload')) {
     $used = @(); foreach ($k in $buckets.Keys) { $used += $buckets[$k] }
     $top = if ($used.Count) { ($used | Measure-Object -Maximum).Maximum } else { 0 }
-    if (($maxIdx - $top) -ge 4) {
+    if (($frameCount - 1 - $top) -ge 4) {
       $inf = New-Object System.Collections.Generic.List[int]
-      for ($i = $top + 1; $i -le $maxIdx; $i++) { $inf.Add($i) }
+      for ($i = $top + 1; $i -lt $frameCount; $i++) { $inf.Add($i) }
       $buckets['reload'] = $inf
+      $notes += "$cls -- reload inferred from frames $($top+1)-$($frameCount-1) (no //Reload header)"
     }
   }
 
@@ -156,8 +210,8 @@ foreach ($b in $blocks) {
 
   [void]$st.AppendLine("class $cls : Actor {}")
 
-  foreach ($k in $buckets.Keys) {
-    $ix = ($buckets[$k] | Sort-Object)
+  foreach ($k in ($buckets.Keys | Sort-Object)) {
+    $ix = @($buckets[$k] | Sort-Object)
     if (-not $ix.Count) { continue }
     $steps = ($ix | ForEach-Object { "$_@1" }) -join ','
     $mark = if ($k -eq 'fire') { 0 } else { -1 }
@@ -165,6 +219,14 @@ foreach ($b in $blocks) {
   }
 
   $rows += "`t`t`t`"$fam|$cls|$anchor|0|$rest|$frameCount`","
+  # A mesh may honestly belong on more than one shelf. Nothing stops a model
+  # appearing under several archetypes; the row is the same, only the shelf
+  # differs. The Dragonslayer is a blade, so it answers for melee too.
+  if ($EXTRAFAM.ContainsKey($meshName)) {
+    foreach ($xf in $EXTRAFAM[$meshName]) {
+      $rows += "`t`t`t`"$xf|$cls|$anchor|0|$rest|$frameCount`","
+    }
+  }
 }
 
 Set-Content "$out\bd21.modeldef" $md.ToString() -Encoding utf8
@@ -178,3 +240,5 @@ Write-Host "--- clip coverage ---"
 ($cl.ToString() -split "`n") | Where-Object {$_ -match '\|'} | ForEach-Object {
   ($_ -split '\|')[1]
 } | Group-Object | Sort-Object Count -Descending | ForEach-Object { "  $($_.Name): $($_.Count)" }
+Write-Host "--- notes ---"
+$notes | ForEach-Object { "  $_" }
