@@ -18,7 +18,21 @@ server string rs_fm_picks = "";
 // Hitscan -> projectile conversion. Off by default, and the only setting
 // here that changes how the loaded mod plays rather than how it looks.
 server bool rs_fm_ballistic       = false;  // player hitscans become travelling rounds
-server int  rs_fm_ballistic_speed = 90;     // map units per tic, clamped 10-400
+// 300, not 90, for two reasons that happen to agree.
+//
+// GunBonsai infers whether a weapon is a hitscan or a projectile weapon from
+// the speed of what it fires, and counts anything at 300 map units per tic or
+// faster as a hitscan -- a threshold it added for mods that simulate bullets
+// with fast projectiles, which is exactly what this is. Below it, every
+// converted shotgun and rifle is filed as a projectile weapon and offered the
+// wrong upgrade tree. It also credits XP to the weapon held when the round
+// LANDS, so a shorter flight time is a smaller window to fire, swap, and have
+// the XP go to the wrong gun.
+//
+// It is also the fastest the trail can draw at full density: one bit per 12
+// units, 24 per tic, so 300 units of travel is 25 requested against 24 allowed.
+// Faster than this and the streak starts to gap.
+server int  rs_fm_ballistic_speed = 300;    // map units per tic, clamped 10-400
 
 // Bullet Time X compensation. Inert unless that mod is loaded alongside.
 // 0.0 = player as slow as the monsters, 1.0 = normal player movement speed

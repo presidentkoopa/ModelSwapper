@@ -86,6 +86,9 @@ OptionMenu "RSFM_Ballistic"
     Slider "Round Speed", "rs_fm_ballistic_speed", 10, 400, 10, 0
     StaticText "Map units per tic. Lower is easier to see and easier to", "DarkGray"
     StaticText "dodge; higher plays closer to the original hitscan.", "DarkGray"
+    StaticText "Keep at 300+ with GunBonsai loaded -- below that it files", "DarkGray"
+    StaticText "converted guns as projectile weapons and offers them the", "DarkGray"
+    StaticText "wrong upgrades.", "DarkGray"
     StaticText " "
 
     Slider "Muzzle Trim", "rs_fm_muzzle", -20, 80, 1, 0
