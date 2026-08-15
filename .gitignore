@@ -9,3 +9,4 @@ desktop.ini
 # Build artifacts -- rebuild with ./build.ps1
 ModelSwapper_*.pk3
 ModelSwapper-REMAP.pk3
+ModelSwapper-QUEST.pk3
