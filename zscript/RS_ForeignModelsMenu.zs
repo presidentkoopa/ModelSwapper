@@ -78,6 +78,13 @@ class RS_Menu_ForeignModels : OptionMenu
 		// UNSURE FIRST. The rows that fell through to the slot fallback are
 		// the ones the classifier is admitting it could not read; everything
 		// below them is a confident guess that probably needs no attention.
+		//
+		// ONE ROW PER GROUP. A mod's tiers and modes of the same gun share a
+		// slot position and collapse to a single row -- see
+		// RS_ForeignModelHandler.GroupKey. The first entry of each group is
+		// the one that gets a row; the handler fans every write out to the
+		// rest, so picking on the row assigns all of them.
+		Array<string> seenGroups;
 		int shown = 0;
 		for (int pass = 0; pass < 2; ++pass)
 		{
@@ -94,6 +101,13 @@ class RS_Menu_ForeignModels : OptionMenu
 				// mods whose slots live on a player class that never spawns,
 				// the case that makes located alone return an empty menu.
 				if (!showAll && !h.EntryLocated(i) && !h.EntryModDefined(i)) continue;
+
+				string gk = h.GroupKey(i);
+				bool dupe = false;
+				for (int g = 0; g < seenGroups.Size(); ++g)
+					if (seenGroups[g] == gk) { dupe = true; break; }
+				if (dupe) continue;
+				seenGroups.Push(gk);
 
 				desc.mItems.Push(new("OptionMenuItemRS_ForeignRow").InitRow(i));
 				shown++;
@@ -209,6 +223,12 @@ class OptionMenuItemRS_ForeignRow : OptionMenuItem
 		// A model with no reload animation can only hold its rest pose while
 		// the weapon reloads. Worth seeing before you pick it, not after.
 		if (!h.EntryModelHasReload(mRow, 1)) m1 = m1 .. " \c[Brick]*\c-";
+
+		// A collapsed row says so. Three jackhammer tiers behind one row is
+		// the point of grouping, but it should not look like two of them
+		// went missing.
+		int gsize = h.GroupSize(mRow);
+		if (gsize > 1) tag = tag .. " \c[DarkGray]x" .. gsize .. "\c-";
 
 		string label = (unsure ? "\c[Brick]?\c- " : "  ") .. tag;
 		mLabel = label;

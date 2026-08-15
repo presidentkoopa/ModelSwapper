@@ -41,6 +41,10 @@ class RS_ForeignEntry
 	string clsName;       // the foreign weapon's class name
 	string tag;           // display tag (falls back to class name)
 	int    slot;          // runtime slot, -1 = none
+	int    slotPos;       // position WITHIN that slot, -1 = none. LocateWeapon
+	                      // has always returned it and it was always thrown
+	                      // away; it is what lets tiered/morphing variants of
+	                      // one weapon share a single picker row. See GroupKey.
 	string archetype;     // guessed archetype (our vocabulary)
 	bool   guessedBySlot; // true = name/ammo told us nothing
 	bool   located;       // player has a slot binding for it (see Scan)
@@ -837,14 +841,15 @@ class RS_ForeignScanner
 			// SlotNumber is -1 for weapons that get their slot from
 			// KEYCONF/MAPINFO instead of the actor property. Read the
 			// player's REAL runtime slot when we can.
-			e.slot = def.SlotNumber;
+			e.slot    = def.SlotNumber;
+			e.slotPos = -1;   // only a real slot binding sets this
 			bool located = false;
 			PlayerInfo pl = players[consolePlayer];
 			if (pl && pl.mo)
 			{
 				int sl; int prio;
 				[located, sl, prio] = pl.weapons.LocateWeapon(type);
-				if (located) e.slot = sl;
+				if (located) { e.slot = sl; e.slotPos = prio; }
 			}
 
 			// DO NOT REJECT ON !located. It looks like a clean way to keep the
@@ -1057,6 +1062,53 @@ class RS_ForeignModelHandler : StaticEventHandler
 			Console.Printf("[RSRM]   from %s: %d", srcNames[k], srcCounts[k]);
 		if (unknown > 0)
 			Console.Printf("[RSRM]   slot-bound only, no source archive: %d", unknown);
+	}
+
+	// -----------------------------------------------------------------
+	// ONE PICKER ROW PER WEAPON *POSITION*, not per class.
+	//
+	// Mods routinely ship several classes that are the same gun: Ashes'
+	// three jackhammer tiers, MetaDoom weapons that morph as you find
+	// upgrades, DRLA assembly variants, purist-mode duplicates. Only one
+	// of them can ever be in your hands at a given slot position, so
+	// giving each its own row is pure menu bloat -- nobody wants to
+	// assign a shotgun model three times to guarantee the shotgun slot
+	// looks right whatever mode it is in.
+	//
+	// The slot table already answers this: LocateWeapon returns the slot
+	// AND the position within it, and that pair is exactly "which weapon
+	// is this, from the player's point of view". Variants that replace
+	// each other share it. Genuinely different guns (shotgun at 3:0, SSG
+	// at 3:1) do not.
+	//
+	// Weapons with no slot binding fall back to their own class name --
+	// one row each, exactly as before. That keeps Golden Souls-style
+	// mods (slots on a player class that never spawns, so located is
+	// false for everything) working rather than collapsing their whole
+	// arsenal into a single row.
+	//
+	// PERSISTENCE STAYS PER CLASS. A group write fans out to every
+	// member, so the archive is still keyed by class name and still
+	// scoped per mod -- "slot 3 pos 1" would collide between mods.
+	// -----------------------------------------------------------------
+	string GroupKey(int i) const
+	{
+		if (i < 0 || i >= mEntries.Size()) return "";
+		if (mEntries[i].located && mEntries[i].slotPos >= 0)
+			return "s" .. mEntries[i].slot .. ":" .. mEntries[i].slotPos;
+		return "c:" .. mEntries[i].clsName;
+	}
+
+	// How many entries share this row's group -- shown in the picker so a
+	// collapsed row says so rather than silently hiding classes.
+	int GroupSize(int i) const
+	{
+		string k = GroupKey(i);
+		if (k.Length() == 0) return 0;
+		int n = 0;
+		for (int j = 0; j < mEntries.Size(); ++j)
+			if (GroupKey(j) == k) n++;
+		return n;
 	}
 
 	int FindEntry(string cls)
@@ -1290,7 +1342,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 				bool loc; int sl; int prio;
 				[loc, sl, prio] = pi.weapons.LocateWeapon(t);
 				mEntries[i].located = loc;
-				if (loc) mEntries[i].slot = sl;
+				if (loc) { mEntries[i].slot = sl; mEntries[i].slotPos = prio; }
 			}
 		}
 	}
@@ -1492,15 +1544,23 @@ class RS_ForeignModelHandler : StaticEventHandler
 		SetArchetype(i, a[v]);
 	}
 
+	// Applies to the whole GROUP -- every class sharing this weapon's slot
+	// position. One assignment covers a mod's tiers/modes of one gun. See
+	// GroupKey.
 	void SetArchetype(int i, string a)
 	{
 		if (i < 0 || i >= mEntries.Size()) return;
-		mEntries[i].archetype  = a;
-		mEntries[i].modelPick1 = 0;
-		mEntries[i].modelPick2 = 0;
-		mEntries[i].pinned     = true;
+		string k = GroupKey(i);
+		for (int j = 0; j < mEntries.Size(); ++j)
+		{
+			if (GroupKey(j) != k) continue;
+			mEntries[j].archetype  = a;
+			mEntries[j].modelPick1 = 0;
+			mEntries[j].modelPick2 = 0;
+			mEntries[j].pinned     = true;
+			SavePick(j);
+		}
 		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
-		SavePick(i);
 	}
 
 	// The one place a pick reaches the archive. Called after every write to
@@ -1528,12 +1588,19 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int v = (mEntries[i].modelPick1 + dir) % n;
 		if (v < 0) v += n;
 
-		mEntries[i].modelPick1 = v;
-		mEntries[i].modelPick2 = v;
-
-		mEntries[i].pinned = true;
+		// Whole group, same as SetArchetype: the tiers and modes of one
+		// weapon move together, because only one of them is ever the gun
+		// in your hands.
+		string k = GroupKey(i);
+		for (int j = 0; j < mEntries.Size(); ++j)
+		{
+			if (GroupKey(j) != k) continue;
+			mEntries[j].modelPick1 = v;
+			mEntries[j].modelPick2 = v;
+			mEntries[j].pinned     = true;
+			SavePick(j);
+		}
 		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
-		SavePick(i);
 	}
 
 	// One-button "give everything a one-handed model" -- pistol, revolver or
