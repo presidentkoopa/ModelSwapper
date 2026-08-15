@@ -1169,12 +1169,50 @@ class RS_ForeignModelHandler : StaticEventHandler
 		class<Actor> c = mEntries[i].clsName;
 		if (!c) return i;
 
+		readonly<Actor> dc = GetDefaultByType(c);
+		if (!dc) return i;
+
 		int best = i;
 		class<Object> p = c.GetParentClass();
 		for (int guard = 0; p != null && p != "Weapon" && guard < 16; ++guard)
 		{
 			int j = FindEntry("" .. p.GetClassName());
-			if (j >= 0 && mEntries[j].located) best = j;
+			if (j >= 0 && mEntries[j].located)
+			{
+				// INHERITED ANIMATION IS THE TEST, not merely descent.
+				//
+				// A tier that is the same gun overrides cosmetics and keeps
+				// its parent's states: Ashes' `Glock2 : Glock` changes Tag,
+				// icon and pickup text, so both resolve to the SAME Ready
+				// state pointer, and one picker row is right.
+				//
+				// A subclass that redeclares States{} is a different weapon
+				// wearing an inheritance link for convenience. Project
+				// Brutality's `PB_PulseCannon : PB_M1Plasma` is a whole
+				// separate sprite family; DoomRL Arsenal's 223 assemblies
+				// each declare their own. Merging those is wrong, and in
+				// DRLA's case catastrophic -- its RLWeapon base is itself
+				// slot-bound, so a descent-only rule collapsed 222 weapons
+				// into a single row.
+				//
+				// Comparing the resolved Ready pointer answers exactly
+				// "does this share its parent's animation", which is the
+				// real question. Falls back to Select for the rare weapon
+				// with no Ready.
+				class<Actor> pc = (class<Actor>)(p);
+				readonly<Actor> dp = pc ? GetDefaultByType(pc) : null;
+				if (dp)
+				{
+					State sc = dc.FindState('Ready');
+					State sp = dp.FindState('Ready');
+					if (sc == null && sp == null)
+					{
+						sc = dc.FindState('Select');
+						sp = dp.FindState('Select');
+					}
+					if (sc != null && sc == sp) best = j;
+				}
+			}
 			p = p.GetParentClass();
 		}
 		return best;
