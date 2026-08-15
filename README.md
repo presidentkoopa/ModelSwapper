@@ -8,6 +8,8 @@ damage, projectiles, effects and sounds run untouched. Only the mesh is replaced
 
 Built for VR, where a flat sprite welded to your view is the thing you notice most.
 
+PKs Note: Confirmed working for Ashes, Golden Souls, DAKKA, ... I'm workin on brutaldoomv22 and I'm almost there.
+
 ---
 
 ## Download
