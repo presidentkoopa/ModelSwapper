@@ -838,6 +838,15 @@ class RS_ForeignScanner
 			string lcn = cn; lcn = lcn.MakeLower();
 			if (lcn.IndexOf("random") == 0) continue;   // RandomSpawner-style
 
+			// PICKUP PROXIES ARE NOT WEAPONS YOU HOLD. WeaponGiver derives
+			// from Weapon (weapons.zs), so every one of them gets scanned --
+			// but its entire job is to hand you a real weapon and vanish. It
+			// is never in your hands, so it can never wear a model, and a
+			// picker row for it is a row that does nothing. MetaDoom alone
+			// ships one per weapon (MetaAxePickup, MetaChaingunPickup...),
+			// which is a doubled menu for no benefit.
+			if (type is 'WeaponGiver') continue;
+
 			// A mod that already ships its own 3D weapon models is not asking
 			// for ours. Leave it alone.
 			if (RS_ForeignScanner.HasOwnModel(type)) continue;
