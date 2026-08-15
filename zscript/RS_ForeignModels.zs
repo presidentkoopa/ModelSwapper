@@ -137,29 +137,24 @@ class RS_ForeignShelf
 			"bfg|MS_BD_BFG|BFGG|0|0|16",
 			"bfg|MS_BD_BFG_10k|BFGG|0|6|21",
 			"axe|MS_BD_BrutalAxe|PUNG|0|0|15",
-			"saw|MS_BD_Chain_saw|SAWG|0|0|65",
 			"axe|MS_BD_DSweap|PUNG|0|5|10",
 			"melee|MS_BD_DSweap|PUNG|0|5|10",
 			"flamethrower|MS_BD_FlameCannon|PLSG|0|0|8",
 			"flamethrower|MS_BD_Flamethrower2|PLSG|0|0|6",
 			"rocket|MS_BD_HellishMissile|MISG|0|0|10",
-			"saw|MS_BD_HitlersBuzzsaw|SAWG|0|0|3",
 			"launcher|MS_BD_M79|MISG|0|0|33",
 			"machinegun|MS_BD_Machinegun|CHGG|0|0|36",
 			"chaingun|MS_BD_Minigun|CHGG|0|0|16",
 			"smg|MS_BD_MP40|CHGG|0|0|14",
-			"smg|MS_BD_Dual_MP40|CHGG|0|0|20",
 			"pistol|MS_BD_BrutalPistol|PISG|0|0|38",
 			"plasma|MS_BD_Plasma|PLSG|0|0|30",
 			"railgun|MS_BD_RailGun|PLSG|0|0|37",
 			"revolver|MS_BD_Revolver|PISG|0|0|33",
 			"rifle|MS_BD_Rifle|CHGG|0|0|32",
-			"rifle|MS_BD_Rifle_Dual|CHGG|0|0|40",
 			"rocket|MS_BD_RPG|MISG|0|0|39",
 			"rocket|MS_BD_SnipaRPG|MISG|0|0|41",
 			"shotgun|MS_BD_Shotgun|SHTG|0|0|36",
 			"smg|MS_BD_BrutalSMG|CHGG|0|0|27",
-			"smg|MS_BD_DualSMG|CHGG|0|0|27",
 			"supershotgun|MS_BD_SSG|SHT2|0|47|52",
 			"unmaker|MS_BD_Unmaker|BFGG|0|4|16",
 
@@ -674,7 +669,7 @@ class RS_ForeignScanner
 	//
 	// hasmodel is set on the CLASS DEFAULTS by the MODELDEF parser and is the
 	// same flag FindModelFrameRaw gates on, so it answers exactly the right
-	// question. It is an RS-fork export (FORK_CHANGES.md Ã‚Â§15); on stock GZDoom
+	// question. It is an RS-fork export (FORK_CHANGES.md Ãƒâ€šÃ‚Â§15); on stock GZDoom
 	// this is not answerable from ZScript at all.
 	//
 	// READ IT OFF THE DEFAULTS, NEVER OFF A LIVE ACTOR. A_ChangeModel sets

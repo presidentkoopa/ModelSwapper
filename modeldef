@@ -451,17 +451,6 @@ Model MS_BD_BrutalAxe
 	FrameIndex PUNG A 0 0
 }
 
-Model MS_BD_Chain_saw
-{
-	Path "models/bd21/Chain_saw"
-	Model 0 "Chain_saw.md3"
-	Skin 0 "Chain_saw.png"
-	Scale -1.5 1.5 1.5
-	ZOffset -5
-	NoInterpolation
-	FrameIndex SAWG A 0 0
-}
-
 Model MS_BD_DSweap
 {
 	Path "models/bd21/DSweap"
@@ -506,17 +495,6 @@ Model MS_BD_HellishMissile
 	FrameIndex MISG A 0 0
 }
 
-Model MS_BD_HitlersBuzzsaw
-{
-	Path "models/bd21/HitlersBuzzsaw"
-	Model 0 "HitlersBuzzsaw.md3"
-	Skin 0 "HitlersBuzzsaw.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex SAWG A 0 0
-}
-
 Model MS_BD_M79
 {
 	Path "models/bd21/M79"
@@ -554,17 +532,6 @@ Model MS_BD_MP40
 {
 	Path "models/bd21/MP40"
 	Model 0 "MP40.md3"
-	Skin 0 "MP40.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex CHGG A 0 0
-}
-
-Model MS_BD_Dual_MP40
-{
-	Path "models/bd21/MP40"
-	Model 0 "Dual_MP40.md3"
 	Skin 0 "MP40.png"
 	Scale -1.0 1.0 1.0
 	ZOffset -5
@@ -627,17 +594,6 @@ Model MS_BD_Rifle
 	FrameIndex CHGG A 0 0
 }
 
-Model MS_BD_Rifle_Dual
-{
-	Path "models/bd21/Rifle"
-	Model 0 "Rifle_Dual.md3"
-	Skin 0 "Rifle.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex CHGG A 0 0
-}
-
 Model MS_BD_RPG
 {
 	Path "models/bd21/RPG"
@@ -675,17 +631,6 @@ Model MS_BD_BrutalSMG
 {
 	Path "models/bd21/BrutalSMG"
 	Model 0 "BrutalSMG.md3"
-	Skin 0 "BrutalSMG.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex CHGG A 0 0
-}
-
-Model MS_BD_DualSMG
-{
-	Path "models/bd21/BrutalSMG"
-	Model 0 "DualSMG.md3"
 	Skin 0 "BrutalSMG.png"
 	Scale -1.0 1.0 1.0
 	ZOffset -5

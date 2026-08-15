@@ -53,6 +53,26 @@ $EXTRAFAM = @{
   'DSweap' = @('melee')
 }
 
+# Meshes we deliberately do not ship, and why.
+#
+# The Dual_ family is a CATEGORY exclusion, not a size cut. Brutal Doom ships
+# dual-wield meshes in both v21 and v22 -- two guns modelled as one object,
+# because a flat-screen mod has one psprite to draw them on. ModelSwapper runs
+# in VR with hand tracking and per-hand assignment: you put a gun in each hand
+# and move it between them. A mesh with both hands baked in fights the thing
+# this mod exists to do, and it costs a family slot that the single-barrelled
+# version already fills. Any future Dual_/_Dual mesh should be skipped too.
+#
+# The two saws below are size cuts, not principle -- 23MB between them for one
+# family that MeatGrinder's saw and VanAlek's chainsaw still cover.
+$DROP = @{
+  'Dual_MP40'      = 'dual-wield mesh'
+  'DualSMG'        = 'dual-wield mesh'
+  'Rifle_Dual'     = 'dual-wield mesh'
+  'HitlersBuzzsaw' = 'size: 4.9MB, saw family has other models'
+  'Chain_saw'      = 'size: 18.4MB, the largest single asset in the pk3'
+}
+
 # section comment -> our clip name. Anything unlisted is ignored.
 function Sect([string]$c){
   $c = ($c -replace '//','').Trim().ToLower()
@@ -129,6 +149,18 @@ foreach ($b in $blocks) {
   $meshName = [System.IO.Path]::GetFileNameWithoutExtension($mdl)
   $cls = "MS_BD_$meshName"
   if ($seen.ContainsKey($cls)) { continue }
+  if ($DROP.ContainsKey($meshName)) {
+    if (-not $seen.ContainsKey("drop:$meshName")) {
+      $seen["drop:$meshName"] = $true
+      $notes += "DROP $cls -- $($DROP[$meshName])"
+    }
+    continue
+  }
+  # Catch any dual mesh the list above has not been told about yet.
+  if ($meshName -match '(?i)(^dual|_dual|dual_)') {
+    $notes += "DROP $cls -- looks like a dual-wield mesh, add it to `$DROP if intended"
+    continue
+  }
 
   # The mesh decides the frame count, not the def.
   $frameCount = MeshFrames (Join-Path $dst "$leaf\$mdl")
