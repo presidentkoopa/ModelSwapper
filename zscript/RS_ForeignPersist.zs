@@ -92,12 +92,14 @@ class RS_ForeignPickPersist
 		return true;
 	}
 
-	// Written every time the player changes a pick. That is at most a few
-	// times a session by hand -- or up to one row per weapon in one shot
-	// from the random-assign button -- so, unlike the timing archive, this
-	// does not bother batching: correctness (never losing a pick to a
-	// crash) is worth more than the write count here.
-	void Store(string cls, string arch, int p1, int p2)
+	// Written every time the player changes a pick -- a few times a session
+	// by hand, so the immediate Save costs nothing. Batch writers (the
+	// random-assign button) pass save=false per row and call Save() ONCE
+	// after: per-row saving rebuilds the whole growing blob every call,
+	// which at hundreds of rows is quadratic string churn measured in the
+	// hundreds of megabytes -- a multi-second main-thread stall that killed
+	// a VR session outright before this parameter existed.
+	void Store(string cls, string arch, int p1, int p2, bool save = true)
 	{
 		int i = Find(cls);
 		if (i < 0)
@@ -108,7 +110,7 @@ class RS_ForeignPickPersist
 		{
 			mArch[i] = arch; mPick1[i] = p1; mPick2[i] = p2;
 		}
-		Save();
+		if (save) Save();
 	}
 
 	void Forget()
