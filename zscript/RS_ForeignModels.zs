@@ -1099,12 +1099,70 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// member, so the archive is still keyed by class name and still
 	// scoped per mod -- "slot 3 pos 1" would collide between mods.
 	// -----------------------------------------------------------------
+	// The highest ancestor that is ITSELF a real, slot-bound weapon --
+	// which is what a tier root looks like and what a shared abstract
+	// base does not.
+	//
+	// Ashes: `actor Glock2 : Glock`, `actor Glock3 : Glock`, where Glock
+	// is a genuine weapon sitting in a slot. All three collapse to Glock.
+	// The tiers override only Tag, icon and pickup message; mechanically
+	// they are one gun.
+	//
+	// GNRC-WPN: every weapon is `: ModWeapon`, a shared base with no slot
+	// that is never in the player's weapon table. Walking blindly to the
+	// top would merge that mod's whole arsenal into a single row, so the
+	// `located` test is the thing that makes this safe: a base class
+	// nobody can wield is not a group root.
+	//
+	// Weapons Of Saturn: everything derives straight from Weapon, so each
+	// is its own root -- correct, they are genuinely different guns.
+	//
+	// A mod that implements tiers WITHOUT inheritance gets one row each,
+	// exactly as before. This can only merge things that are provably
+	// related, never guess.
+	int GroupRoot(int i) const
+	{
+		if (i < 0 || i >= mEntries.Size()) return i;
+		class<Actor> c = mEntries[i].clsName;
+		if (!c) return i;
+
+		int best = i;
+		class<Object> p = c.GetParentClass();
+		for (int guard = 0; p != null && p != "Weapon" && guard < 16; ++guard)
+		{
+			int j = FindEntry("" .. p.GetClassName());
+			if (j >= 0 && mEntries[j].located) best = j;
+			p = p.GetParentClass();
+		}
+		return best;
+	}
+
 	string GroupKey(int i) const
 	{
 		if (i < 0 || i >= mEntries.Size()) return "";
-		if (mEntries[i].located && mEntries[i].slotPos >= 0)
-			return "s" .. mEntries[i].slot .. ":" .. mEntries[i].slotPos;
-		return "c:" .. mEntries[i].clsName;
+
+		// COLLAPSE BY FAMILY. Arsenal mods defeat ancestry grouping by
+		// building weapons combinatorially rather than by inheritance --
+		// DoomRL Arsenal's assemblies are base weapon x mod pack, so
+		// "Demolition Ammo Chaingun" and "Nanomachic Chaingun" are
+		// unrelated classes that are both, visibly, a chaingun. 150 rows
+		// of that is unusable however correct each row is.
+		//
+		// With this on, one row per family: the whole menu becomes
+		// "shotgun -> this model, chaingun -> that model", which is what
+		// the player wanted to say in the first place. Off by default,
+		// because on a normal mod each weapon deserves its own say.
+		CVar fc = CVar.FindCVar("rs_foreignmodels_byfamily");
+		if (fc && fc.GetBool())
+			return "a:" .. mEntries[i].archetype;
+
+		return "c:" .. mEntries[GroupRoot(i)].clsName;
+	}
+
+	bool ByFamily() const
+	{
+		CVar fc = CVar.FindCVar("rs_foreignmodels_byfamily");
+		return (fc && fc.GetBool());
 	}
 
 	// How many entries share this row's group -- shown in the picker so a
@@ -1119,7 +1177,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		return n;
 	}
 
-	int FindEntry(string cls)
+	int FindEntry(string cls) const
 	{
 		for (int i = 0; i < mEntries.Size(); ++i)
 			if (mEntries[i].clsName == cls) return i;

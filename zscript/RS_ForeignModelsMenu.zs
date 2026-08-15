@@ -224,10 +224,12 @@ class OptionMenuItemRS_ForeignRow : OptionMenuItem
 		// the weapon reloads. Worth seeing before you pick it, not after.
 		if (!h.EntryModelHasReload(mRow, 1)) m1 = m1 .. " \c[Brick]*\c-";
 
-		// A collapsed row says so. Three jackhammer tiers behind one row is
-		// the point of grouping, but it should not look like two of them
-		// went missing.
+		// A collapsed row says so. Three weapon tiers behind one row is the
+		// point of grouping, but it should not look like two of them went
+		// missing. In family mode the row IS the family, so name it that
+		// way rather than picking one member's tag to stand for 40 guns.
 		int gsize = h.GroupSize(mRow);
+		if (h.ByFamily()) tag = "all " .. fam;
 		if (gsize > 1) tag = tag .. " \c[DarkGray]x" .. gsize .. "\c-";
 
 		string label = (unsure ? "\c[Brick]?\c- " : "  ") .. tag;
