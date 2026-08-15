@@ -601,3 +601,357 @@ Model MS_GH_Grenade
 	FrameIndex MISG A 0 2
 }
 
+
+// ===================================================================
+// BD21 -- the complete Brutal Doom v21 weapon set, generated from BD's
+// own per-weapon MODELDEFs by gen_bd21.ps1. Distinct from the Bv21
+// (MS_GH_) set, which is RS_Main's curated subset of the same lineage.
+//
+// A BD .def declares the same actor name several times, each block bound
+// to a DIFFERENT mesh -- the gun, plus Boot.md3 for the kick and nade.md3
+// for the grenade toss, selected at runtime by sprite name. Each block is
+// therefore imported as its own model, named after its mesh.
+// ===================================================================
+Model MS_BD_AssaultShotgun
+{
+	Path "models/bd21/AssaultShotgun"
+	Model 0 "AssaultShotgun.md3"
+	Skin 0 "AssaultShotgun.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex SHTG A 0 0
+}
+
+Model MS_BD_nade
+{
+	Path "models/bd21/Grenade"
+	Model 0 "nade.md3"
+	Skin 0 "nade.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex MISG A 0 0
+}
+
+Model MS_BD_Boot
+{
+	Path "models/bd21/Boot"
+	Model 0 "Boot.md3"
+	Skin 0 "Boot.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PUNG A 0 0
+}
+
+Model MS_BD_fistclosed
+{
+	Path "models/bd21/FIST"
+	Model 0 "fistclosed.md3"
+	Skin 0 "fist.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PUNG A 0 0
+}
+
+Model MS_BD_BFG
+{
+	Path "models/bd21/BFG"
+	Model 0 "BFG.md3"
+	Skin 0 "BFG.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex BFGG A 0 0
+}
+
+Model MS_BD_BFG_10k
+{
+	Path "models/bd21/BFG"
+	Model 0 "BFG_10k.md3"
+	Skin 0 "BFG_10k.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex BFGG A 0 6
+}
+
+Model MS_BD_BrutalAxe
+{
+	Path "models/bd21/BrutalAxe"
+	Model 0 "BrutalAxe.md3"
+	Skin 0 "BrutalAxe.png"
+	Scale -1.5 1.5 1.5
+	ZOffset 5
+	NoInterpolation
+	FrameIndex PUNG A 0 0
+}
+
+Model MS_BD_Chain_saw
+{
+	Path "models/bd21/Chain_saw"
+	Model 0 "Chain_saw.md3"
+	Skin 0 "Chain_saw.png"
+	Scale -1.5 1.5 1.5
+	ZOffset -5
+	NoInterpolation
+	FrameIndex SAWG A 0 0
+}
+
+Model MS_BD_Minigun
+{
+	Path "models/bd21/Minigun"
+	Model 0 "Minigun.md3"
+	Skin 0 "Minigun.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
+}
+
+Model MS_BD_BrutalPistol
+{
+	Path "models/bd21/BrutalPistol"
+	Model 0 "BrutalPistol.md3"
+	Skin 0 "BrutalPistol.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PISG A 0 0
+}
+
+Model MS_BD_Plasma
+{
+	Path "models/bd21/Plasma_Gun"
+	Model 0 "Plasma.md3"
+	Skin 0 "Plasma.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PLSG A 0 0
+}
+
+Model MS_BD_RPG
+{
+	Path "models/bd21/RPG"
+	Model 0 "RPG.md3"
+	Skin 0 "RPG.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex MISG A 0 0
+}
+
+Model MS_BD_Shotgun
+{
+	Path "models/bd21/Shotgun"
+	Model 0 "Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex SHTG A 0 0
+}
+
+Model MS_BD_BrutalSMG
+{
+	Path "models/bd21/BrutalSMG"
+	Model 0 "BrutalSMG.md3"
+	Skin 0 "BrutalSMG.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
+}
+
+Model MS_BD_SSG
+{
+	Path "models/bd21/SSG"
+	Model 0 "SSG.md3"
+	Skin 0 "SSG.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex SHT2 A 0 0
+}
+
+Model MS_BD_FlameCannon
+{
+	Path "models/bd21/FlameCannon"
+	Model 0 "FlameCannon.md3"
+	Skin 0 "FlameCannon.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PLSG A 0 0
+}
+
+Model MS_BD_Flamethrower2
+{
+	Path "models/bd21/Flamethrower2"
+	Model 0 "Flamethrower2.md3"
+	Skin 0 "Flamethrower2.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PLSG A 0 0
+}
+
+Model MS_BD_HellishMissile
+{
+	Path "models/bd21/HellishMissile"
+	Model 0 "HellishMissile.md3"
+	Skin 0 "HellishMissile.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex MISG A 0 0
+}
+
+Model MS_BD_HitlersBuzzsaw
+{
+	Path "models/bd21/HitlersBuzzsaw"
+	Model 0 "HitlersBuzzsaw.md3"
+	Skin 0 "HitlersBuzzsaw.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex SAWG A 0 0
+}
+
+Model MS_BD_M79
+{
+	Path "models/bd21/M79"
+	Model 0 "M79.md3"
+	Skin 0 "M79.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex MISG A 0 0
+}
+
+Model MS_BD_Machinegun
+{
+	Path "models/bd21/Machinegun"
+	Model 0 "Machinegun.md3"
+	Skin 0 "Machinegun.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
+}
+
+Model MS_BD_MP40
+{
+	Path "models/bd21/MP40"
+	Model 0 "MP40.md3"
+	Skin 0 "MP40.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
+}
+
+Model MS_BD_Dual_MP40
+{
+	Path "models/bd21/MP40"
+	Model 0 "Dual_MP40.md3"
+	Skin 0 "MP40.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
+}
+
+Model MS_BD_RailGun
+{
+	Path "models/bd21/RailGun"
+	Model 0 "RailGun.md3"
+	Skin 0 "RailGun.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PLSG A 0 0
+}
+
+Model MS_BD_SnipaRG
+{
+	Path "models/bd21/Railgun"
+	Model 0 "SnipaRG.md3"
+	Skin 0 "Snipa.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PLSG A 0 0
+}
+
+Model MS_BD_Revolver
+{
+	Path "models/bd21/Revolver"
+	Model 0 "Revolver.md3"
+	Skin 0 "Revolver.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PISG A 0 0
+}
+
+Model MS_BD_Rifle
+{
+	Path "models/bd21/Rifle"
+	Model 0 "Rifle.md3"
+	Skin 0 "Rifle.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
+}
+
+Model MS_BD_Rifle_Dual
+{
+	Path "models/bd21/Rifle"
+	Model 0 "Rifle_Dual.md3"
+	Skin 0 "Rifle.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
+}
+
+Model MS_BD_SnipaRPG
+{
+	Path "models/bd21/RPG"
+	Model 0 "SnipaRPG.md3"
+	Skin 0 "Snipa.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex MISG A 0 0
+}
+
+Model MS_BD_DualSMG
+{
+	Path "models/bd21/BrutalSMG"
+	Model 0 "DualSMG.md3"
+	Skin 0 "BrutalSMG.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 0
+}
+
+Model MS_BD_Unmaker
+{
+	Path "models/bd21/Unmaker"
+	Model 0 "Unmaker.md3"
+	Skin 0 "Unmaker.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex BFGG A 0 4
+}
+
+
+
