@@ -33,7 +33,6 @@ Model MS_Revolver
    FrameIndex PISG A 0 0
 }
 
-
 Model MS_Chaingun
 {
 	Path "models/bd21/Minigun"
@@ -55,7 +54,6 @@ Model MS_RocketLauncher
 	INTERPOLATEDOUBLEDFRAMES
    FrameIndex MISG A 0 5
 }
-
 
 Model MS_Chainsaw
 {
@@ -100,7 +98,6 @@ Model MS_MG_Knife
    FrameIndex PUNG A 0 0
 }
 
-
 Model MS_MG_Tec9
 {
 	Path "models/meatgrinder/TEC9"
@@ -141,7 +138,6 @@ Model MS_MG_Bolter
    FrameIndex PLSG A 0 0
 }
 
-
 Model MS_BW_Colt
 {
 	Path "models/bw/1911"
@@ -153,7 +149,6 @@ Model MS_BW_Colt
 	FrameIndex PISG A 0 1
 }
 
-
 Model MS_BW_Garand
 {
 	Path "models/bw/Garand"
@@ -164,7 +159,6 @@ Model MS_BW_Garand
 	ZOffset -5
 	FrameIndex CHGG A 0 1
 }
-
 
 Model MS_BW_MG42
 {
@@ -245,6 +239,61 @@ Model MS_BW_Trenchgun
 // therefore imported as its own model, named after its mesh.
 // ===================================================================
 
+Model MS_Shotgun
+{
+	Path "Models/Weapons/hud/RS_Weapon/VR_Shotgun"
+	Model 0 "shotgun.md3"
+	Skin 0 "WPN-SHTGUN.png"
+	Scale 1.35 1.35 1.35
+   FrameIndex SHTG A 0 0
+}
+
+Model MS_SuperShotgun
+{
+	Path "Models/Weapons/hud/RS_Weapon/VR_SuperShotgun"
+	Model 0 "ssg.md3"
+	Skin 0 "WPN-SSHTGUN.png"
+	Scale 1.35 1.35 1.35
+	// THE SPAWN FRAME, WHICH IS WHY A DROPPED SSG WAS INVISIBLE ON
+	// ULTIMATE DOOM. Added 2026-08-08.
+	//
+	// VR_SuperShotgun spawns in the world as SGN2 A (RS_Shotgun-style
+	// Spawn state, RS_SuperShotgun.zs), and SGN2A0 is a DOOM 2 lump --
+	// verified absent from doom.wad and present in doom2.wad. The repo
+	// so on doom.wad an SSG elite drop or pedestal fill had NO SPRITE
+	// AND NO MODEL: an actor that ticks, is reachable and renders
+	// nothing. Exactly the PSP1/BFP1/PLP1/RLP1 defect fixed earlier the
+	// same day, in the one family that pass did not cover because its
+	// spawn sprite EXISTS -- just not in every IWAD.
+	//
+	// Mapping it to the model rather than extracting SGN2 from the IWAD:
+	// the other five sprite-backed families already render their own
+	// mesh in the world (SHTG A, CHGG A, REVO A, RIFK A, SAWG A all have
+	// instead of alone in showing a vanilla pickup graphic, and it costs
+	// no IWAD art at all.
+   FrameIndex SHT2 A 0 0
+}
+
+Model MS_MG_Shotgun
+{
+	Path "models/meatgrinder/Shotgun"
+	Model 0 "Shotgun.md3"
+	Skin 0 "Shotgun.png"
+	Scale -1.1 1.1 1.1
+	ZOffset -6
+   FrameIndex SHTG A 0 0
+}
+
+Model MS_MG_SSG
+{
+	Path "models/meatgrinder/SSG"
+	Model 0 "SSG.md3"
+	Skin 0 "ssg.png"
+	Scale -1.1 1.1 1.1
+	ZOffset -6
+   FrameIndex SHT2 A 0 0
+}
+
 Model MS_BD_AssaultShotgun
 {
 	Path "models/bd21/AssaultShotgun"
@@ -277,7 +326,6 @@ Model MS_BD_Boot
 	NoInterpolation
 	FrameIndex PUNG A 0 0
 }
-
 
 Model MS_BD_BFG_10k
 {
@@ -312,7 +360,6 @@ Model MS_BD_DSweap
 	FrameIndex PUNG A 0 5
 }
 
-
 Model MS_BD_Flamethrower2
 {
 	Path "models/bd21/Flamethrower2"
@@ -345,7 +392,6 @@ Model MS_BD_Machinegun
 	NoInterpolation
 	FrameIndex CHGG A 0 0
 }
-
 
 Model MS_BD_BrutalPistol
 {
@@ -445,59 +491,3 @@ Model MS_BD_Unmaker
 	NoInterpolation
 	FrameIndex BFGG A 0 4
 }
-
-Model MS_Shotgun
-{
-	Path "Models/Weapons/hud/RS_Weapon/VR_Shotgun"
-	Model 0 "shotgun.md3"
-	Skin 0 "WPN-SHTGUN.png"
-	Scale 1.35 1.35 1.35
-   FrameIndex SHTG A 0 0
-}
-
-Model MS_SuperShotgun
-{
-	Path "Models/Weapons/hud/RS_Weapon/VR_SuperShotgun"
-	Model 0 "ssg.md3"
-	Skin 0 "WPN-SSHTGUN.png"
-	Scale 1.35 1.35 1.35
-	// THE SPAWN FRAME, WHICH IS WHY A DROPPED SSG WAS INVISIBLE ON
-	// ULTIMATE DOOM. Added 2026-08-08.
-	//
-	// VR_SuperShotgun spawns in the world as SGN2 A (RS_Shotgun-style
-	// Spawn state, RS_SuperShotgun.zs), and SGN2A0 is a DOOM 2 lump --
-	// verified absent from doom.wad and present in doom2.wad. The repo
-	// so on doom.wad an SSG elite drop or pedestal fill had NO SPRITE
-	// AND NO MODEL: an actor that ticks, is reachable and renders
-	// nothing. Exactly the PSP1/BFP1/PLP1/RLP1 defect fixed earlier the
-	// same day, in the one family that pass did not cover because its
-	// spawn sprite EXISTS -- just not in every IWAD.
-	//
-	// Mapping it to the model rather than extracting SGN2 from the IWAD:
-	// the other five sprite-backed families already render their own
-	// mesh in the world (SHTG A, CHGG A, REVO A, RIFK A, SAWG A all have
-	// instead of alone in showing a vanilla pickup graphic, and it costs
-	// no IWAD art at all.
-   FrameIndex SHT2 A 0 0
-}
-
-Model MS_MG_Shotgun
-{
-	Path "models/meatgrinder/Shotgun"
-	Model 0 "Shotgun.md3"
-	Skin 0 "Shotgun.png"
-	Scale -1.1 1.1 1.1
-	ZOffset -6
-   FrameIndex SHTG A 0 0
-}
-
-Model MS_MG_SSG
-{
-	Path "models/meatgrinder/SSG"
-	Model 0 "SSG.md3"
-	Skin 0 "ssg.png"
-	Scale -1.1 1.1 1.1
-	ZOffset -6
-   FrameIndex SHT2 A 0 0
-}
-

@@ -185,7 +185,6 @@ class RS_ForeignShelf
 			// bare fist, an axe, a knife. The axe is on this shelf as well as
 			// its own because a mod's slot 1 is frequently a hand axe and the
 			// classifier files it as melee.
-			"melee|MS_BD_BrutalAxe|PUNG|0|0|15",
 
 			// ---- axe/blade: a held edge, not a bare hand ----
 			"axe|MS_MG_Knife|PUNG|0|0|9",
@@ -218,6 +217,11 @@ class RS_ForeignShelf
 			// three shelves. Nothing stops a donor appearing under more than
 			// one archetype; the row is the same, only the shelf differs.
 			"pistol|MS_MG_Bolter|PLSG|0|0|5",
+
+			// The Tec9 is a machine pistol -- it is held in one hand and reads
+			// as a sidearm as readily as it does as an SMG, so it sits on both
+			// shelves rather than being filed under one of them.
+			"pistol|MS_MG_Tec9|CHGG|0|0|6",
 
 			// ---- Brutal Wolfenstein set. Real WW2 weapons, which is what a
 			// post-apocalyptic or contemporary mod actually wants -- Ashes'
@@ -661,7 +665,7 @@ class RS_ForeignScanner
 	//
 	// hasmodel is set on the CLASS DEFAULTS by the MODELDEF parser and is the
 	// same flag FindModelFrameRaw gates on, so it answers exactly the right
-	// question. It is an RS-fork export (FORK_CHANGES.md ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§15); on stock GZDoom
+	// question. It is an RS-fork export (FORK_CHANGES.md ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§15); on stock GZDoom
 	// this is not answerable from ZScript at all.
 	//
 	// READ IT OFF THE DEFAULTS, NEVER OFF A LIVE ACTOR. A_ChangeModel sets

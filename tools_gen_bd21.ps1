@@ -89,7 +89,12 @@ $DROP = @{
 function Sect([string]$c){
   $c = ($c -replace '//','').Trim().ToLower()
   if ($c -match '^ready')                    { return 'ready'   }
-  if ($c -match 'aim and fire|^fire|alt-?fire'){ return 'fire'   }
+  # BD is not consistent about this header. Across the v21 defs it writes
+  # "//Aim and Fire" 66 times, "//Aim and Firing" twice, "//Aim Fire" twice
+  # and "//Fire" four times. Matching only the long form cost the
+  # Dragonslayer its entire swing -- the sword had a ready pose and nothing
+  # to play when you attacked. "aim.*fir" covers every spelling BD uses.
+  if ($c -match 'aim.*fir|^fire|alt-?fire|^throw') { return 'fire' }
   if ($c -match '^reload')                   { return 'reload'  }
   if ($c -match '^zoom')                     { return 'ads'     }
   if ($c -match '^sprint')                   { return 'sprint'  }
