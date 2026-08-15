@@ -227,6 +227,24 @@ class RS_ForeignRemap play
 		return "";
 	}
 
+	// Labels whose states are drawn on an overlay layer, not the weapon
+	// layer we paint -- muzzle flashes, gun-flash sequences, glitter and
+	// smoke. Their tics must not be counted into any weapon animation.
+	// Matched on substring because mods suffix them per weapon
+	// (MuzzleFlashRV, GunFlashAU, MuzzleFlashOAU1) rather than using one
+	// shared name.
+	static bool IsEffectLabel(string lname)
+	{
+		return lname.IndexOf("muzzleflash") >= 0
+		    || lname.IndexOf("gunflash")    >= 0
+		    || lname.IndexOf("flashkick")   >= 0
+		    || lname.IndexOf("flashpunch")  >= 0
+		    || lname.IndexOf("sparkle")     >= 0
+		    || lname.IndexOf("smokespawn")  >= 0
+		    || lname.IndexOf("recoiloffset")>= 0   // 0-tic Offset() bookkeeping
+		    || lname.IndexOf("fireoffset")  >= 0;
+	}
+
 	// Labels that mean "whatever follows is NOT part of a psprite
 	// sequence" -- world-actor and inventory labels. A custom label that
 	// follows one of these in source order belongs to it, not to us.
@@ -278,6 +296,21 @@ class RS_ForeignRemap play
 				lname = "" .. nm; lname = lname.MakeLower();
 				lst = st;
 			}
+
+			// OVERLAY-EFFECT LABELS ARE NOT THIS WEAPON'S ANIMATION.
+			//
+			// Golden Souls declares 20+ psprite labels like MuzzleFlashRV and
+			// GunFlashAU. They are real states, but they run on a SEPARATE
+			// overlay layer via A_Overlay -- flash sprites, never the gun.
+			// Absorbed into the preceding group they contribute their tics to
+			// the total, so the clip gets distributed across states that never
+			// appear on the layer we paint, and the real fire animation is
+			// squeezed into whatever fraction is left.
+			//
+			// Skipped entirely rather than closing the group: a flash label
+			// sits in the middle of a weapon's own labels, so closing there
+			// would orphan whatever legitimately follows it.
+			if (i < n && IsEffectLabel(lname)) continue;
 
 			string std = (i < n) ? PspriteClip(lname) : "";
 			bool closer = (i >= n) || (std.Length() > 0) || ClosesGroup(lname);
