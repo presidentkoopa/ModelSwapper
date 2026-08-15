@@ -32,36 +32,61 @@
 // timing exists.
 // =====================================================================
 
+// One group's clip data, kept after build so self-healing can continue
+// the right clip when an orphaned state is claimed mid-action.
+class RS_RemapGroup
+{
+	string clipName;
+	Array<int> frames;   // per-tic frame list, post-fallback
+}
+
 class RS_ForeignRemap
 {
 	string clsName;
 	string donor;
 
-	// Parallel arrays; mStates is the key. Lookups are hint-cached:
-	// states advance sequentially, so the next lookup is almost always
-	// the same index or the one after it.
+	// Parallel arrays; mStates is the key. Per row: the mesh frame shown
+	// while the state displays, the frame its end lands on (for lerp),
+	// WHICH GROUP the row belongs to, and how far through that group's
+	// frame list the row's end sits. The last two exist for self-healing:
+	// an orphaned state healed mid-action needs to know which clip was
+	// playing and where it left off, so the heal can continue the clip
+	// instead of freezing it. Lookups are hint-cached: states advance
+	// sequentially, so the next lookup is almost always the same index or
+	// the one after it.
 	Array<State> mStates;
 	Array<int>   mMesh;
 	Array<int>   mMeshNext;
+	Array<int>   mGroupId;   // index into mGroups
+	Array<int>   mEndIdx;    // index into the group's frame list at state end
+	Array<RS_RemapGroup> mGroups;
 	int mHint;
 
-	bool Lookup(State s, out int meshFrame, out int meshNext)
+	int LookupIndex(State s)
 	{
-		meshFrame = -1; meshNext = -1;
 		int n = mStates.Size();
-		if (n == 0 || s == null) return false;
+		if (n == 0 || s == null) return -1;
 
 		if (mHint >= 0 && mHint < n)
 		{
-			if (mStates[mHint] == s) { meshFrame = mMesh[mHint]; meshNext = mMeshNext[mHint]; return true; }
+			if (mStates[mHint] == s) return mHint;
 			int nx = mHint + 1;
-			if (nx < n && mStates[nx] == s) { mHint = nx; meshFrame = mMesh[nx]; meshNext = mMeshNext[nx]; return true; }
+			if (nx < n && mStates[nx] == s) { mHint = nx; return nx; }
 		}
 		for (int i = 0; i < n; ++i)
 		{
-			if (mStates[i] == s) { mHint = i; meshFrame = mMesh[i]; meshNext = mMeshNext[i]; return true; }
+			if (mStates[i] == s) { mHint = i; return i; }
 		}
-		return false;
+		return -1;
+	}
+
+	bool Lookup(State s, out int meshFrame, out int meshNext)
+	{
+		int i = LookupIndex(s);
+		if (i < 0) { meshFrame = -1; meshNext = -1; return false; }
+		meshFrame = mMesh[i];
+		meshNext  = mMeshNext[i];
+		return true;
 	}
 
 	bool Claimed(State s)
@@ -69,6 +94,86 @@ class RS_ForeignRemap
 		for (int i = 0; i < mStates.Size(); ++i)
 			if (mStates[i] == s) return true;
 		return false;
+	}
+
+	// -----------------------------------------------------------------
+	// SELF-HEALING. The walk cannot see a runtime jump whose target
+	// label lives only in an action function's arguments -- that is an
+	// information limit, not a code gap. But the MOMENT such a jump
+	// lands, it identifies itself: the psprite was on a mapped row last
+	// tic and is on an unmapped state now. That is unambiguous, so the
+	// table repairs itself right there: walk the orphaned chain exactly
+	// the way the builder walks a label chain, and distribute the
+	// REMAINDER of the interrupted group's clip across it -- from the
+	// frame index where the mapped portion left off to the clip's end.
+	// The rows register with the engine the same tic, so the heal is
+	// invisible: no pause, no snap, the clip just keeps playing across
+	// states nobody could have predicted statically. Once healed, the
+	// rows are permanent for the session and re-heal identically the
+	// next session on first encounter.
+	// -----------------------------------------------------------------
+	int HealFrom(int fromRow, State missed, Actor w)
+	{
+		if (fromRow < 0 || fromRow >= mStates.Size()) return 0;
+		if (missed == null || w == null) return 0;
+
+		int gid = mGroupId[fromRow];
+		if (gid < 0 || gid >= mGroups.Size()) return 0;
+		let grp = mGroups[gid];
+		int N = grp.frames.Size();
+		if (N == 0) return 0;
+
+		int startIdx = mEndIdx[fromRow];
+		if (startIdx < 0) startIdx = 0;
+		if (startIdx > N - 1) startIdx = N - 1;
+
+		// Walk the orphan chain: same rules as the builder -- stop on
+		// claimed territory (the chain rejoining mapped states is its
+		// natural end), on a revisit (their loop), or at the cap.
+		Array<State> seq;
+		Array<int>   dur;
+		int total = 0;
+		State s = missed;
+		for (int guard = 0; guard < 512; ++guard)
+		{
+			if (s == null) break;
+			if (Claimed(s)) break;
+			bool seen = false;
+			for (int k = 0; k < seq.Size(); ++k)
+				if (seq[k] == s) { seen = true; break; }
+			if (seen) break;
+
+			int d = s.Tics;
+			if (d < 0) d = 1;
+			seq.Push(s);
+			dur.Push(d);
+			total += d;
+			s = s.NextState;
+		}
+		if (seq.Size() == 0) return 0;
+
+		// Distribute the clip's tail across the chain by tic weight.
+		int span = (N - 1) - startIdx;
+		int cum = 0;
+		for (int k = 0; k < seq.Size(); ++k)
+		{
+			int a = startIdx + ((total > 0) ? cum * span / total : 0);
+			int b = startIdx + ((total > 0) ? (cum + dur[k]) * span / total : 0);
+			if (a > N - 1) a = N - 1;
+			if (b > N - 1) b = N - 1;
+
+			mStates.Push(seq[k]);
+			mMesh.Push(grp.frames[a]);
+			mMeshNext.Push(grp.frames[b]);
+			mGroupId.Push(gid);
+			mEndIdx.Push(b);
+			w.RegisterModelStateFrame(seq[k], grp.frames[a], grp.frames[b]);
+			cum += dur[k];
+		}
+
+		if (DebugOn()) Console.Printf("[RSRM] healed %d states into clip '%s' for %s (%d tics of chain)",
+			seq.Size(), grp.clipName, clsName, total);
+		return seq.Size();
 	}
 
 	static bool DebugOn()
@@ -222,13 +327,24 @@ class RS_ForeignRemap
 		if (frameCount > 0 && rest >= frameCount) rest = frameCount - 1;
 		if (rest < 0) rest = 0;
 
+		// The group is recorded either way -- a no-clip group holds one
+		// rest frame -- because self-healing needs every row to know its
+		// group and every group to have a frame list to continue.
+		let grp = new("RS_RemapGroup");
+		grp.clipName = clipName;
+		int gid = m.mGroups.Size();
+
 		if (!haveClip || total <= 0)
 		{
+			grp.frames.Push(rest);
+			m.mGroups.Push(grp);
 			for (int k = 0; k < seq.Size(); ++k)
 			{
 				m.mStates.Push(seq[k]);
 				m.mMesh.Push(rest);
 				m.mMeshNext.Push(rest);
+				m.mGroupId.Push(gid);
+				m.mEndIdx.Push(0);
 			}
 			if (DebugOn()) Console.Printf("[RSRM]   group [%s] -> %d states at rest (no '%s' clip)",
 				groupNames, seq.Size(), clipName);
@@ -236,6 +352,8 @@ class RS_ForeignRemap
 		}
 
 		int N = frames.Size();
+		for (int k = 0; k < N; ++k) grp.frames.Push(frames[k]);
+		m.mGroups.Push(grp);
 
 		// 3. Shot anchor, static: their first bright displaying state pinned
 		// to our clip's marked shot frame, interpolated on both sides.
@@ -257,6 +375,8 @@ class RS_ForeignRemap
 			m.mStates.Push(seq[k]);
 			m.mMesh.Push(frames[a]);
 			m.mMeshNext.Push(frames[b]);
+			m.mGroupId.Push(gid);
+			m.mEndIdx.Push(b);
 			cum += dur[k];
 		}
 		if (DebugOn()) Console.Printf("[RSRM]   group [%s] -> %d states / %d tics on clip '%s'%s",

@@ -293,19 +293,29 @@ class RS_ForeignHand
 	Actor lastCaller;
 	int   lastMesh;    // last mapped mesh frame; held on unmapped states
 
+	// Heal context: the table and row of the last HIT, so a miss knows
+	// which group's clip was interrupted and where it left off. The map
+	// reference guards against a stale row after a donor change rebuilds
+	// the table.
+	RS_ForeignRemap lastMap;
+	int lastHitRow;
+
 	// Health telemetry: tics this hand spent on states the table resolved
 	// vs. missed, printed and reset periodically by the handler so every
 	// session's log answers "did it animate, and where are the holes"
 	// without anyone being asked anything. The last missed state's
-	// sprite/frame is kept so a hole names itself.
-	int hits, misses;
+	// sprite/frame is kept so a hole names itself; healed counts states
+	// the table repaired into itself this interval.
+	int hits, misses, healed;
 	int missSprite, missFrame, missTics;
 
 	void Reset()
 	{
 		lastCaller = null;
 		lastMesh   = -1;
-		hits = 0; misses = 0;
+		lastMap    = null;
+		lastHitRow = -1;
+		hits = 0; misses = 0; healed = 0;
 		missSprite = -1; missFrame = -1; missTics = -1;
 	}
 }

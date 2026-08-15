@@ -1082,26 +1082,48 @@ class RS_ForeignModelHandler : StaticEventHandler
 			psp.ModelFrameNext = -1;
 			psp.ModelFrameLerp = -1;
 
-			// HEALTH TELEMETRY. Same lookup the renderer performs, against
-			// the same table, counted per tic and reported by WorldTick so
-			// the session log says whether the table covered what the
-			// weapon actually did -- and names the biggest hole when not.
+			// HEALTH TELEMETRY + SELF-HEALING. Same lookup the renderer
+			// performs, against the same table. A hit records the heal
+			// context (which row, which table). A miss on a displaying
+			// state is the unambiguous signature of a runtime jump the
+			// walk could not see -- so the table repairs itself on the
+			// spot: the orphaned chain is claimed into the interrupted
+			// group and the rest of its clip distributed across it,
+			// registered with the engine THIS tic. The renderer's next
+			// consult already hits. See RS_ForeignRemap.HealFrom.
 			State cur = psp.CurState;
 			if (cur != null)
 			{
 				let map = MapFor(w, mcls, frameCount, restFrame);
-				int mf, mn;
-				if (map != null && map.Lookup(cur, mf, mn))
+				if (map != null)
 				{
-					hs.hits++;
-					hs.lastMesh = mf;
-				}
-				else if (cur.Tics != 0)   // 0-tic states never display; not a hole
-				{
-					hs.misses++;
-					hs.missSprite = cur.sprite;
-					hs.missFrame  = cur.Frame;
-					hs.missTics   = cur.Tics;
+					int row = map.LookupIndex(cur);
+
+					if (row < 0 && cur.Tics != 0
+					 && hs.lastMap == map && hs.lastHitRow >= 0)
+					{
+						int n = map.HealFrom(hs.lastHitRow, cur, w);
+						if (n > 0)
+						{
+							hs.healed += n;
+							row = map.LookupIndex(cur);
+						}
+					}
+
+					if (row >= 0)
+					{
+						hs.hits++;
+						hs.lastMesh   = map.mMesh[row];
+						hs.lastMap    = map;
+						hs.lastHitRow = row;
+					}
+					else if (cur.Tics != 0)   // 0-tic states never display; not a hole
+					{
+						hs.misses++;
+						hs.missSprite = cur.sprite;
+						hs.missFrame  = cur.Frame;
+						hs.missTics   = cur.Tics;
+					}
 				}
 			}
 		}
@@ -1122,14 +1144,16 @@ class RS_ForeignModelHandler : StaticEventHandler
 			Weapon w = (hand == 1) ? pi.OffhandWeapon : pi.ReadyWeapon;
 			string wn = w ? "" .. w.GetClassName() : "?";
 			int total = hs.hits + hs.misses;
+			string healedNote = (hs.healed > 0)
+				? String.Format(" -- healed %d states", hs.healed) : "";
 			if (hs.misses > 0)
-				Console.Printf("[RSRM] health %s %s: %d/%d tics mapped -- top hole spr=%d fr=%d tics=%d",
+				Console.Printf("[RSRM] health %s %s: %d/%d tics mapped -- top hole spr=%d fr=%d tics=%d%s",
 					hand == 1 ? "offhand" : "mainhand", wn, hs.hits, total,
-					hs.missSprite, hs.missFrame, hs.missTics);
+					hs.missSprite, hs.missFrame, hs.missTics, healedNote);
 			else
-				Console.Printf("[RSRM] health %s %s: %d/%d tics mapped",
-					hand == 1 ? "offhand" : "mainhand", wn, hs.hits, total);
-			hs.hits = 0; hs.misses = 0;
+				Console.Printf("[RSRM] health %s %s: %d/%d tics mapped%s",
+					hand == 1 ? "offhand" : "mainhand", wn, hs.hits, total, healedNote);
+			hs.hits = 0; hs.misses = 0; hs.healed = 0;
 			hs.missSprite = -1; hs.missFrame = -1; hs.missTics = -1;
 		}
 	}
