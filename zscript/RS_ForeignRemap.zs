@@ -369,8 +369,15 @@ class RS_ForeignRemap play
 			if (dur[k] > 0 && seq[k].bFullbright) { brightAt = cum; break; }
 			cum += dur[k];
 		}
+		// markFire >= 0, NOT > 0. Index 0 is a valid shot marker and is what
+		// 49 of the 50 fire clips actually use -- the clip's first frame IS
+		// the muzzle flash. Requiring > 0 silently disabled the shot anchor
+		// for every one of them, so the recoil was only ever landing near
+		// the bang by proportion, never pinned to it. brightAt > 0 still
+		// guards the division below; markFire == 0 just means the whole
+		// run-up sits on frame 0, which is the correct pre-shot pose.
 		bool anchored = (brightAt > 0 && brightAt < total
-		              && markFire > 0 && markFire < N - 1);
+		              && markFire >= 0 && markFire < N - 1);
 
 		// 4. Distribute across the whole group span.
 		cum = 0;
