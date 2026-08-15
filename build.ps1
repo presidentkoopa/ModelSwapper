@@ -17,11 +17,14 @@ Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $root = $PSScriptRoot
-# Deliberately NOT named ModelSwapper.pk3. Two identically named pk3s in
-# two folders is how a test session silently loads the wrong engine and
-# produces results that test nothing. The name in the load order is the
-# proof of which build ran.
-$out  = Join-Path $root $(if ($Static) { 'ModelSwapper-QUEST.pk3' } else { 'ModelSwapper-REMAP.pk3' })
+# The -REMAP suffix existed while the rebuilt engine lived in a second
+# worktree beside the old one: two identically named pk3s in two folders is
+# how a test session silently loads the wrong build and produces results that
+# test nothing. That branch is now main and there is one tree, so the PCVR
+# build takes the plain name again. The Quest build keeps a distinct one --
+# it is a genuinely different artifact (static shim, no animation table) and
+# must never be mistaken for the full build in a load order.
+$out  = Join-Path $root $(if ($Static) { 'ModelSwapper-QUEST.pk3' } else { 'ModelSwapper.pk3' })
 
 # Everything that belongs in the pk3. Anything else in the repo (README, this
 # script, .git) stays out.

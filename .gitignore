@@ -10,3 +10,7 @@ desktop.ini
 ModelSwapper_*.pk3
 ModelSwapper-REMAP.pk3
 ModelSwapper-QUEST.pk3
+
+# Packaged release archives. Built from the tree, never a source of truth --
+# and at ~78MB one of these in history would outweigh the entire repo.
+*.zip
