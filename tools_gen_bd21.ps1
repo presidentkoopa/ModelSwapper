@@ -12,8 +12,14 @@
 #   bd21.shelf      -- shelf rows, one per (family, model)
 
 $src = "D:\SteamLibrary\steamapps\Common\DooM VR\__Games\BrutalDoom\_BD_1.01_WeaponModels"
-$dst = "E:\ModelSwapper-remap\models\bd21"
-$out = "C:\Users\Command\AppData\Local\Temp\claude\E--ModelSwapper\d584ff43-5514-4c35-8f33-afd790fbe555\scratchpad"
+# Both relative to this script, so the generator follows the repo instead of
+# pointing at wherever it happened to live when it was written -- it spent a
+# release aimed at a worktree that no longer exists, and silently emitted an
+# empty table rather than failing.
+$dst = Join-Path $PSScriptRoot 'models\bd21'
+$out = Join-Path $PSScriptRoot '.gen'
+if (-not (Test-Path $out)) { New-Item -ItemType Directory $out | Out-Null }
+if (-not (Test-Path $dst)) { throw "model folder not found: $dst" }
 
 # BD model name -> (our family, anchor sprite). Anchors are stock Doom sprite
 # names so we ship no sprites of our own; the pin only has to resolve.
@@ -196,7 +202,7 @@ foreach ($b in $blocks) {
   $scl = if ($txt -match '(?im)^\s*Scale\s+(\S+)\s+(\S+)\s+(\S+)') { "$($matches[1]) $($matches[2]) $($matches[3])" } else { '-1.0 1.0 1.0' }
   $zof = if ($txt -match '(?im)^\s*ZOffset\s+(\S+)') { $matches[1] } else { '0' }
 
-  $cur2 = ''; $buckets = @{}; $over = 0
+  $cur2 = ''; $buckets = @{}; $over = 0; $sprite = @{}
   $loose = New-Object System.Collections.Generic.List[int]
   foreach ($line in $b.Lines) {
     $t = $line.Trim()
@@ -205,15 +211,43 @@ foreach ($b in $blocks) {
       if ($t -notmatch '(?i)frameindex') { $s = Sect $t; if ($s) { $cur2 = $s } }
       continue
     }
-    if ($t -match '(?i)^FrameIndex\s+\S+\s+\S+\s+\d+\s+(\d+)') {
-      $i = [int]$matches[1]
+    if ($t -match '(?i)^FrameIndex\s+(\S+)\s+\S+\s+\d+\s+(\d+)') {
+      $spr = $matches[1]
+      $i = [int]$matches[2]
       if ($i -ge $frameCount) { $over++; continue }
       if (-not $loose.Contains($i)) { $loose.Add($i) }
       if ($cur2) {
         if (-not $buckets.ContainsKey($cur2)) { $buckets[$cur2] = New-Object System.Collections.Generic.List[int] }
         if (-not $buckets[$cur2].Contains($i)) { $buckets[$cur2].Add($i) }
+        # First sprite each section uses. This is the signal that separates a
+        # deploy from an idle -- see below.
+        if (-not $sprite.ContainsKey($cur2)) { $sprite[$cur2] = $spr }
       }
     }
+  }
+
+  # "//Ready weapon" IS THE DEPLOY, NOT THE IDLE, and BD tells us which by
+  # the SPRITE it uses. The rifle's ready section is RIFS; its held pose is
+  # RIFG at frame 3. Park on RIFS frame 0 and the gun points at the floor --
+  # which is exactly what it does, permanently, in the static Quest build
+  # where nothing ever leaves the rest frame.
+  #
+  # Same shape on the shotgun (SHSS vs SHTN), plasma (PLS9 vs PLSN),
+  # machinegun (MGS1 vs MGN1), assault shotgun, minigun and M79. The pistol
+  # is the one that looked right, and it is the one weapon whose ready and
+  # fire sections share a sprite (PIST) -- there frame 0 really is the idle.
+  #
+  # So: same sprite in both sections means the ready frames are a genuine
+  # idle and are kept. A different sprite means the section is a deploy --
+  # it becomes the select clip, where it belongs, and the idle becomes the
+  # first frame of the fire section, which is the held pose by construction.
+  if ($buckets.ContainsKey('ready') -and $buckets.ContainsKey('fire') -and
+      $sprite['ready'] -ne $sprite['fire']) {
+    $buckets['select'] = $buckets['ready']
+    $held = $buckets['fire'][0]
+    $r = New-Object System.Collections.Generic.List[int]; $r.Add($held)
+    $buckets['ready'] = $r
+    $notes += "$cls -- ready was $($sprite['ready']) (a deploy), moved to select; idle is $($sprite['fire']) frame $held"
   }
   if ($over) { $notes += "$cls -- dropped $over frame refs past the mesh's $frameCount frames" }
 

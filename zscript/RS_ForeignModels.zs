@@ -130,23 +130,23 @@ class RS_ForeignShelf
 			"melee|RS_GH_Fist|HBFS|0|0|75",
 
 			// The complete BD21 set -- generated, see modeldef.
-			"shotgun|MS_BD_AssaultShotgun|SHTG|0|0|32",
+			"shotgun|MS_BD_AssaultShotgun|SHTG|0|4|32",
 			"grenade|MS_BD_nade|MISG|0|0|27",
 			"kick|MS_BD_Boot|PUNG|0|0|58",
 			"bfg|MS_BD_BFG_10k|BFGG|0|6|21",
-			"axe|MS_BD_BrutalAxe|PUNG|0|0|15",
-			"axe|MS_BD_DSweap|PUNG|0|5|10",
+			"axe|MS_BD_BrutalAxe|PUNG|0|5|15",
+			"axe|MS_BD_DSweap|PUNG|0|0|10",
 			"flamethrower|MS_BD_Flamethrower2|PLSG|0|0|6",
-			"launcher|MS_BD_M79|MISG|0|0|33",
-			"machinegun|MS_BD_Machinegun|CHGG|0|0|36",
+			"launcher|MS_BD_M79|MISG|0|3|33",
+			"machinegun|MS_BD_Machinegun|CHGG|0|4|36",
 			"pistol|MS_BD_BrutalPistol|PISG|0|0|38",
-			"plasma|MS_BD_Plasma|PLSG|0|0|30",
-			"railgun|MS_BD_RailGun|PLSG|0|0|37",
+			"plasma|MS_BD_Plasma|PLSG|0|4|30",
+			"railgun|MS_BD_RailGun|PLSG|0|3|37",
 			"revolver|MS_BD_Revolver|PISG|0|0|33",
-			"rifle|MS_BD_Rifle|CHGG|0|0|32",
-			"shotgun|MS_BD_Shotgun|SHTG|0|0|36",
-			"smg|MS_BD_BrutalSMG|CHGG|0|0|27",
-			"supershotgun|MS_BD_SSG|SHT2|0|47|52",
+			"rifle|MS_BD_Rifle|CHGG|0|3|32",
+			"shotgun|MS_BD_Shotgun|SHTG|0|4|36",
+			"smg|MS_BD_BrutalSMG|CHGG|0|3|27",
+			"supershotgun|MS_BD_SSG|SHT2|0|1|52",
 			"unmaker|MS_BD_Unmaker|BFGG|0|4|16",
 
 			"melee|RS_PS_Fist|FSTZ|0|0|9",
@@ -688,7 +688,7 @@ class RS_ForeignScanner
 	//
 	// hasmodel is set on the CLASS DEFAULTS by the MODELDEF parser and is the
 	// same flag FindModelFrameRaw gates on, so it answers exactly the right
-	// question. It is an RS-fork export (FORK_CHANGES.md ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§15); on stock GZDoom
+	// question. It is an RS-fork export (FORK_CHANGES.md ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§15); on stock GZDoom
 	// this is not answerable from ZScript at all.
 	//
 	// READ IT OFF THE DEFAULTS, NEVER OFF A LIVE ACTOR. A_ChangeModel sets

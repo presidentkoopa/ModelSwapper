@@ -14,3 +14,10 @@ ModelSwapper-QUEST.pk3
 # Packaged release archives. Built from the tree, never a source of truth --
 # and at ~78MB one of these in history would outweigh the entire repo.
 *.zip
+
+# Generator scratch output -- rebuild with ./tools_gen_bd21.ps1
+.gen/
+
+# Engine log, written into cwd when the engine is run from here
+questzdoom.log
+*.log

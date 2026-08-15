@@ -302,7 +302,7 @@ Model MS_BD_AssaultShotgun
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex SHTG A 0 0
+	FrameIndex SHTG A 0 4
 }
 
 Model MS_BD_nade
@@ -346,7 +346,7 @@ Model MS_BD_BrutalAxe
 	Scale -1.5 1.5 1.5
 	ZOffset 5
 	NoInterpolation
-	FrameIndex PUNG A 0 0
+	FrameIndex PUNG A 0 5
 }
 
 Model MS_BD_DSweap
@@ -357,7 +357,7 @@ Model MS_BD_DSweap
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex PUNG A 0 5
+	FrameIndex PUNG A 0 0
 }
 
 Model MS_BD_Flamethrower2
@@ -379,7 +379,7 @@ Model MS_BD_M79
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex MISG A 0 0
+	FrameIndex MISG A 0 3
 }
 
 Model MS_BD_Machinegun
@@ -390,7 +390,7 @@ Model MS_BD_Machinegun
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex CHGG A 0 0
+	FrameIndex CHGG A 0 4
 }
 
 Model MS_BD_BrutalPistol
@@ -412,7 +412,7 @@ Model MS_BD_Plasma
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex PLSG A 0 0
+	FrameIndex PLSG A 0 4
 }
 
 Model MS_BD_RailGun
@@ -423,7 +423,7 @@ Model MS_BD_RailGun
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex PLSG A 0 0
+	FrameIndex PLSG A 0 3
 }
 
 Model MS_BD_Revolver
@@ -445,7 +445,7 @@ Model MS_BD_Rifle
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex CHGG A 0 0
+	FrameIndex CHGG A 0 3
 }
 
 Model MS_BD_Shotgun
@@ -456,7 +456,7 @@ Model MS_BD_Shotgun
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex SHTG A 0 0
+	FrameIndex SHTG A 0 4
 }
 
 Model MS_BD_BrutalSMG
@@ -467,7 +467,7 @@ Model MS_BD_BrutalSMG
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex CHGG A 0 0
+	FrameIndex CHGG A 0 3
 }
 
 Model MS_BD_SSG
@@ -478,7 +478,7 @@ Model MS_BD_SSG
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex SHT2 A 0 47
+	FrameIndex SHT2 A 0 1
 }
 
 Model MS_BD_Unmaker
