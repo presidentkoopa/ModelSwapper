@@ -24,18 +24,26 @@ Built for VR, where a flat sprite welded to your view is the thing you notice mo
 | | |
 |---|---|
 | **Enable** | Master switch. On by default. |
-| **Choose Models** | One row per weapon in the loaded mod. Three fields: family, mainhand model, offhand model. Left/Right cycles the highlighted one, Enter moves the highlight. |
+| **Choose Models** | One row per weapon in the loaded mod. Two fields: family and model. Left/Right cycles the highlighted one, Enter moves the highlight. |
 | **Scan Report** | Everything found, and why it was classified the way it was. |
 | **Rescan Now** | Re-reads the loaded mod without a map reload. Your picks are kept. |
 | **Randomize — One-Handed** | Slaps a random pistol, revolver or smg model on every weapon in the list in one press — a varied loadout instead of dialling in each one by hand. |
-| **Forget Learned Timing** | Clears measured animation timing. Use it if a mod update changed how a weapon moves. |
+| **Assign All — VanAlek / Bv21 / MeatG / BWolf** | Dresses the whole arsenal in one set, keeping each weapon's family: a shotgun gets that set's shotgun. Families the set has no model for keep whatever they had. |
 | **Forget Saved Models** | Clears saved model choices, back to auto-picked everywhere. |
 | **List Unbound Weapons** | Shows weapons with no slot binding — normally the Heretic, Hexen, Strife and Chex arsenals the engine compiles into every session. |
+
+**One model per weapon, not per hand.** Whichever hand ends up holding a gun, it wears
+the same donor — there is no separate mainhand/offhand pick to keep in sync.
 
 Models swap in your hands as you cycle, so choosing is looking rather than guessing.
 
 Set the family to **`any`** to pick from all fifty models regardless of archetype. A
 chainsaw on a rocket launcher is a legitimate thing to want.
+
+Weapons you never touch don't all end up wearing the same mesh: an auto-guessed pick is
+seeded by hashing the weapon's class name, so two pistols in the same mod get different
+models — and the *same* weapon gets the *same* model every session, since the hash is
+deterministic rather than rolled.
 
 **Picks are remembered between sessions, per mod, with no profile system to manage.**
 Every choice — yours or Randomize's — is saved keyed on the foreign weapon's class name.
@@ -43,8 +51,8 @@ Since only one mod's weapon classes exist in the world at a time, that name is a
 scoped to whichever mod is loaded: load Ashes, pick models, quit; load Golden Souls, pick
 different ones; go back to Ashes next week and its picks are still there, because Golden
 Souls never wrote an entry under Ashes' class names. (Two different mods reusing an
-identical class name would collide — the same tradeoff the learned-timing archive already
-makes, and for the same reason: rare enough in practice that neither guards against it.)
+identical class name would collide — rare enough in practice that this doesn't guard
+against it.)
 
 ---
 
@@ -351,8 +359,10 @@ Time X's own player-speed options, or this will overwrite them.
 ```
 zscript.txt                  donor stubs + includes
 zscript/
-  RS_ForeignModels.zs        scanner, classifier, binder, animation driver
+  RS_ForeignModels.zs        scanner, classifier, binder, telemetry
+  RS_ForeignRemap.zs         label walk, group mapping, self-healing table
   RS_ForeignAnim.zs          clip table, expansion, per-hand state
+  RS_ForeignPersist.zs       the picks archive
   RS_ForeignModelsMenu.zs    picker + scan report
   RS_ForeignBallistic.zs     hitscan -> projectile, and the round itself
   RS_ForeignBulletTime.zs    Bullet Time X compensation (inert without it)
@@ -386,7 +396,10 @@ resolving, no duplicate donor blocks, no donor without a stub.
 
 ## The engine change
 
-Frame-accurate animation needed one thing stock GZDoom can't do.
+Frame-accurate animation needs things stock GZDoom can't do. There are **three**
+additions, and they build on each other.
+
+### 1. Direct model frame addressing (`ModelFrame`)
 
 A HUD model's frame arrives *through the sprite*: `psp->Frame` is a sprite letter index,
 MODELDEF maps that letter to a model frame. That channel is one character wide —
@@ -402,17 +415,86 @@ So the fork skips the encoding instead of stretching it: `int ModelFrame` on `DP
 read directly by the HUD path, with `ModelFrameNext` and `ModelFrameLerp` for sub-tic
 blending.
 
-**[`ENGINE_CHANGES.md`](ENGINE_CHANGES.md) is the full patch** — every file, every
+### 2. Native state remap — the animation clock
+
+Writing a frame number every tic from script makes the *script* the animation clock, with
+everything that implies: tick ordering, event timing, and silent failure when any link
+breaks. Instead the engine owns a per-instance table.
+
+- **`DActorModelData` gains `TMap<intptr_t, int64_t> stateRemap`** — `FState*` keyed,
+  mapping to two packed non-negative int32s, `(frame << 32) | next`. Not serialized;
+  binds re-register it.
+- **Two ZScript natives on `Actor`:** `RegisterModelStateFrame(State, int, int)` and
+  `ClearModelStateFrames()`. Registration requires `modelData`, so `A_ChangeModel` must
+  run first.
+- **Two consult points in `models.cpp`,** both shared by VR and flat, mainhand and
+  offhand. `CalcModelFrame` derives interpolation from the state's own tic countdown plus
+  the renderer's frame fraction — display rate, not 35Hz. `CalcModelOverrides` resolves
+  the frame numbers from the table, placed *after* the §1 fields so a live table beats
+  stale serialized values.
+- **`rs_remap_dump` ccmd** — per hand: weapon class, table size, and whether the state in
+  the psprite *right now* resolves.
+
+### 3. Full state-label enumeration
+
+`FindState` can only probe label names known in advance, which makes every mod-custom
+label invisible to a script-side walk — and DECORATE-era mods keep their real animations
+behind exactly those. The class's own label table has all of them:
+
+```
+clearscope native static int CountStateLabels(class<Actor> cls);
+clearscope native static Name, State GetStateLabelAt(class<Actor> cls, int index);
+```
+
+Returned **sorted by state address**, which is source declaration order. That ordering is
+the whole point: it lets the walker attribute each custom label to the standard label it
+was written under, with no name heuristics. `clearscope` because these are pure reads of
+static class data — play scope fails to compile from the builder's data context.
+
+**[`ENGINE_CHANGES.md`](ENGINE_CHANGES.md) is the full patch** for §1 — every file, every
 function, the exact code, and the one signature change that fails as a *link* error
-rather than a compile error if you miss it. Five edits across six files, all confined to
-the HUD path; world models are untouched. It's written so someone can apply it to their
-own GZDoom build without reading this mod's source.
+rather than a compile error if you miss it. §2 and §3 are documented in the fork's own
+`FORK_CHANGES.md` under "Native state remap".
+
+---
+
+## Running on stock GZDoom or QuestZDoom — the static-model port
+
+None of the above is needed if you don't need *animation*. The binding half — putting the
+right 3D model in your hands on any mod's weapons — is **stock-compatible**, and that's
+the whole feature for a Quest build where a static model beats a flat sprite regardless.
+
+`A_ChangeModel` is stock as of GZDoom 4.11, so the parts that already work anywhere are:
+the scanner, the archetype classifier, provenance filtering, the picker menu, pick
+persistence, Assign All / Randomize, and the per-instance model bind itself.
+
+What to strip for a static port:
+
+| Remove | Why |
+|---|---|
+| `zscript/RS_ForeignRemap.zs` | The whole remap engine — needs §2 and §3. |
+| `RS_ForeignRemap` calls in `ApplyHand` | Table build/registration and the health telemetry. |
+| `psp.ModelFrame*` writes | Fork-only fields (§1). Referencing them is a compile error, not a graceful skip. |
+| `Actor.hasmodel` read in `HasOwnModel` | Fork export. Return `false` and accept that a mod shipping its own 3D weapons gets painted over. |
+
+Keep the psprite pin (`psp.Sprite`/`psp.Frame` set to the donor's anchor) — that's what
+makes `FindModelFrame` resolve, and it's stock behavior. Each donor then renders at its
+anchored rest frame permanently: a correct, well-oriented 3D weapon that doesn't move.
+
+Ballistics and Bullet Time X compensation are stock-safe as-is — `WorldHitscanPreFired`
+is stock and cancellable, and the BT hook only reads and writes cvars.
+
+The mesh data is the real budget question on a Quest, not the code: 51 donors at ~78 MB
+is a desktop-sized pk3. A phone-class build wants a trimmed donor set — one or two models
+per family instead of four to six — which the shelf table supports by simply having fewer
+rows.
 
 ---
 
 ## Requirements
 
-GZDoom 4.11+ for `A_ChangeModel`. The DoomXR fork for animation.
+GZDoom 4.11+ for `A_ChangeModel` — enough for static models. The DoomXR fork for
+animation.
 
 ## Asset licensing
 
