@@ -24,6 +24,12 @@ OptionMenu "RSFM_Main"
     Option "Enable", "rs_foreignmodels", "OnOff"
     StaticText " "
 
+    Option "One Row Per Family", "rs_foreignmodels_byfamily", "OnOff"
+    StaticText "Collapses the model list to one row per weapon family --", "DarkGray"
+    StaticText "one shotgun row, one chaingun row. For arsenal mods that", "DarkGray"
+    StaticText "ship a hundred variants of the same few guns.", "DarkGray"
+    StaticText " "
+
     Submenu "Choose Models", "RSFM_Picker"
     Submenu "Scan Report",   "RSFM_Report"
     StaticText " "

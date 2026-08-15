@@ -37,3 +37,9 @@ server string rs_fm_bt_base  = "";
 // Extra distance from the grip to the muzzle, on top of the per-family
 // figure. The engine has no muzzle concept -- shots start at the hand.
 server int rs_fm_muzzle = 0;   // map units, clamped -20..80
+
+// Collapse the picker to ONE ROW PER FAMILY. For arsenal mods that build
+// weapons combinatorially (DoomRL Arsenal's ~150 assemblies), where every
+// row is technically a distinct class but the menu is unusable. Off by
+// default: on a normal mod each weapon deserves its own row.
+server bool rs_foreignmodels_byfamily = false;
