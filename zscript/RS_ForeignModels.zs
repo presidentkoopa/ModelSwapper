@@ -1020,6 +1020,43 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		mScanned  = true;
 		mLastMain = null; mLastOff = null;
+		ReportScan();
+	}
+
+	// WHICH MOD IS THIS. The engine prints its "adding X.pk3" list before
+	// autoexec opens the logfile, so a session log never says what was
+	// actually loaded -- which makes reading a log after the fact a guessing
+	// game. The scan already knows: provenance harvesting recorded the
+	// archive that DEFINED each weapon class. Print that, once, with counts.
+	// One line per source archive turns every log into a self-identifying
+	// record of what was tested.
+	void ReportScan()
+	{
+		Array<string> srcNames;
+		Array<int>    srcCounts;
+		int unknown = 0, visible = 0;
+
+		for (int i = 0; i < mEntries.Size(); ++i)
+		{
+			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+			visible++;
+			string src = mEntries[i].srcContainer;
+			if (src.Length() == 0) { unknown++; continue; }
+
+			int at = -1;
+			for (int k = 0; k < srcNames.Size(); ++k)
+				if (srcNames[k] == src) { at = k; break; }
+			if (at < 0) { srcNames.Push(src); srcCounts.Push(1); }
+			else        { srcCounts[at] = srcCounts[at] + 1; }
+		}
+
+		Console.Printf("[RSRM] scan: %d weapons listed of %d classes compiled%s",
+			visible, mEntries.Size(),
+			RS_Fork.Supported() ? "" : "  [STATIC BUILD -- no animation]");
+		for (int k = 0; k < srcNames.Size(); ++k)
+			Console.Printf("[RSRM]   from %s: %d", srcNames[k], srcCounts[k]);
+		if (unknown > 0)
+			Console.Printf("[RSRM]   slot-bound only, no source archive: %d", unknown);
 	}
 
 	int FindEntry(string cls)
