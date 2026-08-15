@@ -1143,6 +1143,12 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 			Weapon w = (hand == 1) ? pi.OffhandWeapon : pi.ReadyWeapon;
 			string wn = w ? "" .. w.GetClassName() : "?";
+			// Which table served this interval -- donor and size. An
+			// all-miss interval with a healthy-sized table is a lookup
+			// problem; with no table at all it is a bind problem. The
+			// line should say which.
+			if (hs.lastMap != null)
+				wn = wn .. " [" .. hs.lastMap.donor .. ", table=" .. hs.lastMap.mStates.Size() .. "]";
 			int total = hs.hits + hs.misses;
 			string healedNote = (hs.healed > 0)
 				? String.Format(" -- healed %d states", hs.healed) : "";
@@ -1477,10 +1483,19 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// same as if the player had dialled in each one by hand.
 	void RandomizeOneHanded()
 	{
-		if (!mShelf) return;
+		if (!mShelf || !mPicks) return;
 
+		int touched = 0;
 		for (int i = 0; i < mEntries.Size(); ++i)
 		{
+			// Only rows the picker shows: the loaded mod's weapons. The
+			// engine compiles in hundreds of arsenal classes (Heretic,
+			// Hexen, Strife, Chex) that are not part of any loaded mod --
+			// randomizing those poisoned the picks archive with junk rows
+			// forever, and the per-row save across ~500 entries was the
+			// quadratic stall that took a whole VR session down.
+			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+
 			string arch;
 			switch (random[MSRandomize](0, 2))
 			{
@@ -1496,8 +1511,13 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mEntries[i].modelPick1 = pick;
 			mEntries[i].modelPick2 = pick;   // one model per weapon, both hands
 			mEntries[i].pinned     = true;
-			SavePick(i);
+			mPicks.Store(mEntries[i].clsName, arch, pick, pick, false);
+			touched++;
 		}
+
+		// One save for the whole batch, not one per row.
+		mPicks.Save();
+		Console.Printf("[RSRM] randomized %d weapons", touched);
 
 		mLastMain = null; mLastOff = null;
 	}
