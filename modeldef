@@ -518,7 +518,13 @@ Model MS_SMG
 	Scale -1.0 1.0 1.0
 	Offset 0.0 0.0 0.0
 	ZOffset -5
-	PitchOffset 45.0
+	// PitchOffset 0, NOT 45. The source pack splits VR_SMG across two
+	// blocks: the SMGR reload frames carry PitchOffset 45 (the mesh is
+	// tilted for the mag-swap view) and the SMGG/SMGF handling frames
+	// carry 0. Extraction took the reload block's pitch, so the gun sat
+	// nose-up 45 degrees through the whole animation -- we anchor frame 3,
+	// which is a handling frame.
+	PitchOffset 0.0
 	NoInterpolation
 	FrameIndex CHGG A 0 3
 }
