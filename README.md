@@ -17,6 +17,23 @@ Built for VR, where a flat sprite welded to your view is the thing you notice mo
 
 ---
 
+## Which download
+
+Two builds ship, from one source tree. Take the one that matches your engine.
+
+| Your engine | Download | What you get |
+|---|---|---|
+| **UZDXREMA / DoomXR** (PC VR) | `ModelSwapper.pk3` | Everything. Models animate through each mod's own states — reloads, fire, deploy, ADS — plus overlay actions like kicks. |
+| **QuestZDoom** (Emawind's DoomVR), or stock GZDoom 4.11+ | `ModelSwapper-QUEST.pk3` | Models bind and orient correctly, held at their rest pose. No animation. |
+
+Same models, same menus, same picker in both. The difference is animation, and only
+animation — see [the static-model port](#running-on-stock-gzdoom-or-questzdoom--the-static-model-port)
+for exactly what is and isn't in the Quest build and why.
+
+**Do not load both.** They are the same mod and will collide.
+
+---
+
 ## Using it
 
 **Options → Weapon Model Swap Program**
@@ -468,38 +485,59 @@ the whole feature for a Quest build where a static model beats a flat sprite reg
 the scanner, the archetype classifier, provenance filtering, the picker menu, pick
 persistence, Assign All / Randomize, and the per-instance model bind itself.
 
-What to strip for a static port:
+### Building it
 
-| Remove | Why |
-|---|---|
-| `zscript/RS_ForeignRemap.zs` | The whole remap engine — needs §2 and §3. |
-| `RS_ForeignRemap` calls in `ApplyHand` | Table build/registration and the health telemetry. |
-| `psp.ModelFrame*` writes | Fork-only fields (§1). Referencing them is a compile error, not a graceful skip. |
-| `Actor.hasmodel` read in `HasOwnModel` | Fork export. Return `false` and accept that a mod shipping its own 3D weapons gets painted over. |
+Nothing is stripped by hand. Every fork-only engine call in this mod lives behind one
+class, `RS_Fork`, and the build script ships one of two implementations of it:
 
-Keep the psprite pin (`psp.Sprite`/`psp.Frame` set to the donor's anchor) — that's what
-makes `FindModelFrame` resolve, and it's stock behavior. Each donor then renders at its
-anchored rest frame permanently: a correct, well-oriented 3D weapon that doesn't move.
+```
+./build.ps1           # ModelSwapper.pk3        -- desktop RS_Fork, full animation
+./build.ps1 -Static   # ModelSwapper-QUEST.pk3  -- static RS_Fork, stock-safe
+```
 
-Ballistics and Bullet Time X compensation are stock-safe as-is — `WorldHitscanPreFired`
-is stock and cancellable, and the BT hook only reads and writes cvars.
+`zscript/static/RS_ForeignFork.zs` is the static one. Its `Supported()` returns false and
+its methods are no-ops, so the animation table is never built and the overlay painter
+returns immediately. **No other file differs between the two builds** — same scanner,
+same classifier, same picker, same models, same everything else. That matters: a bug
+fixed for PCVR is fixed for Quest in the same commit, and there is no second copy of the
+mod to drift.
 
-The mesh data is the real budget question on a Quest, not the code: 51 donors at ~78 MB
-is a desktop-sized pk3. A phone-class build wants a trimmed donor set — one or two models
-per family instead of four to six — which the shelf table supports by simply having fewer
-rows.
+### What the Quest build keeps
+
+The scanner, the archetype classifier, provenance filtering, the picker menu, pick
+persistence, Assign All / Randomize, and the per-instance model bind itself. Ballistics
+and Bullet Time X compensation come along too — `WorldHitscanPreFired` is stock and
+cancellable, and the BT hook only reads and writes cvars.
+
+The psprite pin (`psp.Sprite`/`psp.Frame` set to the donor's anchor) is stock behaviour
+and stays: it's what makes `FindModelFrame` resolve. Each model then renders at its
+anchored rest frame permanently — a correct, well-oriented 3D weapon that doesn't move.
+
+### What it loses
+
+Animation, and the overlay painting that depends on the same frame table. A weapon
+reloads with the sound and the timing and the ammo, wearing a model that holds still.
+
+### Size
+
+Both pk3s are the same ~65 MB, because the models are the whole budget and they are
+identical. If a phone-class build ever needs to be smaller, the lever is the shelf table
+in `RS_ForeignModels.zs` — fewer rows per family means fewer meshes to ship, and nothing
+else in the mod has to change.
 
 ---
 
 ## Requirements
 
-GZDoom 4.11+ for `A_ChangeModel` — enough for static models. The DoomXR fork for
-animation.
+GZDoom 4.11+ for `A_ChangeModel` — enough for static models, and what the
+`ModelSwapper-QUEST.pk3` build targets. The DoomXR / UZDXREMA fork for animation, which
+is what `ModelSwapper.pk3` targets.
 
 ## Asset licensing
 
 The code here is ours. **The models are not** — they come from several weapon packs:
-Brutal Doom v21 (the Bv21/`MS_GH_` set), MeatGrinder (credited in the source modeldef to
+Brutal Doom v21 (the Bv21/`MS_BD_` set, imported from BD's own MODELDEFs by
+`tools_gen_bd21.ps1`), MeatGrinder (credited in the source modeldef to
 `BR_VR_MeatGrinder`), Alek's Doom Guns and Ermac's Vanilla Doom Guns (together, the
 VanAlek set), and the Brutal Wolfenstein VR weapons. Their licenses have not been
 established. Sort that out before making this repository public or redistributing the
