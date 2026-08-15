@@ -621,8 +621,15 @@ class RS_ForeignScanner
 		//
 		// Bare "saw" is deliberately not a token -- "sawed-off" would eat it,
 		// and that is a supershotgun. It is matched earlier anyway.
+		// POWERED TOOLS BELONG HERE, NOT WITH THE FIST. Ashes' Jackhammer is
+		// its chainsaw -- a two-handed powered tool held out in front, used by
+		// holding the trigger down. It was on the melee list, so it came out
+		// as a pair of knuckles. Anything that runs on a motor reads as a saw
+		// no matter what the motor drives.
 		if (hay.IndexOf("chainsaw") >= 0 || hay.IndexOf("chain saw") >= 0
 		 || hay.IndexOf("buzzsaw")  >= 0 || hay.IndexOf("sawblade") >= 0
+		 || hay.IndexOf("jackhammer") >= 0 || hay.IndexOf("jack hammer") >= 0
+		 || hay.IndexOf("drill")    >= 0 || hay.IndexOf("auger") >= 0
 		 || hay.IndexOf("ripper")   >= 0) return "saw";
 		// AXE/BLADE before bare-hand melee. A hatchet, machete or combat knife
 		// is a held edge with reach and a swing arc -- nothing like a fist,
@@ -641,10 +648,13 @@ class RS_ForeignScanner
 		if (hay.IndexOf("kick") >= 0 || hay.IndexOf("stomp") >= 0
 		 || hay.IndexOf("roundhouse") >= 0) return "kick";
 
+		// Unpowered swung objects. A crowbar or a shovel is a heavy thing you
+		// hit with, which is close enough to a punch; a jackhammer is not, and
+		// used to be listed here.
 		if (hay.IndexOf("fist") >= 0
 		 || hay.IndexOf("punch") >= 0 || hay.IndexOf("knuckle") >= 0
 		 || hay.IndexOf("crowbar") >= 0 || hay.IndexOf("whip") >= 0
-		 || hay.IndexOf("jackhammer") >= 0 || hay.IndexOf("wrench") >= 0
+		 || hay.IndexOf("wrench") >= 0
 		 || hay.IndexOf("shovel") >= 0) return "melee";
 		return "";
 	}
