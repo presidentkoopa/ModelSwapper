@@ -280,7 +280,12 @@ class RS_ForeignRemap play
 	// -----------------------------------------------------------------
 	// Build the whole table for one weapon wearing one donor.
 	// -----------------------------------------------------------------
-	static RS_ForeignRemap Build(class<Weapon> type, string donorCls,
+	// class<Actor>, not class<Weapon>. A psprite layer's caller does not have
+	// to be a weapon: ParryKick's kick is a CustomInventory that runs its
+	// animation on an A_Overlay layer, and MetaDoom and Guncaster do the same
+	// with theirs. Nothing in this walk ever needed Weapon -- it reads state
+	// labels off a class and follows NextState.
+	static RS_ForeignRemap Build(class<Actor> type, string donorCls,
 	                             RS_ForeignClip clips, int frameCount, int restFrame)
 	{
 		let m = new("RS_ForeignRemap");

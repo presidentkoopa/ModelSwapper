@@ -496,6 +496,20 @@ class RS_ForeignScanner
 	}
 
 	// contains-match archetype words, ordered so the specific wins
+	// Naming rules for OVERLAY callers only. These are inventory items and
+	// dummy actors, never guns, so body-part words mean what they say -- an
+	// overlay caller called SpareLeg (ParryKick) or BootItem is a kick, where
+	// the same token among the weapon rules would misfile a Legendary rifle.
+	// Falls through to the shared rules so an overlay that IS named after a
+	// weapon still classifies as one.
+	static string OverlayArchetype(string hay)
+	{
+		if (hay.IndexOf("leg")  >= 0 || hay.IndexOf("foot") >= 0
+		 || hay.IndexOf("boot") >= 0 || hay.IndexOf("shin") >= 0
+		 || hay.IndexOf("knee") >= 0 || hay.IndexOf("shoe") >= 0) return "kick";
+		return TokenArchetype(hay);
+	}
+
 	static string TokenArchetype(string hay)
 	{
 		// SUPERSHOTGUN before SHOTGUN, and both before the SMG/pistol
@@ -617,6 +631,15 @@ class RS_ForeignScanner
 		 || hay.IndexOf("tomahawk") >= 0 || hay.IndexOf("machete") >= 0
 		 || hay.IndexOf("knife") >= 0 || hay.IndexOf("dagger") >= 0
 		 || hay.IndexOf("blade") >= 0) return "axe";
+
+		// A KICK IS NOT A PUNCH, and it is almost never a weapon -- mods bind
+		// it to its own key and run it on an overlay layer. Only the tokens
+		// that cannot mean anything else live here, because this function
+		// classifies WEAPONS too: "leg" would hand a boot to every gun some
+		// mod called Legendary-something. The looser body-part tokens are in
+		// OverlayArchetype, which only ever sees overlay callers.
+		if (hay.IndexOf("kick") >= 0 || hay.IndexOf("stomp") >= 0
+		 || hay.IndexOf("roundhouse") >= 0) return "kick";
 
 		if (hay.IndexOf("fist") >= 0
 		 || hay.IndexOf("punch") >= 0 || hay.IndexOf("knuckle") >= 0
@@ -967,6 +990,13 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// pins its psprite to our anchor, leaving a raw sprite in their hands.
 	Weapon mLastMain;
 	Weapon mLastOff;
+
+	// Callers we have bound on an OVERLAY layer. Not weapons: a kick, a
+	// shoulder-mounted anything, a taunt -- mods run these from an inventory
+	// item on a layer A_Overlay picked, and the caller is that item. Tracked
+	// the same way and for the same reason as the two hands above.
+	Array<Actor> mOvlBound;
+
 	bool   mBound;        // something is currently wearing one of our models
 	bool   mLocatedDone;  // slot flags refreshed after the level settled
 
@@ -1059,7 +1089,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		}
 
 		mScanned  = true;
-		mLastMain = null; mLastOff = null;
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();
 		ReportScan();
 	}
 
@@ -1491,7 +1521,9 @@ class RS_ForeignModelHandler : StaticEventHandler
 		else
 			mLastOff = null;
 
-		mBound = (mLastMain != null || mLastOff != null);
+		ApplyOverlays(pi);
+
+		mBound = (mLastMain != null || mLastOff != null || mOvlBound.Size() > 0);
 
 		// Every ten seconds, say how the table did. See ReportHealth.
 		if (mBound && level.maptime > 0 && level.maptime % 350 == 0)
@@ -1535,13 +1567,87 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// -----------------------------------------------------------------
 	Array<RS_ForeignRemap> mMaps;   // per (class, donor); session-lifetime
 
-	RS_ForeignRemap MapFor(Weapon w, string donor, int frameCount, int restFrame)
+	// ------------------------------------------------------------------
+	// PAINT THE OVERLAY LAYERS.
+	//
+	// PSP_WEAPON and PSP_OFFHANDWEAPON are not the only layers that draw a
+	// psprite. A_Overlay puts an animation on any layer the mod likes, and a
+	// whole class of actions lives there and nowhere else -- kicks, shoves,
+	// taunts, grenade tosses. ParryKick is the clean example: a
+	// CustomInventory called SpareLeg, bound to its own key, that probes
+	// downward from layer -8 for a free slot and runs a six-tic swing there
+	// out of three sprite frames.
+	//
+	// The engine already draws models on those layers. IsHUDModelForPlayer-
+	// Available walks EVERY psprite below PSP_TARGETCENTER and the per-layer
+	// test is just FindModelFrame(psp->Caller, ...) -- the PSP_WEAPON gate in
+	// hw_weapon.cpp guards the VR flat-sprite projection, not the model path.
+	// So this needs no engine change: bind the caller, pin the layer, and the
+	// renderer does the rest.
+	//
+	// Their Offset(x,y) still applies on top, so the kick still travels up
+	// the screen exactly as the mod authored it. We are replacing the picture,
+	// not the motion.
+	void ApplyOverlays(PlayerInfo pi)
+	{
+		// The frame table is what makes an overlay worth painting -- without
+		// it the layer would hold one pose for the whole swing.
+		if (!RS_Fork.Supported() || !mShelf) return;
+
+		for (let psp = pi.psprites; psp != null; psp = psp.Next)
+		{
+			int id = psp.ID;
+			if (id == PSP_WEAPON || id == PSP_OFFHANDWEAPON) continue;
+			if (id >= PSP_TARGETCENTER) continue;    // reticles, not animation
+
+			Actor c = psp.Caller;
+			if (c == null) continue;
+			// A weapon's own flash layer has the weapon as its caller. That
+			// layer is the muzzle flash, not the gun, and painting the gun's
+			// mesh onto it would draw the weapon twice.
+			if (c == pi.ReadyWeapon || c == pi.OffhandWeapon) continue;
+
+			string arch = RS_ForeignScanner.OverlayArchetype(("" .. c.GetClassName()).MakeLower());
+			if (arch.Length() == 0) continue;
+
+			string mcls, anchor; int heldFrame, restFrame, frameCount;
+			if (!mShelf.Get(arch, 0, mcls, anchor, heldFrame, restFrame, frameCount))
+				continue;
+
+			bool fresh = true;
+			for (int i = 0; i < mOvlBound.Size(); ++i)
+				if (mOvlBound[i] == c) { fresh = false; break; }
+
+			if (fresh)
+			{
+				c.A_ChangeModel(mcls);
+				let map = MapFor(c, mcls, frameCount, restFrame);
+				RS_Fork.ClearRows(c);
+				int pushed = 0;
+				for (int i = 0; i < map.mStates.Size(); ++i)
+					if (RS_Fork.RegisterRow(c, map.mStates[i], map.mMesh[i], map.mMeshNext[i]))
+						pushed++;
+				mOvlBound.Push(c);
+				if (RS_ForeignRemap.DebugOn())
+					Console.Printf("[RSRM] overlay layer %d: %s (%s) -> %s, %d/%d rows",
+						id, c.GetClassName(), arch, mcls, pushed, map.mStates.Size());
+			}
+
+			int si = Actor.GetSpriteIndex(anchor);
+			if (si < 0) continue;
+			psp.Sprite = si;
+			psp.Frame  = heldFrame;
+			RS_Fork.ReleaseFrames(psp);
+		}
+	}
+
+	RS_ForeignRemap MapFor(Actor w, string donor, int frameCount, int restFrame)
 	{
 		string cn = w.GetClassName();
 		for (int i = 0; i < mMaps.Size(); ++i)
 			if (mMaps[i].clsName == cn && mMaps[i].donor == donor) return mMaps[i];
 
-		let m = RS_ForeignRemap.Build((class<Weapon>)(w.GetClass()), donor,
+		let m = RS_ForeignRemap.Build(w.GetClass(), donor,
 		                              mClips, frameCount, restFrame);
 		mMaps.Push(m);
 		return m;
@@ -1555,21 +1661,26 @@ class RS_ForeignModelHandler : StaticEventHandler
 		if (mLastMain) mLastMain.A_ChangeModel("");
 		if (mLastOff)  mLastOff.A_ChangeModel("");
 
+		// Overlay callers are inventory items the player keeps, so an unbind
+		// that skipped them would leave a boot bound to a leg forever.
+		for (int i = 0; i < mOvlBound.Size(); ++i)
+			if (mOvlBound[i]) mOvlBound[i].A_ChangeModel("");
+		mOvlBound.Clear();
+
 		// Hand the psprites back too. ModelFrame persists on the layer and is
 		// serialised, so leaving it set would keep forcing a frame number onto
 		// whatever the weapon renders next.
 		if (playeringame[consolePlayer] && players[consolePlayer].mo)
 		{
 			let pi = players[consolePlayer];
-			for (int lay = 0; lay < 2; ++lay)
-			{
-				let psp = pi.FindPSprite(lay == 0 ? PSP_WEAPON : PSP_OFFHANDWEAPON);
-				if (!psp) continue;
+			// Every layer, not just the two hands -- an overlay we painted
+			// carries the same serialised ModelFrame and would keep forcing a
+			// frame number onto whatever draws there next.
+			for (let psp = pi.psprites; psp != null; psp = psp.Next)
 				RS_Fork.ReleaseFrames(psp);
-			}
 		}
 
-		mLastMain = null; mLastOff = null;
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();
 		mBound    = false;
 	}
 
@@ -1589,7 +1700,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			"pistol", "revolver", "smg", "rifle", "shotgun", "supershotgun",
 			"chaingun", "rocket", "plasma", "railgun", "flamethrower",
 			"bfg", "melee", "saw", "grenade", "sniper",
-			"machinegun", "launcher", "unmaker", "axe",
+			"machinegun", "launcher", "unmaker", "axe", "kick",
 			// Last, so cycling forward through the sensible families reaches
 			// it only after they are exhausted -- but it is one step BACK
 			// from "pistol", which is where most weapons start.
@@ -1737,7 +1848,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mEntries[j].pinned     = true;
 			SavePick(j);
 		}
-		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();      // force a re-bind on both hands
 	}
 
 	// The one place a pick reaches the archive. Called after every write to
@@ -1777,7 +1888,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mEntries[j].pinned     = true;
 			SavePick(j);
 		}
-		mLastMain = null; mLastOff = null;      // force a re-bind on both hands
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();      // force a re-bind on both hands
 	}
 
 	// One-button "give everything a one-handed model" -- pistol, revolver or
@@ -1823,7 +1934,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		mPicks.Save();
 		Console.Printf("[RSRM] randomized %d weapons", touched);
 
-		mLastMain = null; mLastOff = null;
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();
 	}
 
 	// Which SET a donor class belongs to -- same prefix logic the picker's
@@ -1879,7 +1990,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		Console.Printf("[RSRM] assigned %d weapons to %s (%d families had no %s model, left as-is)",
 			assigned, setName, missing, setName);
 
-		mLastMain = null; mLastOff = null;
+		mLastMain = null; mLastOff = null; mOvlBound.Clear();
 	}
 
 	void Dump()
