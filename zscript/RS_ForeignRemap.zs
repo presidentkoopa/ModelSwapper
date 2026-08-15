@@ -40,7 +40,11 @@ class RS_RemapGroup
 	Array<int> frames;   // per-tic frame list, post-fallback
 }
 
-class RS_ForeignRemap
+// play scope: HealFrom registers rows with the engine mid-game, which is
+// a play-side write, and every caller of this class is the play-side
+// handler anyway. (Data scope was the compile error the session log
+// caught: "Can't call play function RegisterModelStateFrame".)
+class RS_ForeignRemap play
 {
 	string clsName;
 	string donor;
