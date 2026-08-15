@@ -221,8 +221,24 @@ class RS_ForeignRemap play
 		if (lname == "fire"    || lname == "hold"    || lname == "flash")    return "fire";
 		if (lname == "altfire" || lname == "althold" || lname == "altflash") return "altfire";
 		if (lname == "reload") return "reload";
-		if (lname == "ready"  || lname == "deselect" || lname == "select"
-		 || lname == "zoom"   || lname == "user1"    || lname == "user2"
+		// SELECT AND DESELECT ARE THEIR OWN ANIMATIONS, not idle.
+		//
+		// Every mod surveyed defines both on every weapon -- roughly 330
+		// weapons across the ten -- and folding them into "ready" meant a
+		// weapon SNAPPED into your hands instead of being raised. It was
+		// the single most common missing animation, and it is the one all
+		// four model sets have frames for, since every gun mesh carries a
+		// raise and a lower.
+		//
+		// This also fixes the deploy-vs-idle confusion the surveys found in
+		// five of ten mods, where `Ready:` is a settle animation that falls
+		// through to the real idle loop: those deploy states now land in
+		// the select clip where they belong, rather than stretching the
+		// one-frame ready clip across a deployment.
+		if (lname == "select")   return "select";
+		if (lname == "deselect") return "deselect";
+		if (lname == "zoom")   return "ads";
+		if (lname == "ready"  || lname == "user1"    || lname == "user2"
 		 || lname == "user3"  || lname == "user4") return "ready";
 		return "";
 	}
@@ -386,6 +402,32 @@ class RS_ForeignRemap play
 		if (!haveClip && clipName == "altfire")
 			haveClip = clips.Get(donorCls, "fire", frameCount, frames, markFire)
 			           && frames.Size() > 0;
+
+		// FALL BACK TO THE READY CLIP for the deploy/holster/aim groups.
+		//
+		// Where a model has no dedicated select clip this is not a
+		// consolation prize: BD's own ready sections are multi-frame
+		// SETTLE animations (the AssaultShotgun's is frames 0-3, the gun
+		// coming up), so running one forward is a real raise. Deselect is
+		// the same frames reversed -- lowering is raising backwards, which
+		// is how the source meshes were built.
+		//
+		// ADS holds the last ready frame rather than snapping to rest,
+		// since almost no model has a genuine ironsight pose and a snap
+		// reads far worse than a hold.
+		bool reverseClip = false;
+		if (!haveClip && (clipName == "select" || clipName == "deselect" || clipName == "ads"))
+		{
+			haveClip = clips.Get(donorCls, "ready", frameCount, frames, markFire)
+			           && frames.Size() > 0;
+			if (haveClip && clipName == "deselect") reverseClip = true;
+		}
+		if (reverseClip)
+		{
+			Array<int> rev;
+			for (int k = frames.Size() - 1; k >= 0; --k) rev.Push(frames[k]);
+			frames.Copy(rev);
+		}
 
 		int rest = restFrame;
 		if (frameCount > 0 && rest >= frameCount) rest = frameCount - 1;
