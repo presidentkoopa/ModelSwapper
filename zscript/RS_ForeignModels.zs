@@ -1393,6 +1393,17 @@ class RS_ForeignModelHandler : StaticEventHandler
 			return;
 		}
 
+		// Themed loadout: every visible weapon wears one set, families kept.
+		// arg 0: 0 VanAlek, 1 Bv21, 2 MeatG, 3 BWolf.
+		if (e.name == "rs-fm-assign-set")
+		{
+			if (multiplayer) return;
+			int setIdx = e.args[0];
+			if (setIdx < 0 || setIdx > 3) return;
+			AssignSet(setIdx);
+			return;
+		}
+
 		// (rs-fm-forget is gone: the remap engine learns nothing, so there
 		// is nothing to forget. Model choices are still clearable below.)
 		if (e.name == "rs-fm-forget-picks")
@@ -1518,6 +1529,60 @@ class RS_ForeignModelHandler : StaticEventHandler
 		// One save for the whole batch, not one per row.
 		mPicks.Save();
 		Console.Printf("[RSRM] randomized %d weapons", touched);
+
+		mLastMain = null; mLastOff = null;
+	}
+
+	// Which SET a donor class belongs to -- same prefix logic the picker's
+	// Pretty() uses for display, minus the formatting. 0 VanAlek, 1 Bv21,
+	// 2 MeatG, 3 BWolf.
+	static int SetOfDonor(string cls)
+	{
+		if (cls.IndexOf("MS_GH_") == 0 || cls.IndexOf("RS_GH_") == 0) return 1;
+		if (cls.IndexOf("MS_MG_") == 0 || cls.IndexOf("RS_PS_") == 0) return 2;
+		if (cls.IndexOf("MS_BW_") == 0)                               return 3;
+		return 0;   // VanAlek: the plain MS_/VR_ donors
+	}
+
+	// One press: every visible weapon wears the chosen set, KEEPING its
+	// family -- a shotgun gets that set's shotgun. Rows whose family has no
+	// model in the requested set keep their current pick untouched: a
+	// missing model honestly absent beats a wrong one silently present.
+	// Batch-saved for the same reason Randomize is.
+	void AssignSet(int setIdx)
+	{
+		if (!mShelf || !mPicks) return;
+
+		int assigned = 0, missing = 0;
+		for (int i = 0; i < mEntries.Size(); ++i)
+		{
+			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+
+			string arch = mEntries[i].archetype;
+			int have = mShelf.Count(arch);
+			if (have <= 0) continue;
+
+			int found = -1;
+			for (int p = 0; p < have; ++p)
+			{
+				string mcls, anchor; int hf, rf, fc;
+				if (!mShelf.Get(arch, p, mcls, anchor, hf, rf, fc)) continue;
+				if (SetOfDonor(mcls) == setIdx) { found = p; break; }
+			}
+			if (found < 0) { missing++; continue; }
+
+			mEntries[i].modelPick1 = found;
+			mEntries[i].modelPick2 = found;
+			mEntries[i].pinned     = true;
+			mPicks.Store(mEntries[i].clsName, arch, found, found, false);
+			assigned++;
+		}
+		mPicks.Save();
+
+		string setName = setIdx == 1 ? "Bv21" : setIdx == 2 ? "MeatG"
+		               : setIdx == 3 ? "BWolf" : "VanAlek";
+		Console.Printf("[RSRM] assigned %d weapons to %s (%d families had no %s model, left as-is)",
+			assigned, setName, missing, setName);
 
 		mLastMain = null; mLastOff = null;
 	}
