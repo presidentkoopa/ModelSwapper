@@ -64,6 +64,11 @@ class MS_SMG : Actor {}
 class MS_Shotgun : Actor {}
 class MS_SuperShotgun : Actor {}
 
+// Every fork-only engine call lives behind RS_Fork, and the build script
+// ships one of two implementations of this path: the desktop one, or the
+// stock-GZDoom/QuestZDoom stub from zscript/static/. Nothing else in the
+// pk3 differs between the two builds. See zscript/RS_ForeignFork.zs.
+#include "zscript/RS_ForeignFork.zs"
 #include "zscript/RS_ForeignPersist.zs"
 #include "zscript/RS_ForeignAnim.zs"
 #include "zscript/RS_ForeignRemap.zs"

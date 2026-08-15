@@ -171,7 +171,7 @@ class RS_ForeignRemap play
 			mMeshNext.Push(grp.frames[b]);
 			mGroupId.Push(gid);
 			mEndIdx.Push(b);
-			w.RegisterModelStateFrame(seq[k], grp.frames[a], grp.frames[b]);
+			RS_Fork.RegisterRow(w, seq[k], grp.frames[a], grp.frames[b]);
 			cum += dur[k];
 		}
 
@@ -230,7 +230,9 @@ class RS_ForeignRemap play
 		m.mHint   = 0;
 
 		class<Actor> ac = (class<Actor>)(type);
-		int n = Actor.CountStateLabels(ac);
+		// Zero on a stock engine -- the static build produces an empty
+		// table and the binder never consults it. See RS_Fork.
+		int n = RS_Fork.CountLabels(ac);
 		if (DebugOn()) Console.Printf("[RSRM] %s/%s: %d labels total", m.clsName, donorCls, n);
 
 		// One pass in source order. A psprite standard opens a group (and
@@ -247,7 +249,7 @@ class RS_ForeignRemap play
 			if (i < n)
 			{
 				Name nm; State st;
-				[nm, st] = Actor.GetStateLabelAt(ac, i);
+				[nm, st] = RS_Fork.LabelAt(ac, i);
 				lname = "" .. nm; lname = lname.MakeLower();
 				lst = st;
 			}

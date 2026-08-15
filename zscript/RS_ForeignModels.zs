@@ -644,8 +644,7 @@ class RS_ForeignScanner
 	// skip everything the first one bound.
 	static bool HasOwnModel(class<Weapon> type)
 	{
-		readonly<Actor> def = GetDefaultByType(type);
-		return (def && def.hasmodel);
+		return RS_Fork.HasOwnModel(type);
 	}
 
 	// -----------------------------------------------------------------
@@ -720,6 +719,14 @@ class RS_ForeignScanner
 			if (cm >= 0) ln = ln.Left(cm);
 			string low = ln.MakeLower();
 
+			// String.Length() is unsigned; every counter here is a signed
+			// int. Hoisting the lengths into int locals keeps the loop
+			// guards signed-vs-signed -- six "comparison between signed and
+			// unsigned" warnings on every single load otherwise, which
+			// buries real diagnostics in the session log.
+			int lnLen  = int(ln.Length());
+			int lowLen = int(low.Length());
+
 			// #include -- and DECORATE includes are often UNQUOTED
 			// ("#Include Actors/Weapons/Crowbar.txt", Ashes does exactly
 			// this), so both forms have to parse.
@@ -727,9 +734,9 @@ class RS_ForeignScanner
 			if (inc >= 0)
 			{
 				int p = inc + 8;
-				while (p < ln.Length() && (ln.ByteAt(p) == 32 || ln.ByteAt(p) == 9)) p++;
+				while (p < lnLen && (ln.ByteAt(p) == 32 || ln.ByteAt(p) == 9)) p++;
 				string path = "";
-				if (p < ln.Length() && ln.ByteAt(p) == 34)   // opening quote
+				if (p < lnLen && ln.ByteAt(p) == 34)   // opening quote
 				{
 					int q2 = ln.IndexOf("\"", p + 1);
 					if (q2 > p) path = ln.Mid(p + 1, q2 - p - 1);
@@ -737,7 +744,7 @@ class RS_ForeignScanner
 				else
 				{
 					int s0 = p;
-					while (p < ln.Length() && ln.ByteAt(p) > 32) p++;
+					while (p < lnLen && ln.ByteAt(p) > 32) p++;
 					path = ln.Mid(s0, p - s0);
 				}
 				if (path.Length() > 0)
@@ -753,15 +760,15 @@ class RS_ForeignScanner
 			// keyword. That skips "extend class" (defines nothing new) and
 			// incidental uses of the words mid-line.
 			int p = 0;
-			while (p < low.Length() && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
+			while (p < lowLen && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
 			bool isDecl = false;
 			if (low.Mid(p, 6) == "class " || low.Mid(p, 6) == "class\t") { p += 6; isDecl = true; }
 			else if (low.Mid(p, 6) == "actor " || low.Mid(p, 6) == "actor\t") { p += 6; isDecl = true; }
 			if (!isDecl) continue;
 
-			while (p < low.Length() && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
+			while (p < lowLen && (low.ByteAt(p) == 32 || low.ByteAt(p) == 9)) p++;
 			int s0 = p;
-			while (p < low.Length())
+			while (p < lowLen)
 			{
 				int ch = low.ByteAt(p);
 				bool idc = (ch >= 97 && ch <= 122) || (ch >= 48 && ch <= 57) || ch == 95;
@@ -1051,15 +1058,24 @@ class RS_ForeignModelHandler : StaticEventHandler
 		{
 			w.A_ChangeModel(mcls);
 
-			let map = MapFor(w, mcls, frameCount, restFrame);
-			w.ClearModelStateFrames();
-			int pushed = 0;
-			for (int i = 0; i < map.mStates.Size(); ++i)
-				if (w.RegisterModelStateFrame(map.mStates[i], map.mMesh[i], map.mMeshNext[i]))
-					pushed++;
-			if (RS_ForeignRemap.DebugOn())
-				Console.Printf("[RSRM] bound %s -> %s: %d/%d rows registered",
-					w.GetClassName(), mcls, pushed, map.mStates.Size());
+			// Static build (stock GZDoom / QuestZDoom): the bind above is
+			// the whole feature there -- A_ChangeModel is stock, the pin
+			// below is stock, and the weapon wears its donor at the rest
+			// pose. Everything past here needs the fork's animation
+			// extensions, so it is skipped wholesale rather than run into
+			// no-op shims.
+			if (RS_Fork.Supported())
+			{
+				let map = MapFor(w, mcls, frameCount, restFrame);
+				RS_Fork.ClearRows(w);
+				int pushed = 0;
+				for (int i = 0; i < map.mStates.Size(); ++i)
+					if (RS_Fork.RegisterRow(w, map.mStates[i], map.mMesh[i], map.mMeshNext[i]))
+						pushed++;
+				if (RS_ForeignRemap.DebugOn())
+					Console.Printf("[RSRM] bound %s -> %s: %d/%d rows registered",
+						w.GetClassName(), mcls, pushed, map.mStates.Size());
+			}
 		}
 
 		// STEP 2 -- every tick: their states re-set the psprite each frame,
@@ -1078,9 +1094,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			psp.Sprite = si;
 			psp.Frame  = heldFrame;
 
-			psp.ModelFrame     = -1;
-			psp.ModelFrameNext = -1;
-			psp.ModelFrameLerp = -1;
+			RS_Fork.ReleaseFrames(psp);
 
 			// HEALTH TELEMETRY + SELF-HEALING. Same lookup the renderer
 			// performs, against the same table. A hit records the heal
@@ -1092,7 +1106,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// registered with the engine THIS tic. The renderer's next
 			// consult already hits. See RS_ForeignRemap.HealFrom.
 			State cur = psp.CurState;
-			if (cur != null)
+			if (cur != null && RS_Fork.Supported())
 			{
 				let map = MapFor(w, mcls, frameCount, restFrame);
 				if (map != null)
@@ -1285,9 +1299,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			{
 				let psp = pi.FindPSprite(lay == 0 ? PSP_WEAPON : PSP_OFFHANDWEAPON);
 				if (!psp) continue;
-				psp.ModelFrame     = -1;
-				psp.ModelFrameNext = -1;
-				psp.ModelFrameLerp = -1;
+				RS_Fork.ReleaseFrames(psp);
 			}
 		}
 
