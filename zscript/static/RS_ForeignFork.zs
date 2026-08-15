@@ -2,8 +2,9 @@
 // RS_Fork -- STOCK GZDOOM / QUESTZDOOM BUILD.
 //
 // The twin of zscript/RS_ForeignFork.zs. Same class, same signatures,
-// every fork-only engine symbol removed. build.ps1 -Static ships this
-// file in place of the other one; nothing else in the pk3 differs.
+// same scopes, every fork-only engine symbol removed. build.ps1
+// -Static ships this file in place of the other one; nothing else in
+// the pk3 differs.
 //
 // It has to be a whole separate FILE rather than a runtime branch:
 // ZScript resolves every field and method reference at compile time,
@@ -27,7 +28,7 @@
 // off in the menu when playing one of those.
 // =====================================================================
 
-class RS_Fork
+class RS_Fork play
 {
 	static clearscope bool Supported() { return false; }
 
@@ -50,6 +51,8 @@ class RS_Fork
 	static clearscope int CountLabels(class<Actor> cls) { return 0; }
 	static clearscope Name, State LabelAt(class<Actor> cls, int index)
 	{
-		return 'None', null;
+		Name n = 'None';
+		State s = null;
+		return n, s;
 	}
 }

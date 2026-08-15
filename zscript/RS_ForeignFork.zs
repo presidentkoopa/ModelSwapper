@@ -20,6 +20,11 @@
 //   3. Actor.CountStateLabels / GetStateLabelAt
 // ...plus AActor::hasmodel, exported for HasOwnModel.
 //
+// SCOPE: the class is `play` because writing psprite fields and calling
+// the registration natives are play-side actions. The four read-only
+// queries are marked `clearscope` individually so the scanner -- which
+// runs in data context -- can still call them.
+//
 // Supported() is what callers branch on. When it is false the mod still
 // scans, classifies, picks and BINDS -- A_ChangeModel is stock as of
 // GZDoom 4.11 -- it simply never drives frames, so each weapon wears
@@ -27,7 +32,7 @@
 // not animate.
 // =====================================================================
 
-class RS_Fork
+class RS_Fork play
 {
 	// Does this engine have the animation extensions?
 	static clearscope bool Supported() { return true; }
@@ -79,6 +84,8 @@ class RS_Fork
 
 	static clearscope Name, State LabelAt(class<Actor> cls, int index)
 	{
-		return Actor.GetStateLabelAt(cls, index);
+		Name n; State s;
+		[n, s] = Actor.GetStateLabelAt(cls, index);
+		return n, s;
 	}
 }

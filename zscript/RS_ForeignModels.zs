@@ -1202,14 +1202,60 @@ class RS_ForeignModelHandler : StaticEventHandler
 				{
 					int row = map.LookupIndex(cur);
 
-					if (row < 0 && cur.Tics != 0
-					 && hs.lastMap == map && hs.lastHitRow >= 0)
+					if (row < 0 && cur.Tics != 0)
 					{
-						int n = map.HealFrom(hs.lastHitRow, cur, w);
-						if (n > 0)
+						// WHICH CLIP DOES THE ORPHAN CHAIN BELONG TO?
+						//
+						// Inheriting the last mapped state's group is only
+						// right MID-ACTION. Pressing altfire straight from
+						// idle lands on an orphan chain while the last
+						// mapped state was the ready loop -- healing off
+						// that would spread the one-frame ready clip across
+						// the whole altfire animation and cache it, freezing
+						// that weapon's altfire permanently.
+						//
+						// The button is the honest signal: the engine's own
+						// P_CheckWeaponButtons jumps to Fire/AltFire/Reload
+						// by name, so a button held on the tic the psprite
+						// leaves mapped territory names the sequence that
+						// was just entered. Offhand buttons map the same way
+						// for the offhand layer.
+						int btn = pi.cmd.buttons;
+						bool off = (layer == PSP_OFFHANDWEAPON);
+						int gid = -1;
+						if (btn & (off ? BT_OFFHANDALTATTACK : BT_ALTATTACK))
+							gid = map.FindGroupByClip("altfire");
+						else if (btn & (off ? BT_OFFHANDRELOAD : BT_RELOAD))
+							gid = map.FindGroupByClip("reload");
+						else if (btn & (off ? BT_OFFHANDATTACK : BT_ATTACK))
+							gid = map.FindGroupByClip("fire");
+
+						int startIdx = 0;   // a button press starts its clip
+						if (gid < 0 && hs.lastMap == map && hs.lastHitRow >= 0)
 						{
-							hs.healed += n;
-							row = map.LookupIndex(cur);
+							// No button: this is a continuation of whatever
+							// was already running. Only inherit a real
+							// ACTION group -- never "ready", which is the
+							// freeze case above.
+							int g = map.GroupIdOfRow(hs.lastHitRow);
+							if (g >= 0 && map.GroupClip(g) != "ready")
+							{
+								gid      = g;
+								startIdx = map.EndIdxOfRow(hs.lastHitRow);
+							}
+						}
+
+						// No confident group: hold the pose and DO NOT
+						// cache. A wrong heal is permanent; a skipped one
+						// costs a tic and retries.
+						if (gid >= 0)
+						{
+							int n = map.HealInto(gid, startIdx, cur, w);
+							if (n > 0)
+							{
+								hs.healed += n;
+								row = map.LookupIndex(cur);
+							}
 						}
 					}
 
