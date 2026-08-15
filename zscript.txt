@@ -1,4 +1,4 @@
-version "4.14"
+﻿version "4.14"
 
 // ============================================================================
 // ModelSwapper -- donor stubs.
@@ -68,6 +68,40 @@ class MS_SuperShotgun : Actor {}
 // ships one of two implementations of this path: the desktop one, or the
 // stock-GZDoom/QuestZDoom stub from zscript/static/. Nothing else in the
 // pk3 differs between the two builds. See zscript/RS_ForeignFork.zs.
+// The complete Brutal Doom v21 set (see modeldef), generated from BD's
+// own MODELDEFs -- one class per MESH, so Boot and nade are their own.
+class MS_BD_AssaultShotgun : Actor {}
+class MS_BD_nade : Actor {}
+class MS_BD_Boot : Actor {}
+class MS_BD_fistclosed : Actor {}
+class MS_BD_BFG : Actor {}
+class MS_BD_BFG_10k : Actor {}
+class MS_BD_BrutalAxe : Actor {}
+class MS_BD_Chain_saw : Actor {}
+class MS_BD_Minigun : Actor {}
+class MS_BD_BrutalPistol : Actor {}
+class MS_BD_Plasma : Actor {}
+class MS_BD_RPG : Actor {}
+class MS_BD_Shotgun : Actor {}
+class MS_BD_BrutalSMG : Actor {}
+class MS_BD_SSG : Actor {}
+class MS_BD_FlameCannon : Actor {}
+class MS_BD_Flamethrower2 : Actor {}
+class MS_BD_HellishMissile : Actor {}
+class MS_BD_HitlersBuzzsaw : Actor {}
+class MS_BD_M79 : Actor {}
+class MS_BD_Machinegun : Actor {}
+class MS_BD_MP40 : Actor {}
+class MS_BD_Dual_MP40 : Actor {}
+class MS_BD_RailGun : Actor {}
+class MS_BD_SnipaRG : Actor {}
+class MS_BD_Revolver : Actor {}
+class MS_BD_Rifle : Actor {}
+class MS_BD_Rifle_Dual : Actor {}
+class MS_BD_SnipaRPG : Actor {}
+class MS_BD_DualSMG : Actor {}
+class MS_BD_Unmaker : Actor {}
+
 #include "zscript/RS_ForeignFork.zs"
 #include "zscript/RS_ForeignPersist.zs"
 #include "zscript/RS_ForeignAnim.zs"

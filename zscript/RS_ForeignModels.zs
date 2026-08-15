@@ -1,4 +1,4 @@
-// =====================================================================
+﻿// =====================================================================
 // RS_ForeignModels -- OUR MODELS ON THEIR WEAPONS.
 //
 // Scans every weapon class loaded alongside us (any wad/pk3), guesses an
@@ -128,6 +128,40 @@ class RS_ForeignShelf
 			"bfg|RS_GH_BFG10k|HBBT|0|6|21",
 			"bfg|RS_PS_BFG|BFGN|0|0|11",
 			"melee|RS_GH_Fist|HBFS|0|0|75",
+
+			// The complete BD21 set -- generated, see modeldef.
+			"shotgun|MS_BD_AssaultShotgun|SHTG|0|0|32",
+			"grenade|MS_BD_nade|MISG|0|0|16",
+			"kick|MS_BD_Boot|PUNG|0|0|58",
+			"melee|MS_BD_fistclosed|PUNG|0|0|75",
+			"bfg|MS_BD_BFG|BFGG|0|0|7",
+			"bfg|MS_BD_BFG_10k|BFGG|0|6|11",
+			"axe|MS_BD_BrutalAxe|PUNG|0|0|15",
+			"saw|MS_BD_Chain_saw|SAWG|0|0|61",
+			"chaingun|MS_BD_Minigun|CHGG|0|0|12",
+			"pistol|MS_BD_BrutalPistol|PISG|0|0|7",
+			"plasma|MS_BD_Plasma|PLSG|0|0|18",
+			"rocket|MS_BD_RPG|MISG|0|0|16",
+			"shotgun|MS_BD_Shotgun|SHTG|0|0|19",
+			"smg|MS_BD_BrutalSMG|CHGG|0|0|7",
+			"supershotgun|MS_BD_SSG|SHT2|0|0|46",
+			"flamethrower|MS_BD_FlameCannon|PLSG|0|0|8",
+			"flamethrower|MS_BD_Flamethrower2|PLSG|0|0|5",
+			"rocket|MS_BD_HellishMissile|MISG|0|0|10",
+			"saw|MS_BD_HitlersBuzzsaw|SAWG|0|0|3",
+			"launcher|MS_BD_M79|MISG|0|0|33",
+			"machinegun|MS_BD_Machinegun|CHGG|0|0|36",
+			"smg|MS_BD_MP40|CHGG|0|0|14",
+			"smg|MS_BD_Dual_MP40|CHGG|0|0|21",
+			"railgun|MS_BD_RailGun|PLSG|0|0|37",
+			"railgun|MS_BD_SnipaRG|PLSG|0|0|37",
+			"revolver|MS_BD_Revolver|PISG|0|0|33",
+			"rifle|MS_BD_Rifle|CHGG|0|0|32",
+			"rifle|MS_BD_Rifle_Dual|CHGG|0|0|40",
+			"rocket|MS_BD_SnipaRPG|MISG|0|0|5",
+			"smg|MS_BD_DualSMG|CHGG|0|0|48",
+			"unmaker|MS_BD_Unmaker|BFGG|0|4|16",
+
 			"melee|RS_PS_Fist|FSTZ|0|0|9",
 
 			// ---- standalone ModelSwapper.pk3 donors (MS_ namespace) ----
@@ -647,7 +681,7 @@ class RS_ForeignScanner
 	//
 	// hasmodel is set on the CLASS DEFAULTS by the MODELDEF parser and is the
 	// same flag FindModelFrameRaw gates on, so it answers exactly the right
-	// question. It is an RS-fork export (FORK_CHANGES.md §15); on stock GZDoom
+	// question. It is an RS-fork export (FORK_CHANGES.md Â§15); on stock GZDoom
 	// this is not answerable from ZScript at all.
 	//
 	// READ IT OFF THE DEFAULTS, NEVER OFF A LIVE ACTOR. A_ChangeModel sets
