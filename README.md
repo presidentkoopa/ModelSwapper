@@ -106,7 +106,8 @@ Longer list, with the reasons, in [INTERNALS.md](INTERNALS.md).
 
 ## Requirements
 
-GZDoom **4.11+** for the static build. The **DoomXR / UZDXREMA** fork for animation.
+GZDoom **4.14+** for the static build (req WorldHitscanPreFired for ballistic replace).. 
+The **DoomXR / UZDXREMA** fork for animation.
 
 ## Building
 
