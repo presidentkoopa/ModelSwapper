@@ -1533,6 +1533,21 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		ApplyOverlays(pi);
 
+		// Their muzzle flash is a flat sprite on its own layer; next to a 3D
+		// gun it reads as a billboard. Off leaves the mod exactly as drawn;
+		// on uses the opacity slider, whose 0.0 default is fully invisible.
+		{
+			double fa = 1.0;
+			CVar hv = CVar.FindCVar("rs_fm_hideflash");
+			if (!hv || hv.GetBool())
+			{
+				fa = 0.0;
+				CVar av = CVar.FindCVar("rs_fm_flashalpha");
+				if (av) fa = clamp(av.GetFloat(), 0.0, 1.0);
+			}
+			SetWeaponFlashAlpha(pi, fa);
+		}
+
 		mBound = (mLastMain != null || mLastOff != null || mOvlBound.Size() > 0);
 
 		// Every ten seconds, say how the table did. See ReportHealth.
@@ -1651,6 +1666,37 @@ class RS_ForeignModelHandler : StaticEventHandler
 		}
 	}
 
+	// HIDE THE FLAT LAYERS A WEAPON DRAWS ON TOP OF ITSELF.
+	//
+	// A muzzle flash is its own psprite layer -- usually PSP_FLASH -- owned by
+	// the same weapon. We paint models on the two weapon layers, and on layers
+	// whose caller is NOT the weapon (a mod's kick), so a flash layer is never
+	// painted: it stays the mod's flat sprite. Beside a sprite gun that is what
+	// it was drawn to be. Beside a 3D model in VR it is a billboard hanging in
+	// the air, which is the one artifact that gives the whole illusion away.
+	//
+	// Only hidden on a hand we actually replaced. If the gun is still the mod's
+	// own sprite -- because it ships 3D models of its own, or we had no model
+	// for it -- then its flash still belongs with it and is left alone.
+	void SetWeaponFlashAlpha(PlayerInfo pi, double a)
+	{
+		for (let psp = pi.psprites; psp != null; psp = psp.Next)
+		{
+			int id = psp.ID;
+			if (id == PSP_WEAPON || id == PSP_OFFHANDWEAPON) continue;
+			if (id >= PSP_TARGETCENTER) continue;   // reticles
+
+			Actor c = psp.Caller;
+			if (c == null) continue;
+
+			// Owned by a hand we bound. An overlay belonging to anything else
+			// is somebody's kick or taunt -- ApplyOverlays paints those.
+			if (c != mLastMain && c != mLastOff) continue;
+
+			psp.alpha = a;
+		}
+	}
+
 	RS_ForeignRemap MapFor(Actor w, string donor, int frameCount, int restFrame)
 	{
 		string cn = w.GetClassName();
@@ -1683,6 +1729,9 @@ class RS_ForeignModelHandler : StaticEventHandler
 		if (playeringame[consolePlayer] && players[consolePlayer].mo)
 		{
 			let pi = players[consolePlayer];
+			// Give any flash layer we blanked its visibility back, while we
+			// still know which weapons were ours.
+			SetWeaponFlashAlpha(pi, 1.0);
 			// Every layer, not just the two hands -- an overlay we painted
 			// carries the same serialised ModelFrame and would keep forcing a
 			// frame number onto whatever draws there next.

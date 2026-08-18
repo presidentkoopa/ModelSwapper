@@ -24,6 +24,14 @@ OptionMenu "RSFM_Main"
     Option "Enable", "rs_foreignmodels", "OnOff"
     StaticText " "
 
+    Option "Hide Muzzle Flash Sprites", "rs_fm_hideflash", "OnOff"
+    Slider "  Flash Opacity", "rs_fm_flashalpha", 0.0, 1.0, 0.05, 2
+    StaticText "A muzzle flash is a separate flat sprite. Next to a 3D", "DarkGray"
+    StaticText "weapon it hangs in the air like a billboard. Turn off to", "DarkGray"
+    StaticText "see the mod exactly as its author drew it. Raise the opacity", "DarkGray"
+    StaticText "to keep a dimmed flash instead of none at all.", "DarkGray"
+    StaticText " "
+
     Option "One Row Per Family", "rs_foreignmodels_byfamily", "OnOff"
     StaticText "Collapses the model list to one row per weapon family --", "DarkGray"
     StaticText "one shotgun row, one chaingun row. For arsenal mods that", "DarkGray"
