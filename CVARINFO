@@ -76,11 +76,20 @@ server bool rs_foreignmodels_byfamily = true;
 // meet the whole list first.
 server bool rs_foreignmodels_carried = false;
 
-// Offer models for weapons that ALREADY have their own 3D model.
+// Offer models even when a weapon already has one of its own.
 //
-// Off by default, because a mod's own model is built for its own animation
-// and usually beats anything we would put there. Project Brutality is why
-// this is a switch at all: it ships eight MODELDEF files covering its
-// arsenal, so we stood down on nearly every weapon it has -- which from the
-// player's side looked exactly like a scanner that could not see the mod.
-server bool rs_foreignmodels_replaceown = false;
+// ON by default, because the flag we can read cannot answer the question we
+// actually have. Actor.hasmodel means "this class has a model bound to SOME
+// sprite" -- it says nothing about WHICH. A mod that models its dropped
+// pickup and leaves the first-person view as flat sprites reads identically
+// to one that ships full HUD models.
+//
+// Project Brutality is exactly that mod. Its MODELDEF binds sprite VIFL and
+// its Spawn state runs A_PBVPFramework -- the pickup lying on the floor. Its
+// Fire states use R0F8 and have no model at all. hasmodel came back true, we
+// stood down, and we withheld models from the weapons that most needed them.
+//
+// Pickup models are common; first-person weapon models are rare -- a mod
+// that had them would not need this one. So offering is the right default.
+// Turn this off to leave any modelled weapon alone.
+server bool rs_foreignmodels_replaceown = true;

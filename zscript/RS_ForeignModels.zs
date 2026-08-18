@@ -960,10 +960,16 @@ class RS_ForeignScanner
 			// rescan ever brought it back, because we were never going to
 			// offer it anything.
 			//
-			// Standing down is still the right default -- a mod's own model is
-			// made for its own animation and usually beats ours. But "usually"
-			// is not "always", and the player is better placed to judge than
-			// a rule is.
+			// And it is the WRONG skip: PB models the pickup on the floor, not
+			// the gun in your hands. Its MODELDEF binds sprite VIFL and its
+			// Spawn state runs A_PBVPFramework; its Fire states use R0F8 and
+			// have no model at all. hasmodel cannot tell those apart -- it is
+			// one flag meaning "some sprite of this class has a model" -- so we
+			// withheld models from the weapons that most needed them.
+			//
+			// Pickup models are common; first-person models are rare, and a mod
+			// that had them would not need this one. So we offer by default now
+			// and the switch is there to stand down.
 			if (!replaceOwn && RS_ForeignScanner.HasOwnModel(type)) continue;
 
 			RS_ForeignEntry e = new("RS_ForeignEntry");
