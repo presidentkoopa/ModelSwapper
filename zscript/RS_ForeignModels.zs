@@ -1287,6 +1287,54 @@ class RS_ForeignModelHandler : StaticEventHandler
 		return n;
 	}
 
+	// A "WEAPON" THAT CANNOT FIRE IS NOT A WEAPON.
+	//
+	// Mods hand you things that are Weapon subclasses because a Weapon is what
+	// occupies a slot and draws on the psprite -- not because they shoot. Ashes
+	// gives you a motorcycle, and what you actually hold is:
+	//
+	//     ACTOR Motohandles : Weapon   // no guns for you, yet
+	//     Fire:
+	//         "----" A 0
+	//         Goto Ready
+	//
+	// Handlebars. Bind a model to that and you ride across the wasteland
+	// gripping a shotgun. The same shape covers lanterns, binoculars, radios,
+	// map devices -- anything a mod parks in a slot.
+	//
+	// The test is structural, not a name guess: walk the Fire chain and add up
+	// the tics it actually DISPLAYS. A real weapon shows recoil, a muzzle
+	// frame, something. A placeholder Fire is 0-tic states that jump straight
+	// back to Ready, and totals zero. Stops at any other label's entry state
+	// for the same reason the clip walk does -- otherwise `Goto Ready` drags
+	// the idle loop's tics in and every placeholder looks armed.
+	//
+	// Stock ZScript throughout, so the Quest build gets this too.
+	static bool CannotFire(class<Actor> type)
+	{
+		readonly<Actor> d = GetDefaultByType(type);
+		if (!d) return false;
+
+		State f = d.FindState('Fire');
+		if (f == null) return true;          // no Fire at all -- not a gun
+
+		// Entry states of the labels we must not wander into.
+		State rdy = d.FindState('Ready');
+		State sel = d.FindState('Select');
+		State dsl = d.FindState('Deselect');
+
+		int total = 0;
+		State s = f;
+		for (int guard = 0; guard < 64 && s != null; ++guard)
+		{
+			if (guard > 0 && (s == rdy || s == sel || s == dsl || s == f)) break;
+			if (s.Tics > 0) total += s.Tics;
+			if (total > 0) return false;     // it displays something: a weapon
+			s = s.NextState;
+		}
+		return total <= 0;
+	}
+
 	int FindEntry(string cls) const
 	{
 		for (int i = 0; i < mEntries.Size(); ++i)
@@ -1305,6 +1353,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		int idx = FindEntry(w.GetClassName());
 		if (idx < 0) return null;
+
+		// Handlebars, lanterns, binoculars -- a Weapon that never fires is not
+		// something to hang a gun on. See CannotFire.
+		if (CannotFire(w.GetClass())) return null;
 		let en = mEntries[idx];
 
 		string mcls, anchor; int heldFrame, restFrame, frameCount;
