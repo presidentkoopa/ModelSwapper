@@ -52,8 +52,15 @@ server string rs_fm_bt_base  = "";
 // figure. The engine has no muzzle concept -- shots start at the hand.
 server int rs_fm_muzzle = 0;   // map units, clamped -20..80
 
-// Collapse the picker to ONE ROW PER FAMILY. For arsenal mods that build
-// weapons combinatorially (DoomRL Arsenal's ~150 assemblies), where every
-// row is technically a distinct class but the menu is unusable. Off by
-// default: on a normal mod each weapon deserves its own row.
-server bool rs_foreignmodels_byfamily = false;
+// Collapse the picker to ONE ROW PER FAMILY -- one shotgun row, one smg row.
+//
+// ON by default. Off, the menu lists one row per weapon CLASS, and mods
+// manufacture classes without limit: Brutal Doom 22 shows 85 rows, DoomRL
+// Arsenal about 150, and across the test corpus there are 934 weapon classes
+// of which only 276 even declare a slot. Nobody dresses 85 guns one at a
+// time, and most of those rows are the same gun in a different mode --
+// BrutalPistol, DualPistols and PuristPistol are all your pistol.
+//
+// Turn it off to address every class individually. The freedom is still
+// there; it just is not the thing you meet first.
+server bool rs_foreignmodels_byfamily = true;
