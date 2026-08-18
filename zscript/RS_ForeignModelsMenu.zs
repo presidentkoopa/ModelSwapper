@@ -314,6 +314,9 @@ class RS_Menu_ForeignReport : OptionMenu
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
 			String.Format("\c[DarkGray](%d weapon classes scanned in total; the rest belong to games the engine compiles in)\c-",
 				n), Font.CR_DARKGRAY));
+		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
+			String.Format("harvest: %d root lumps, %d files read, %d class names found",
+				h.HarvestRoots(), h.HarvestLumps(), h.HarvestNames()), Font.CR_DARKGRAY));
 		desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(" ", Font.CR_WHITE));
 
 		for (int i = 0; i < n; ++i)

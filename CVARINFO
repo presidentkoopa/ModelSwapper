@@ -75,3 +75,12 @@ server bool rs_foreignmodels_byfamily = true;
 // Off by default: a player who wants to dress a gun before finding it should
 // meet the whole list first.
 server bool rs_foreignmodels_carried = false;
+
+// Offer models for weapons that ALREADY have their own 3D model.
+//
+// Off by default, because a mod's own model is built for its own animation
+// and usually beats anything we would put there. Project Brutality is why
+// this is a switch at all: it ships eight MODELDEF files covering its
+// arsenal, so we stood down on nearly every weapon it has -- which from the
+// player's side looked exactly like a scanner that could not see the mod.
+server bool rs_foreignmodels_replaceown = false;

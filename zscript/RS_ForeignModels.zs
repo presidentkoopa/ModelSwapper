@@ -737,11 +737,13 @@ class RS_ForeignScanner
 	// falls back to the slot-binding filter -- the models cannot be taken
 	// down by a parsing bug here. That rule is load-bearing; see Scan().
 	// -----------------------------------------------------------------
-	static void HarvestModClasses(out Array<string> outNames, out Array<string> outFrom)
+	static void HarvestModClasses(out Array<string> outNames, out Array<string> outFrom,
+	                              out int roots, out int lumps)
 	{
 		outNames.Clear();
 		outFrom.Clear();
 
+		roots = 0; lumps = 0;
 		Array<int> visited;
 		int n = Wads.GetNumLumps();
 		for (int i = 0; i < n; ++i)
@@ -757,8 +759,10 @@ class RS_ForeignScanner
 			string stem = (dp >= 0) ? fn.Left(dp) : fn;
 			if (stem != "decorate" && stem != "zscript") continue;
 
+			roots++;
 			string from = Wads.GetContainerName(Wads.GetLumpContainer(i));
 			ParseLump(i, from, outNames, outFrom, visited, 0);
+			lumps = visited.Size();
 		}
 	}
 
@@ -879,15 +883,23 @@ class RS_ForeignScanner
 		return r;
 	}
 
-	static void Scan(RS_ForeignShelf shelf, in out Array<RS_ForeignEntry> outList)
+	static void Scan(RS_ForeignShelf shelf, in out Array<RS_ForeignEntry> outList,
+	                 out int hRoots, out int hLumps, out int hNames)
 	{
 		outList.Clear();
 
 		// Once per scan, not per class. See HarvestModClasses for why a
 		// total failure here is safe: modDefined false everywhere degrades
 		// to exactly the pre-harvest menu behavior.
+		bool replaceOwn = false;
+		{
+			CVar ro = CVar.FindCVar("rs_foreignmodels_replaceown");
+			replaceOwn = (ro && ro.GetBool());
+		}
+
 		Array<string> harvestNames, harvestFrom;
-		HarvestModClasses(harvestNames, harvestFrom);
+		HarvestModClasses(harvestNames, harvestFrom, hRoots, hLumps);
+		hNames = harvestNames.Size();
 
 		int n = AllActorClasses.Size();
 		for (int i = 0; i < n; ++i)
@@ -936,9 +948,23 @@ class RS_ForeignScanner
 			string cn0 = "" .. type.GetClassName();
 			if (cn0 == "Beak" || cn0 == "Snout") continue;
 
-			// A mod that already ships its own 3D weapon models is not asking
-			// for ours. Leave it alone.
-			if (RS_ForeignScanner.HasOwnModel(type)) continue;
+			// A MOD THAT SHIPS ITS OWN 3D WEAPONS IS NOT ASKING FOR OURS --
+			// unless you say otherwise.
+			//
+			// Project Brutality is the case that made this an option. It ships
+			// eight MODELDEF files covering its arsenal (MODELDEF.Slot1.txt
+			// through Slot4, plus MODELS/PBVP/Weapons), so hasmodel is true on
+			// most of its weapons and we stood down on every one of them. From
+			// the outside that is indistinguishable from a scanner that cannot
+			// see the mod: the starting DMR simply was not in the list, and no
+			// rescan ever brought it back, because we were never going to
+			// offer it anything.
+			//
+			// Standing down is still the right default -- a mod's own model is
+			// made for its own animation and usually beats ours. But "usually"
+			// is not "always", and the player is better placed to judge than
+			// a rule is.
+			if (!replaceOwn && RS_ForeignScanner.HasOwnModel(type)) continue;
 
 			RS_ForeignEntry e = new("RS_ForeignEntry");
 			e.clsName = cn;
@@ -1032,6 +1058,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 	Array<RS_ForeignEntry> mEntries;
 	bool mScanned;
 
+	// What the mod-text harvest actually saw. Printed in the Scan Report so a
+	// missing weapon is a number on screen rather than four wrong theories.
+	int mHRoots, mHLumps, mHNames;
+
 	// Track the ACTOR, not the class name. A_ChangeModel writes modelData on
 	// one specific instance, so if the player drops and re-picks the same
 	// weapon class the new instance never gets bound -- while step 2 still
@@ -1112,7 +1142,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		for (int i = 0; i < mEntries.Size(); ++i)
 			if (mEntries[i].pinned) keep.Push(mEntries[i]);
 
-		RS_ForeignScanner.Scan(mShelf, mEntries);
+		RS_ForeignScanner.Scan(mShelf, mEntries, mHRoots, mHLumps, mHNames);
 
 		for (int k = 0; k < keep.Size(); ++k)
 		{
@@ -1398,6 +1428,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		return "c:" .. mEntries[GroupRoot(i)].clsName;
 	}
+
+	int HarvestRoots() const { return mHRoots; }
+	int HarvestLumps() const { return mHLumps; }
+	int HarvestNames() const { return mHNames; }
 
 	bool CarriedOnly() const
 	{
