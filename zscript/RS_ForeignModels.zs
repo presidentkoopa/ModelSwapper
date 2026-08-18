@@ -1847,10 +1847,19 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 			Actor c = psp.Caller;
 			if (c == null) continue;
-			// A weapon's own flash layer has the weapon as its caller. That
-			// layer is the muzzle flash, not the gun, and painting the gun's
-			// mesh onto it would draw the weapon twice.
-			if (c == pi.ReadyWeapon || c == pi.OffhandWeapon) continue;
+			// ANY WEAPON'S EXTRA LAYER IS THAT WEAPON DRAWING ITSELF.
+			//
+			// Testing against ReadyWeapon/OffhandWeapon was too narrow. Project
+			// Brutality composes one gun across several psprite layers, and the
+			// callers are not always the instance the player has readied -- so
+			// those layers looked like somebody's kick and we painted a model
+			// on each. Three guns, three positions, one weapon.
+			//
+			// Overlay painting exists for callers that are NOT weapons: an
+			// inventory item running a kick on a layer of its own. If a Weapon
+			// is drawing it, it is part of that weapon's own view, and we are
+			// already replacing the whole gun with a single mesh.
+			if (c is 'Weapon') continue;
 
 			string arch = RS_ForeignScanner.OverlayArchetype(("" .. c.GetClassName()).MakeLower());
 			if (arch.Length() == 0) continue;
@@ -1915,11 +1924,22 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 			Actor c = psp.Caller;
 			if (c == null) continue;
-			// Only a hand we actually replaced. A weapon still wearing its own
-			// sprite keeps its flash, because there it belongs.
-			if (c != mLastMain && c != mLastOff) continue;
 
-			int si = (c == mLastMain) ? mFlashSprMain : mFlashSprOff;
+			// EVERY EXTRA LAYER A WEAPON DRAWS, not just the one we bound.
+			//
+			// Project Brutality builds one gun out of several psprite layers.
+			// Blanking only the layers owned by the exact instance we bound
+			// left the others drawing, so the weapon appeared three times at
+			// three positions. We are replacing the whole gun with one mesh --
+			// every other layer that weapon draws is part of the picture we
+			// just replaced.
+			//
+			// Only while a hand IS bound: with nothing of ours on screen, a
+			// mod's own layers are all it has and must be left alone.
+			if (mLastMain == null && mLastOff == null) continue;
+			if (!(c is 'Weapon')) continue;
+
+			int si = (c == mLastOff) ? mFlashSprOff : mFlashSprMain;
 			if (si < 0) continue;
 			psp.Sprite = si;
 			psp.Frame  = 1;      // letter B -- the out-of-range anchor
