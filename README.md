@@ -39,6 +39,17 @@ Load it **last**. That's the only rule. Everything else lives in
 
 ---
 
+## On the model count
+
+42 is what survived. The set started considerably larger and was cut to one model per
+silhouette -- duplicates, dual-wield meshes that fight per-hand assignment in VR, and
+anything that lost a straight comparison against the model kept for its family. Expect
+it to shrink further: every model is still being evaluated against how cleanly it maps
+onto real mods' animation states, and one gun that reloads correctly everywhere is worth
+more than three that hold a pose.
+
+---
+
 ## Asset licensing
 
 The code here is ours. **The models are not** — they come from Brutal Doom v21,
