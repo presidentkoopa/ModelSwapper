@@ -1247,6 +1247,53 @@ class RS_ForeignModelHandler : StaticEventHandler
 		return best;
 	}
 
+	// UPGRADE TIERS ARE ONE WEAPON, NOT FOUR.
+	//
+	// Ashes Afterglow's workbench modkits do not modify a weapon -- they take
+	// the old one away and give you a new class:
+	//
+	//     revolver -> revolver2 -> revolver3
+	//     Glock -> Glock2,  Jackhammer -> Jackhammer2,  m16 -> m162
+	//
+	// Ten weapons, twenty-two classes, and the ancestry walk above cannot see
+	// it because the tiers are independent declarations that inherit from
+	// Weapon, not from each other. So the picker asks you to dress the same
+	// jackhammer four times, and the fourth one is the only one you ever hold
+	// once you have upgraded.
+	//
+	// The rule is narrow on purpose: a name is a tier of another weapon only
+	// when stripping its trailing digits yields the name of a weapon THAT IS
+	// ALSO LOADED, in the SAME family. "MP40" does not collapse into anything
+	// because no mod ships an "MP4"; "m162" collapses into "m16" because Ashes
+	// ships both. Requiring the base to exist is what keeps this from eating
+	// every weapon whose name happens to end in a number.
+	int TierRoot(int i) const
+	{
+		if (i < 0 || i >= mEntries.Size()) return -1;
+
+		string n = mEntries[i].clsName;
+		string arch = mEntries[i].archetype;
+		if (n.Length() < 2) return -1;
+
+		// Strip trailing digits one at a time, testing each shorter name.
+		int cut = n.Length();
+		while (cut > 1)
+		{
+			string last = n.Mid(cut - 1, 1);
+			if (last < "0" || last > "9") break;
+			cut--;
+			string baseName = n.Left(cut);
+			for (int j = 0; j < mEntries.Size(); ++j)
+			{
+				if (j == i) continue;
+				if (mEntries[j].archetype != arch) continue;
+				if (mEntries[j].clsName.MakeLower() == baseName.MakeLower())
+					return j;
+			}
+		}
+		return -1;
+	}
+
 	string GroupKey(int i) const
 	{
 		if (i < 0 || i >= mEntries.Size()) return "";
@@ -1265,6 +1312,32 @@ class RS_ForeignModelHandler : StaticEventHandler
 		CVar fc = CVar.FindCVar("rs_foreignmodels_byfamily");
 		if (fc && fc.GetBool())
 			return "a:" .. mEntries[i].archetype;
+
+		// SLOT IS THE ONLY THING THE PLAYER ACTUALLY SEES.
+		//
+		// Mods manufacture variants of one weapon in every way a language
+		// allows: Ashes' workbench swaps the class outright (revolver ->
+		// revolver2 -> revolver3), DoomRL Arsenal multiplies base x modpack,
+		// others subclass, others morph. Chasing each convention means a rule
+		// per mod, and the next mod invents a new one.
+		//
+		// But a player does not pick a class. They press a number key. Every
+		// class that answers slot 3 and is a shotgun is, to the person holding
+		// it, their shotgun -- however the mod arrived at four of them. Keying
+		// on (slot, archetype) is mod-independent by construction because it
+		// asks the weapon table, which every mod has to fill in honestly for
+		// its own weapons to be selectable at all.
+		//
+		// Archetype is in the key, not just slot: a mod that puts a pistol and
+		// a revolver both in slot 2 gets two rows, which is right -- they look
+		// nothing alike. Only same-slot, same-shape classes collapse.
+		if (mEntries[i].located && mEntries[i].slot >= 0)
+			return "s:" .. mEntries[i].slot .. ":" .. mEntries[i].archetype;
+
+		// An upgrade tier belongs with the weapon it upgrades: one row for the
+		// jackhammer, not one per workbench visit.
+		int t = TierRoot(i);
+		if (t >= 0) return "c:" .. mEntries[GroupRoot(t)].clsName;
 
 		return "c:" .. mEntries[GroupRoot(i)].clsName;
 	}
