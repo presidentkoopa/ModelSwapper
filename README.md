@@ -52,9 +52,9 @@ more than three that hold a pose.
 
 ## Asset licensing
 
-The code here is ours. **The models are not** — they come from Brutal Doom v21,
+The code here is ours. **The models are not** — they come from community made Brutal Doom v21,
 MeatGrinder, Alek's Doom Guns, Ermac's Vanilla Doom Guns, and the Brutal Wolfenstein VR
-weapons. Their licenses have not been established. Sort that out before redistributing.
+weapon packs.
 
 ## More
 
