@@ -25,7 +25,10 @@ if (-not (Test-Path $dst)) { throw "model folder not found: $dst" }
 # names so we ship no sprites of our own; the pin only has to resolve.
 $MAP = @{
   'Fist'            = @('melee','PUNG');   'BrutalAxe'   = @('axe','PUNG')
-  'Chain_saw'       = @('saw','SAWG');     'HitlersBuzzsaw' = @('saw','SAWG')
+  'Chain_saw'       = @('saw','SAWG')
+  # Hitler's Buzzsaw is the MG42's wartime nickname -- a belt-fed machinegun,
+  # not a saw. It was on the saw shelf here purely because of the word.
+  'HitlersBuzzsaw'  = @('machinegun','CHGG')
   'BrutalPistol'    = @('pistol','PISG');  'Revolver'    = @('revolver','PISG')
   'BrutalSMG'       = @('smg','CHGG');     'MP40'        = @('smg','CHGG')
   'Shotgun'         = @('shotgun','SHTG'); 'AssaultShotgun' = @('shotgun','SHTG')
@@ -77,7 +80,7 @@ $DROP = @{
   'Dual_MP40'      = 'dual-wield mesh'
   'DualSMG'        = 'dual-wield mesh'
   'Rifle_Dual'     = 'dual-wield mesh'
-  'HitlersBuzzsaw' = 'size: 4.9MB, saw family has other models'
+  'HitlersBuzzsaw' = 'size: 4.9MB; it is an MG42, and machinegun already has two'
   'Chain_saw'      = 'size: 18.4MB, the largest single asset in the pk3'
   # One model per silhouette. These lost a straight comparison against the
   # model kept for their family -- see the shelf in RS_ForeignModels.zs.

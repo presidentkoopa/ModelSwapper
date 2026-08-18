@@ -1294,6 +1294,25 @@ class RS_ForeignModelHandler : StaticEventHandler
 		return -1;
 	}
 
+	// WHAT IS ACTUALLY IN YOUR HANDS.
+	//
+	// The cheapest and most honest filter in the whole mod: a mod can invent
+	// classes without limit, but you only ever CARRY the ones your player
+	// class was given. BD22's Purist* variants never appear unless you are
+	// playing Purist; Combined Arms shows the character you picked; DoomRL
+	// Arsenal shows your class's guns and not the other three classes'.
+	//
+	// Asks the mod nothing. Reads your inventory, which is the one place the
+	// answer is already correct.
+	bool EntryCarried(int i) const
+	{
+		if (i < 0 || i >= mEntries.Size()) return false;
+		if (!playeringame[consolePlayer] || !players[consolePlayer].mo) return false;
+		class<Inventory> t = (class<Inventory>)(mEntries[i].clsName);
+		if (!t) return false;
+		return players[consolePlayer].mo.FindInventory(t) != null;
+	}
+
 	string GroupKey(int i) const
 	{
 		if (i < 0 || i >= mEntries.Size()) return "";
@@ -1340,6 +1359,12 @@ class RS_ForeignModelHandler : StaticEventHandler
 		if (t >= 0) return "c:" .. mEntries[GroupRoot(t)].clsName;
 
 		return "c:" .. mEntries[GroupRoot(i)].clsName;
+	}
+
+	bool CarriedOnly() const
+	{
+		CVar c = CVar.FindCVar("rs_foreignmodels_carried");
+		return (c && c.GetBool());
 	}
 
 	bool ByFamily() const

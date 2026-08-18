@@ -33,6 +33,12 @@ OptionMenu "RSFM_Main"
     StaticText "Engine setting: does nothing on the Quest build.", "DarkGray"
     StaticText " "
 
+    Option "Only Weapons I'm Carrying", "rs_foreignmodels_carried", "OnOff"
+    StaticText "Hides everything not in your inventory right now. Cuts the", "DarkGray"
+    StaticText "list to what your character actually gets -- useful on mods", "DarkGray"
+    StaticText "that ship several classes' worth of guns.", "DarkGray"
+    StaticText " "
+
     Option "One Row Per Family", "rs_foreignmodels_byfamily", "OnOff"
     StaticText "ON: one row per weapon family -- one shotgun row, one smg", "DarkGray"
     StaticText "row. Most mods ship the same gun several times over (Brutal", "DarkGray"

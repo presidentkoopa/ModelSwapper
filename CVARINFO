@@ -64,3 +64,14 @@ server int rs_fm_muzzle = 0;   // map units, clamped -20..80
 // Turn it off to address every class individually. The freedom is still
 // there; it just is not the thing you meet first.
 server bool rs_foreignmodels_byfamily = true;
+
+// Show only weapons you are CARRYING. The cheapest honest filter there is:
+// a mod can invent classes without limit, but you only ever hold the ones
+// your player class was given. Guncaster and Trailblazer name their weapons
+// Brimstone and Bitchmaker -- no token list will ever classify those, and no
+// filter built on names will ever shorten that menu. Your inventory answers
+// both questions without asking the mod anything.
+//
+// Off by default: a player who wants to dress a gun before finding it should
+// meet the whole list first.
+server bool rs_foreignmodels_carried = false;

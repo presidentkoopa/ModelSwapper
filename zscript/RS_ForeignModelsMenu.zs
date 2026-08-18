@@ -102,6 +102,10 @@ class RS_Menu_ForeignModels : OptionMenu
 				// the case that makes located alone return an empty menu.
 				if (!showAll && !h.EntryLocated(i) && !h.EntryModDefined(i)) continue;
 
+				// Carrying it is the strongest signal there is that this weapon
+				// is one you will actually hold -- it survives any naming scheme.
+				if (h.CarriedOnly() && !h.EntryCarried(i)) continue;
+
 				string gk = h.GroupKey(i);
 				bool dupe = false;
 				for (int g = 0; g < seenGroups.Size(); ++g)
