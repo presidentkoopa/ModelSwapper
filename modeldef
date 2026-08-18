@@ -354,6 +354,18 @@ Model MS_BD_Boot
 	FrameIndex PUNG B 0 9999
 }
 
+Model MS_BD_BFG
+{
+	Path "models/bd21/BFG"
+	Model 0 "BFG.md3"
+	Skin 0 "BFG.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex BFGG A 0 6
+	FrameIndex BFGG B 0 9999
+}
+
 Model MS_BD_BFG_10k
 {
 	Path "models/bd21/BFG"
@@ -390,6 +402,18 @@ Model MS_BD_DSweap
 	FrameIndex PUNG B 0 9999
 }
 
+Model MS_BD_FlameCannon
+{
+	Path "models/bd21/FlameCannon"
+	Model 0 "FlameCannon.md3"
+	Skin 0 "FlameCannon.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex PLSG A 0 1
+	FrameIndex PLSG B 0 9999
+}
+
 Model MS_BD_Flamethrower2
 {
 	Path "models/bd21/Flamethrower2"
@@ -400,6 +424,18 @@ Model MS_BD_Flamethrower2
 	NoInterpolation
 	FrameIndex PLSG A 0 0
 	FrameIndex PLSG B 0 9999
+}
+
+Model MS_BD_HellishMissile
+{
+	Path "models/bd21/HellishMissile"
+	Model 0 "HellishMissile.md3"
+	Skin 0 "HellishMissile.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex MISG A 0 0
+	FrameIndex MISG B 0 9999
 }
 
 Model MS_BD_M79
@@ -426,6 +462,18 @@ Model MS_BD_Machinegun
 	FrameIndex CHGG B 0 9999
 }
 
+Model MS_BD_Minigun
+{
+	Path "models/bd21/Minigun"
+	Model 0 "Minigun.md3"
+	Skin 0 "Minigun.png"
+	Scale -1.0 1.0 1.0
+	ZOffset -5
+	NoInterpolation
+	FrameIndex CHGG A 0 4
+	FrameIndex CHGG B 0 9999
+}
+
 Model MS_BD_BrutalPistol
 {
 	Path "models/bd21/BrutalPistol"
@@ -434,7 +482,7 @@ Model MS_BD_BrutalPistol
 	Scale -1.0 1.0 1.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex PISG A 0 0
+	FrameIndex PISG A 0 3
 	FrameIndex PISG B 0 9999
 }
 

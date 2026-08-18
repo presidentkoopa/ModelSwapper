@@ -87,11 +87,7 @@ $DROP = @{
   'fistclosed'     = 'one fist: VanAlek keeps the melee slot'
   'MP40'           = 'one MP40: Brutal Wolfenstein keeps it'
   'RPG'            = 'same mesh as VanAlek RocketLauncher, which keeps the slot'
-  'HellishMissile' = 'rocket family is down to VanAlek + MeatGrinder'
   'SnipaRPG'       = 'a 2-frame def on a 41-frame mesh; its reload was inferred'
-  'BFG'            = 'bfg keeps the BFG10k and VanAlek''s'
-  'FlameCannon'    = 'one flamethrower, and Flamethrower2 is the flamethrower'
-  'Minigun'        = 'same mesh as VanAlek Chaingun, which keeps the slot'
 }
 
 # section comment -> our clip name. Anything unlisted is ignored.
@@ -205,7 +201,7 @@ foreach ($b in $blocks) {
   $scl = if ($txt -match '(?im)^\s*Scale\s+(\S+)\s+(\S+)\s+(\S+)') { "$($matches[1]) $($matches[2]) $($matches[3])" } else { '-1.0 1.0 1.0' }
   $zof = if ($txt -match '(?im)^\s*ZOffset\s+(\S+)') { $matches[1] } else { '0' }
 
-  $cur2 = ''; $buckets = @{}; $over = 0; $sprite = @{}
+  $cur2 = ''; $buckets = @{}; $over = 0; $sprite = @{}; $letter = @{}; $slot = @{}
   $loose = New-Object System.Collections.Generic.List[int]
   foreach ($line in $b.Lines) {
     $t = $line.Trim()
@@ -214,9 +210,10 @@ foreach ($b in $blocks) {
       if ($t -notmatch '(?i)frameindex') { $s = Sect $t; if ($s) { $cur2 = $s } }
       continue
     }
-    if ($t -match '(?i)^FrameIndex\s+(\S+)\s+\S+\s+\d+\s+(\d+)') {
+    if ($t -match '(?i)^FrameIndex\s+(\S+)\s+(\S+)\s+\d+\s+(\d+)') {
       $spr = $matches[1]
-      $i = [int]$matches[2]
+      $let = $matches[2]
+      $i = [int]$matches[3]
       if ($i -ge $frameCount) { $over++; continue }
       if (-not $loose.Contains($i)) { $loose.Add($i) }
       if ($cur2) {
@@ -225,6 +222,13 @@ foreach ($b in $blocks) {
         # First sprite each section uses. This is the signal that separates a
         # deploy from an idle -- see below.
         if (-not $sprite.ContainsKey($cur2)) { $sprite[$cur2] = $spr }
+        if (-not $letter.ContainsKey($cur2)) { $letter[$cur2] = $let }
+        # LAST MAPPING WINS, which is what MODELDEF itself does. BD maps
+        # PIST A to frame 0 under //Ready weapon and to frame 3 again
+        # under //Aim and Fire; in its own game the second wins and
+        # frames 0-1 are dead -- the lowered pose, never displayed.
+        # Taking the first parked the pistol pointing at the floor.
+        $slot["$spr|$let"] = $i
       }
     }
   }
@@ -251,6 +255,12 @@ foreach ($b in $blocks) {
     $r = New-Object System.Collections.Generic.List[int]; $r.Add($held)
     $buckets['ready'] = $r
     $notes += "$cls -- ready was $($sprite['ready']) (a deploy), moved to select; idle is $($sprite['fire']) frame $held"
+    # This rule wins over the last-mapping resolution below: when the
+    # ready section is a deploy on its own sprite, the held pose is the
+    # fire section's first frame and nothing about the ready sprite
+    # should decide where the model parks.
+    $sprite['ready'] = $sprite['fire']
+    $letter['ready'] = $letter['fire']
   }
   if ($over) { $notes += "$cls -- dropped $over frame refs past the mesh's $frameCount frames" }
 
@@ -265,7 +275,15 @@ foreach ($b in $blocks) {
   }
   if ($buckets.Count -eq 0) { $notes += "SKIP $cls -- no frames at all"; $seen.Remove($cls); continue }
 
-  $rest = if ($buckets.ContainsKey('ready') -and $buckets['ready'].Count) { ($buckets['ready'] | Sort-Object)[0] } else { 0 }
+  # Resolve the ready pose through the LAST mapping of its sprite+letter,
+  # not the first frame the section happened to list. BD remaps PIST A
+  # from 0 to 3 in a later section, so 0 is a frame its own game never
+  # shows -- and parking there pitched the pistol at the floor.
+  $rest = 0
+  if ($buckets.ContainsKey('ready') -and $buckets['ready'].Count) {
+    $k = "$($sprite['ready'])|$($letter['ready'])"
+    if ($slot.ContainsKey($k)) { $rest = $slot[$k] } else { $rest = ($buckets['ready'] | Sort-Object)[0] }
+  }
 
   # BD only comments some sections, so a mesh can carry a full reload with no
   # //Reload header above it. Where that happens, infer it: the frames past the
