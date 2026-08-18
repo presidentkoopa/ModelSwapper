@@ -288,6 +288,7 @@ foreach ($b in $blocks) {
   [void]$md.AppendLine("`tZOffset $zof")
   [void]$md.AppendLine("`tNoInterpolation")
   [void]$md.AppendLine("`tFrameIndex $anchor A 0 $rest")
+  [void]$md.AppendLine("`tFrameIndex $anchor B 0 9999")
   [void]$md.AppendLine("}")
   [void]$md.AppendLine("")
 

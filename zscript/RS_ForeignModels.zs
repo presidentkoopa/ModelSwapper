@@ -1007,6 +1007,11 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// the same way and for the same reason as the two hands above.
 	Array<Actor> mOvlBound;
 
+	// Anchor sprite index each hand is pinned to. A flash layer gets pinned to
+	// the SAME sprite, letter B, which resolves a model and draws nothing.
+	int mFlashSprMain;
+	int mFlashSprOff;
+
 	bool   mBound;        // something is currently wearing one of our models
 	bool   mLocatedDone;  // slot flags refreshed after the level settled
 
@@ -1352,6 +1357,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			int si = Actor.GetSpriteIndex(anchor);
 			if (si < 0) return w;
 			psp.Sprite = si;
+			if (layer == PSP_WEAPON) mFlashSprMain = si; else mFlashSprOff = si;
 			psp.Frame  = heldFrame;
 
 			RS_Fork.ReleaseFrames(psp);
@@ -1532,21 +1538,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			mLastOff = null;
 
 		ApplyOverlays(pi);
-
-		// Their muzzle flash is a flat sprite on its own layer; next to a 3D
-		// gun it reads as a billboard. Off leaves the mod exactly as drawn;
-		// on uses the opacity slider, whose 0.0 default is fully invisible.
-		{
-			double fa = 1.0;
-			CVar hv = CVar.FindCVar("rs_fm_hideflash");
-			if (!hv || hv.GetBool())
-			{
-				fa = 0.0;
-				CVar av = CVar.FindCVar("rs_fm_flashalpha");
-				if (av) fa = clamp(av.GetFloat(), 0.0, 1.0);
-			}
-			SetWeaponFlashAlpha(pi, fa);
-		}
+		BlankWeaponFlashes(pi);
 
 		mBound = (mLastMain != null || mLastOff != null || mOvlBound.Size() > 0);
 
@@ -1666,37 +1658,49 @@ class RS_ForeignModelHandler : StaticEventHandler
 		}
 	}
 
-	// HIDE THE FLAT LAYERS A WEAPON DRAWS ON TOP OF ITSELF.
+
+	// KILL THE FLAT MUZZLE FLASH, WITHOUT AN ENGINE CHANGE.
 	//
-	// A muzzle flash is its own psprite layer -- usually PSP_FLASH -- owned by
-	// the same weapon. We paint models on the two weapon layers, and on layers
-	// whose caller is NOT the weapon (a mod's kick), so a flash layer is never
-	// painted: it stays the mod's flat sprite. Beside a sprite gun that is what
-	// it was drawn to be. Beside a 3D model in VR it is a billboard hanging in
-	// the air, which is the one artifact that gives the whole illusion away.
+	// A muzzle flash is its own psprite layer, owned by the same weapon. VR
+	// runs two passes over the psprite list and they are mutually exclusive:
+	// PreparePlayerSprites3D keeps layers that RESOLVE a model, the 2D pass
+	// keeps layers that do not. Our gun resolves one, the flash does not, so
+	// both draw -- a flat billboard hanging in front of a 3D weapon.
 	//
-	// Only hidden on a hand we actually replaced. If the gun is still the mod's
-	// own sprite -- because it ships 3D models of its own, or we had no model
-	// for it -- then its flash still belongs with it and is left alone.
-	void SetWeaponFlashAlpha(PlayerInfo pi, double a)
+	// psp.alpha cannot fix it: DPSprite::GetRenderStyle discards it unless the
+	// layer carries PSPF_ALPHA, which a plain A_GunFlash overlay never sets.
+	//
+	// So instead of hiding the layer, make it RESOLVE a model that draws
+	// nothing. Every MODELDEF block here carries a second anchor letter, B,
+	// pointing at frame 9999. Pinning the flash layer there means
+	// FindModelFrame succeeds -- the 2D pass skips the layer entirely -- while
+	// FMD3Model::RenderFrame rejects the out-of-range frame and draws nothing.
+	// The flat sprite is gone by construction, on stock GZDoom and on the fork
+	// alike, which is why this works on the Quest build too.
+	void BlankWeaponFlashes(PlayerInfo pi)
 	{
 		for (let psp = pi.psprites; psp != null; psp = psp.Next)
 		{
 			int id = psp.ID;
 			if (id == PSP_WEAPON || id == PSP_OFFHANDWEAPON) continue;
-			if (id >= PSP_TARGETCENTER) continue;   // reticles
+			if (id >= PSP_TARGETCENTER) continue;
 
 			Actor c = psp.Caller;
 			if (c == null) continue;
-
-			// Owned by a hand we bound. An overlay belonging to anything else
-			// is somebody's kick or taunt -- ApplyOverlays paints those.
+			// Only a hand we actually replaced. A weapon still wearing its own
+			// sprite keeps its flash, because there it belongs.
 			if (c != mLastMain && c != mLastOff) continue;
 
-			psp.alpha = a;
+			int si = (c == mLastMain) ? mFlashSprMain : mFlashSprOff;
+			if (si < 0) continue;
+			psp.Sprite = si;
+			psp.Frame  = 1;      // letter B -- the out-of-range anchor
+
+			// Fork only: a stale ModelFrame on this layer would override the
+			// out-of-range anchor and draw a real gun frame where the flash was.
+			RS_Fork.ReleaseFrames(psp);
 		}
 	}
-
 	RS_ForeignRemap MapFor(Actor w, string donor, int frameCount, int restFrame)
 	{
 		string cn = w.GetClassName();
@@ -1729,9 +1733,6 @@ class RS_ForeignModelHandler : StaticEventHandler
 		if (playeringame[consolePlayer] && players[consolePlayer].mo)
 		{
 			let pi = players[consolePlayer];
-			// Give any flash layer we blanked its visibility back, while we
-			// still know which weapons were ours.
-			SetWeaponFlashAlpha(pi, 1.0);
 			// Every layer, not just the two hands -- an overlay we painted
 			// carries the same serialised ModelFrame and would keep forcing a
 			// frame number onto whatever draws there next.

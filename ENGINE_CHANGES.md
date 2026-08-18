@@ -238,6 +238,68 @@ Without this the mod still works; it just cannot detect mods that ship their own
 
 ---
 
+## 7. Suppress flat psprite overlays on a weapon drawn as a model (optional)
+
+**Independent of everything above.** Nothing else in this document depends on it, and
+animation works fine without it — this fixes a *visual* artifact that only appears once
+weapons render as models, which is to say once any of this works at all.
+
+### The problem
+
+A muzzle flash is its own psprite layer, drawn by the same weapon on top of itself. VR
+runs two passes over the same psprite list:
+
+```cpp
+PreparePlayerSprites3D:   if (!smf) continue;   // keeps layers WITH a model
+PreparePlayerSprites2D:   if (smf)  continue;   // keeps layers WITHOUT one
+```
+
+The gun has a model, so the 3D pass draws it. The flash has none, so the 2D pass draws
+it flat. Both run every frame, and the result is a billboard hanging in front of a 3D
+weapon — the single artifact that gives the whole illusion away.
+
+### Why it cannot be done from ZScript
+
+Two reasons, either one sufficient:
+
+1. `DPSprite::GetRenderStyle` **discards `psp->alpha`** unless the layer carries
+   `PSPF_ALPHA` or `PSPF_FORCEALPHA`. A plain `A_GunFlash` overlay sets neither, so it
+   returns the *owner's* alpha and a script's write is thrown away. Setting the flag
+   means `A_OverlayFlags`, an action function on the weapon — not reachable for someone
+   else's weapon from an event handler.
+2. The decision is a `continue` in a render loop. No script participates.
+
+### The change
+
+One cvar:
+
+```cpp
+// rendering/r_utility.cpp
+CVAR(Float, r_hudflatoverlay, 1.0f, CVAR_ARCHIVE);
+```
+
+and one block in `PreparePlayerSprites2D` (`rendering/hwrenderer/scene/hw_weapon.cpp`),
+immediately after that pass's `if (smf) continue;`. It walks the psprite list for a
+`PSP_WEAPON`/`PSP_OFFHANDWEAPON` layer with the **same `Caller`** and tests whether that
+layer resolves a model. If it does, this flat layer belongs to a weapon being drawn as a
+mesh, and the cvar decides its fate: `<= 0` skips it outright, anything between scales
+`hudsprite.alpha` after `GetWeaponRenderStyle` has run.
+
+### Why it is safe
+
+Scoped to *"the weapon owning this layer is drawn as a model"*, not to *"hide flashes"*.
+Three consequences worth stating, because they are the whole argument:
+
+- **Vanilla play is untouched.** A sprite pistol's weapon layer resolves no model, the
+  test is false, and the flash draws exactly as always — even with the cvar at 0.
+- **A mod's own sprite weapons keep their flashes** in the same session where a modelled
+  weapon loses one. The distinction is per weapon, per frame, and always current.
+- **The default is 1.0**, which suppresses nothing. Someone has to opt in.
+
+The one cost: it is a *fork* feature. Stock GZDoom and QuestZDoom have no such cvar, so
+the flash stays there. Setting a cvar that does not exist is harmless, so nothing needs
+guarding on the script side.
+
 ## What is *not* needed
 
 **`A_ChangeModel` is stock** as of GZDoom 4.11 and unchanged through 4.14. The binding

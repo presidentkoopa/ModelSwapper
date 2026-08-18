@@ -24,12 +24,13 @@ OptionMenu "RSFM_Main"
     Option "Enable", "rs_foreignmodels", "OnOff"
     StaticText " "
 
-    Option "Hide Muzzle Flash Sprites", "rs_fm_hideflash", "OnOff"
-    Slider "  Flash Opacity", "rs_fm_flashalpha", 0.0, 1.0, 0.05, 2
-    StaticText "A muzzle flash is a separate flat sprite. Next to a 3D", "DarkGray"
-    StaticText "weapon it hangs in the air like a billboard. Turn off to", "DarkGray"
-    StaticText "see the mod exactly as its author drew it. Raise the opacity", "DarkGray"
-    StaticText "to keep a dimmed flash instead of none at all.", "DarkGray"
+    Slider "Muzzle Flash Opacity", "r_hudflatoverlay", 0.0, 1.0, 0.05, 2
+    StaticText "A muzzle flash is a separate FLAT sprite, drawn by the weapon", "DarkGray"
+    StaticText "on its own layer. Beside a 3D model it hangs in the air like a", "DarkGray"
+    StaticText "billboard. 0 hides it, 1 leaves the mod exactly as drawn.", "DarkGray"
+    StaticText "Only ever affects a weapon wearing one of our models -- a mod's", "DarkGray"
+    StaticText "own sprite weapons keep their flashes.", "DarkGray"
+    StaticText "Engine setting: does nothing on the Quest build.", "DarkGray"
     StaticText " "
 
     Option "One Row Per Family", "rs_foreignmodels_byfamily", "OnOff"

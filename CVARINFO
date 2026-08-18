@@ -15,16 +15,6 @@ server bool rs_foreignmodels_showall = false;  // include weapons with no slot b
 // exist in the world at a time. Clear it with the menu.
 server string rs_fm_picks = "";
 
-// A muzzle flash is a separate psprite layer, so it stays the mod's flat
-// sprite even when the gun beside it is one of our models -- which reads as a
-// billboard hanging in the air in VR. On by default; off renders the mod
-// exactly as its author drew it.
-server bool rs_fm_hideflash       = true;
-// Opacity used when the above is on. 0.0 = fully invisible, which is the
-// point of the option; raise it to keep a dimmed flash for the shot feedback
-// without the full-screen billboard.
-server float rs_fm_flashalpha     = 0.0;
-
 // Hitscan -> projectile conversion. Off by default, and the only setting
 // here that changes how the loaded mod plays rather than how it looks.
 server bool rs_fm_ballistic       = false;  // player hitscans become travelling rounds

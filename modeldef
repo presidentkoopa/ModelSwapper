@@ -22,6 +22,7 @@ Model MS_Pistol
 	Skin 0 "WPN-9mm.png"
 	Scale 1.35 1.35 1.35
    FrameIndex PISG A 0 0
+   FrameIndex PISG B 0 9999
 }
 
 Model MS_Revolver
@@ -31,6 +32,7 @@ Model MS_Revolver
 	Skin 0 "WPN-REV.png"
 	Scale 1.35 1.35 1.35
    FrameIndex PISG A 0 0
+   FrameIndex PISG B 0 9999
 }
 
 Model MS_Chaingun
@@ -42,6 +44,7 @@ Model MS_Chaingun
 	Offset 0.0 0.0 0.0
 	NOINTERPOLATION
    FrameIndex CHGG A 0 4
+   FrameIndex CHGG B 0 9999
 }
 
 Model MS_RocketLauncher
@@ -53,6 +56,7 @@ Model MS_RocketLauncher
 	Offset 0.0 0.0 0.0
 	INTERPOLATEDOUBLEDFRAMES
    FrameIndex MISG A 0 5
+   FrameIndex MISG B 0 9999
 }
 
 Model MS_Chainsaw
@@ -64,6 +68,7 @@ Model MS_Chainsaw
 	Scale -1.5 1.5 1.5
 	NOINTERPOLATION
    FrameIndex SAWG A 0 0
+   FrameIndex SAWG B 0 9999
 }
 
 Model MS_Fist
@@ -73,6 +78,7 @@ Model MS_Fist
 	Skin 0 "fist.png"
 	Scale -1.0 1.0 1.0
    FrameIndex PUNG A 0 0
+   FrameIndex PUNG B 0 9999
 }
 
 // A distinct mesh from RS_GH_BFG9000/BFG.md3 above -- confirmed by hash, not
@@ -86,6 +92,7 @@ Model MS_VR_BFG9000
 	Scale -1.0 1.0 1.0
 	Offset 0.0 0.0 0.0
 	FrameIndex BFGG A 0 6
+	FrameIndex BFGG B 0 9999
 }
 
 Model MS_MG_Knife
@@ -96,6 +103,7 @@ Model MS_MG_Knife
 	Scale -1.0 1.0 1.0
 	ZOffset -6
    FrameIndex PUNG A 0 0
+   FrameIndex PUNG B 0 9999
 }
 
 Model MS_MG_Tec9
@@ -106,6 +114,7 @@ Model MS_MG_Tec9
 	Scale -1.1 1.1 1.1
 	ZOffset -6
    FrameIndex CHGG A 0 0
+   FrameIndex CHGG B 0 9999
 }
 
 Model MS_MG_Chaingun
@@ -116,6 +125,7 @@ Model MS_MG_Chaingun
 	Scale -1.1 1.1 1.1
 	ZOffset -6
    FrameIndex CHGG A 0 0
+   FrameIndex CHGG B 0 9999
 }
 
 Model MS_MG_RPG
@@ -126,6 +136,7 @@ Model MS_MG_RPG
 	Scale -1.1 1.1 1.1
 	ZOffset -6
    FrameIndex MISG A 0 0
+   FrameIndex MISG B 0 9999
 }
 
 Model MS_MG_Bolter
@@ -136,6 +147,7 @@ Model MS_MG_Bolter
 	Scale -1.1 1.1 1.1
 	ZOffset -6
    FrameIndex PLSG A 0 0
+   FrameIndex PLSG B 0 9999
 }
 
 Model MS_BW_Colt
@@ -147,6 +159,7 @@ Model MS_BW_Colt
 	Offset 0.0 0.0 0.0
 	ZOffset -5
 	FrameIndex PISG A 0 1
+	FrameIndex PISG B 0 9999
 }
 
 Model MS_BW_Garand
@@ -158,6 +171,7 @@ Model MS_BW_Garand
 	Offset 0.0 0.0 0.0
 	ZOffset -5
 	FrameIndex CHGG A 0 1
+	FrameIndex CHGG B 0 9999
 }
 
 Model MS_BW_MG42
@@ -169,6 +183,7 @@ Model MS_BW_MG42
 	Offset 0.0 0.0 0.0
 	ZOffset -5
 	FrameIndex CHGG A 0 12
+	FrameIndex CHGG B 0 9999
 }
 
 Model MS_BW_MP40
@@ -180,6 +195,7 @@ Model MS_BW_MP40
 	Offset 0.0 0.0 0.0
 	ZOffset -5
 	FrameIndex CHGG A 0 13
+	FrameIndex CHGG B 0 9999
 }
 
 Model MS_BW_Kar98
@@ -191,6 +207,7 @@ Model MS_BW_Kar98
 	Offset 0.0 0.0 0.0
 	ZOffset -5
 	FrameIndex CHGG A 0 1
+	FrameIndex CHGG B 0 9999
 }
 
 Model MS_BW_STG44
@@ -202,6 +219,7 @@ Model MS_BW_STG44
 	Offset 0.0 0.0 0.0
 	ZOffset -5
 	FrameIndex CHGG A 0 13
+	FrameIndex CHGG B 0 9999
 }
 
 Model MS_BW_Thompson
@@ -213,6 +231,7 @@ Model MS_BW_Thompson
 	Offset 0.0 0.0 0.0
 	ZOffset -5
 	FrameIndex CHGG A 0 1
+	FrameIndex CHGG B 0 9999
 }
 
 Model MS_BW_Trenchgun
@@ -224,6 +243,7 @@ Model MS_BW_Trenchgun
 	Offset 0.0 0.0 0.0
 	ZOffset -5
 	FrameIndex SHTG A 0 1
+	FrameIndex SHTG B 0 9999
 }
 
 // ===================================================================
@@ -246,6 +266,7 @@ Model MS_Shotgun
 	Skin 0 "WPN-SHTGUN.png"
 	Scale 1.35 1.35 1.35
    FrameIndex SHTG A 0 0
+   FrameIndex SHTG B 0 9999
 }
 
 Model MS_SuperShotgun
@@ -272,6 +293,7 @@ Model MS_SuperShotgun
 	// instead of alone in showing a vanilla pickup graphic, and it costs
 	// no IWAD art at all.
    FrameIndex SHT2 A 0 0
+   FrameIndex SHT2 B 0 9999
 }
 
 Model MS_MG_Shotgun
@@ -282,6 +304,7 @@ Model MS_MG_Shotgun
 	Scale -1.1 1.1 1.1
 	ZOffset -6
    FrameIndex SHTG A 0 0
+   FrameIndex SHTG B 0 9999
 }
 
 Model MS_MG_SSG
@@ -292,6 +315,7 @@ Model MS_MG_SSG
 	Scale -1.1 1.1 1.1
 	ZOffset -6
    FrameIndex SHT2 A 0 0
+   FrameIndex SHT2 B 0 9999
 }
 
 Model MS_BD_AssaultShotgun
@@ -303,6 +327,7 @@ Model MS_BD_AssaultShotgun
 	ZOffset -5
 	NoInterpolation
 	FrameIndex SHTG A 0 4
+	FrameIndex SHTG B 0 9999
 }
 
 Model MS_BD_nade
@@ -314,6 +339,7 @@ Model MS_BD_nade
 	ZOffset -5
 	NoInterpolation
 	FrameIndex MISG A 0 0
+	FrameIndex MISG B 0 9999
 }
 
 Model MS_BD_Boot
@@ -325,6 +351,7 @@ Model MS_BD_Boot
 	ZOffset -5
 	NoInterpolation
 	FrameIndex PUNG A 0 0
+	FrameIndex PUNG B 0 9999
 }
 
 Model MS_BD_BFG_10k
@@ -336,6 +363,7 @@ Model MS_BD_BFG_10k
 	ZOffset -5
 	NoInterpolation
 	FrameIndex BFGG A 0 6
+	FrameIndex BFGG B 0 9999
 }
 
 Model MS_BD_BrutalAxe
@@ -347,6 +375,7 @@ Model MS_BD_BrutalAxe
 	ZOffset 5
 	NoInterpolation
 	FrameIndex PUNG A 0 5
+	FrameIndex PUNG B 0 9999
 }
 
 Model MS_BD_DSweap
@@ -358,6 +387,7 @@ Model MS_BD_DSweap
 	ZOffset -5
 	NoInterpolation
 	FrameIndex PUNG A 0 0
+	FrameIndex PUNG B 0 9999
 }
 
 Model MS_BD_Flamethrower2
@@ -369,6 +399,7 @@ Model MS_BD_Flamethrower2
 	ZOffset -5
 	NoInterpolation
 	FrameIndex PLSG A 0 0
+	FrameIndex PLSG B 0 9999
 }
 
 Model MS_BD_M79
@@ -380,6 +411,7 @@ Model MS_BD_M79
 	ZOffset -5
 	NoInterpolation
 	FrameIndex MISG A 0 3
+	FrameIndex MISG B 0 9999
 }
 
 Model MS_BD_Machinegun
@@ -391,6 +423,7 @@ Model MS_BD_Machinegun
 	ZOffset -5
 	NoInterpolation
 	FrameIndex CHGG A 0 4
+	FrameIndex CHGG B 0 9999
 }
 
 Model MS_BD_BrutalPistol
@@ -402,6 +435,7 @@ Model MS_BD_BrutalPistol
 	ZOffset -5
 	NoInterpolation
 	FrameIndex PISG A 0 0
+	FrameIndex PISG B 0 9999
 }
 
 Model MS_BD_Plasma
@@ -413,6 +447,7 @@ Model MS_BD_Plasma
 	ZOffset -5
 	NoInterpolation
 	FrameIndex PLSG A 0 4
+	FrameIndex PLSG B 0 9999
 }
 
 Model MS_BD_RailGun
@@ -424,6 +459,7 @@ Model MS_BD_RailGun
 	ZOffset -5
 	NoInterpolation
 	FrameIndex PLSG A 0 3
+	FrameIndex PLSG B 0 9999
 }
 
 Model MS_BD_Revolver
@@ -435,6 +471,7 @@ Model MS_BD_Revolver
 	ZOffset -5
 	NoInterpolation
 	FrameIndex PISG A 0 0
+	FrameIndex PISG B 0 9999
 }
 
 Model MS_BD_Rifle
@@ -446,6 +483,7 @@ Model MS_BD_Rifle
 	ZOffset -5
 	NoInterpolation
 	FrameIndex CHGG A 0 3
+	FrameIndex CHGG B 0 9999
 }
 
 Model MS_BD_Shotgun
@@ -457,6 +495,7 @@ Model MS_BD_Shotgun
 	ZOffset -5
 	NoInterpolation
 	FrameIndex SHTG A 0 4
+	FrameIndex SHTG B 0 9999
 }
 
 Model MS_BD_BrutalSMG
@@ -468,6 +507,7 @@ Model MS_BD_BrutalSMG
 	ZOffset -5
 	NoInterpolation
 	FrameIndex CHGG A 0 3
+	FrameIndex CHGG B 0 9999
 }
 
 Model MS_BD_SSG
@@ -479,6 +519,7 @@ Model MS_BD_SSG
 	ZOffset -5
 	NoInterpolation
 	FrameIndex SHT2 A 0 1
+	FrameIndex SHT2 B 0 9999
 }
 
 Model MS_BD_Unmaker
@@ -490,4 +531,5 @@ Model MS_BD_Unmaker
 	ZOffset -5
 	NoInterpolation
 	FrameIndex BFGG A 0 4
+	FrameIndex BFGG B 0 9999
 }
