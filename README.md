@@ -1,51 +1,33 @@
-Their code, their damage, their sounds, their timing: all of
-it untouched. We replace the mesh and nothing else, then drive it off the mod's *own*
-state machine.
+Their code, their damage, their sounds, their timing... these models.
 
-Pick your models from a menu while you're holding them, or press one button and dress
-the whole arsenal at once. 42 models across 21 weapon families — pistols, shotguns,
-railguns, flamethrowers, a chainsaw, a greatsword — remembered per mod, with no config.
 
-*PK's note: confirmed working for Ashes, Golden Souls, DAKKA. I'm working on Brutal Doom
-v22 and I'm almost there.*
+This miracle mod does one thing: bring true, universal 3d weapons to any and all Doom mods.
 
----
 
-## Get it
+Big claim, and of course I haven't tested it with every mod.
 
-| Your engine | Download |
-|---|---|
-| **UZDXREMA / DoomXR** (PC VR) | **`ModelSwapper.pk3`** — models animate |
-| **QuestZDoom** (Emawind's DoomVR), or stock GZDoom 4.13+ | **`ModelSwapper-QUEST.pk3`** — models held at rest pose |
 
-Same 42 models and the same menus in both; the difference is animation. **Don't load
-both.**
+Tested with:
 
-```
-gzdoom -file TheModYouWantToPlay.pk3 ModelSwapper.pk3
-```
+Ashes 2063, Project Brutality 0.4.1, BD_V22 Test4, Golden Souls 1 / 2, DoomRL, LEDs GNRCWPN, Weapons of Saturn...
 
-Load it **last**. That's the only rule. Everything else lives in
-*Options → Weapon Model Swap Program*.
 
----
+41? or so models pulled from community weapon sets:
 
-## On the model count
+Ermac's VanillaVR Plus, Alek's DoomGuns (both combined to make the VanAlek set in the mod), Brutal Wolfenstein 5.0, BrutalDoom v21.
 
-42 is what survived. The set started considerably larger and was cut down. Expect
-it to shrink further: every model is still being evaluated against how cleanly it maps
-onto real mods' animation states, and one gun that reloads correctly everywhere is worth
-more than three that hold a pose.
 
----
+Menu allows assignment per-weapon, per-model. Also allows options for weapon scanning if you odn't see the weapon for which you want to assign a model. Allows to assign handguns for any and all weapons, too, for some BFG and RocketBased John Wick shit lol.
 
-## Asset licensing
 
-The code here is ours. **The models are not** — they come from community made Brutal Doom v21,
-MeatGrinder, Alek's Doom Guns, Ermac's Vanilla Doom Guns, and the Brutal Wolfenstein VR
-weapon packs.
+Model Preferences are saved between playsessions.
 
-## More
+
+REQUIRES UZDXREMA ENGINE FOR ANIMATED WEAPON MODELS - INC RELOADING ANIMATIONS ---
+QUESTZDOOM VERSION TESTED AGAINST https://github.com/emawind84/QuestZDoom Release 17 ---
+NEEDED ENGINE FEATURES MEANS WEAPON MODELS ARE STATIC ON QUEST
+
+
 
 - **[INTERNALS.md](INTERNALS.md)** — how it works, what it can't do, and why
 - **[ENGINE_CHANGES.md](ENGINE_CHANGES.md)** — the engine-side changes animation needs
