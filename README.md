@@ -5,7 +5,7 @@ This miracle mod does one thing: bring true, universal 3d weapons to any and all
 
 
 ![ModelSwapper in VR](media/demo-3.gif)
-
+Don't forget to reload your boot with your OTHER boot, lol
 ![ModelSwapper](media/demo-1.gif)
 
 
