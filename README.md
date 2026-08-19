@@ -14,7 +14,7 @@ Big claim, and of course I haven't tested it with every mod.
 
 Tested with:
 
-Ashes 2063, Project Brutality 0.4.1, BD_V22 Test4, Golden Souls 1 / 2, DoomRL, LEDs GNRCWPN, Weapons of Saturn... (ok I'm like 80% there with projBrut but all this mod is, is modelsets and some zs so it's fkin problematic lol)
+Ashes 2063, Project Brutality 0.4.1, BD_V22 Test4, Golden Souls 1 / 2, DoomRL, LEDs GNRCWPN, Weapons of Saturn... (ok I'm like 80% there with projBrut but all this mod is, is modelsets and some zs so it's fkin problematic lol - i'm about to crush the phantom weapon bug you see in the PB video up there)
 
 
 41? or so models pulled from community weapon sets:
