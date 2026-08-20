@@ -87,6 +87,12 @@ $DROP = @{
   'fistclosed'     = 'one fist: VanAlek keeps the melee slot'
   'MP40'           = 'one MP40: Brutal Wolfenstein keeps it'
   'RPG'            = 'same mesh as VanAlek RocketLauncher, which keeps the slot'
+  # BD-ONLY SILHOUETTES. A Revenant arm and a Mancubus cannon are weapons no
+  # other mod ships, so these two meshes would ride in every download to serve
+  # exactly one. Brutal Doom's own launcher takes a rocket launcher and its arm
+  # cannon takes a flamethrower; those families already cover them.
+  'HellishMissile' = 'BD-only silhouette; the rocket family covers it'
+  'FlameCannon'    = 'BD-only silhouette; the flamethrower family covers it'
   'SnipaRPG'       = 'a 2-frame def on a 41-frame mesh; its reload was inferred'
 }
 

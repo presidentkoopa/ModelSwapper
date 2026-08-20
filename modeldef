@@ -402,18 +402,6 @@ Model MS_BD_DSweap
 	FrameIndex PUNG B 0 9999
 }
 
-Model MS_BD_FlameCannon
-{
-	Path "models/bd21/FlameCannon"
-	Model 0 "FlameCannon.md3"
-	Skin 0 "FlameCannon.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex PLSG A 0 1
-	FrameIndex PLSG B 0 9999
-}
-
 Model MS_BD_Flamethrower2
 {
 	Path "models/bd21/Flamethrower2"
@@ -424,18 +412,6 @@ Model MS_BD_Flamethrower2
 	NoInterpolation
 	FrameIndex PLSG A 0 0
 	FrameIndex PLSG B 0 9999
-}
-
-Model MS_BD_HellishMissile
-{
-	Path "models/bd21/HellishMissile"
-	Model 0 "HellishMissile.md3"
-	Skin 0 "HellishMissile.png"
-	Scale -1.0 1.0 1.0
-	ZOffset -5
-	NoInterpolation
-	FrameIndex MISG A 0 0
-	FrameIndex MISG B 0 9999
 }
 
 Model MS_BD_M79
