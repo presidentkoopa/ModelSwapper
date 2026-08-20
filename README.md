@@ -4,6 +4,13 @@ Their code, their damage, their sounds, their timing... these models.
 This miracle mod does one thing: bring true, universal 3d weapons to any and all Doom mods.
 
 
+![ModelSwapper in VR](media/demo-3.gif)
+
+![ModelSwapper](media/demo-2.gif)
+
+![ModelSwapper](media/demo-1.gif)
+
+
 Big claim, and of course I haven't tested it with every mod.
 
 
