@@ -3,9 +3,8 @@ Their code, their damage, their sounds, their timing... these models.
 
 This miracle mod does one thing: bring true, universal 3d weapons to any and all Doom mods.
 
+It is possible to assign a boot to a chaingun, if you wanted to kill with your feet. 
 
-![ModelSwapper in VR](media/demo-3.gif)
-Don't forget to reload your boot with your OTHER boot, lol
 ![ModelSwapper](media/demo-1.gif)
 
 
