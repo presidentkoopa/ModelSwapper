@@ -208,6 +208,7 @@ foreach ($b in $blocks) {
   $zof = if ($txt -match '(?im)^\s*ZOffset\s+(\S+)') { $matches[1] } else { '0' }
 
   $cur2 = ''; $buckets = @{}; $over = 0; $sprite = @{}; $letter = @{}; $slot = @{}
+  $refs = New-Object System.Collections.Generic.List[object]
   $loose = New-Object System.Collections.Generic.List[int]
   foreach ($line in $b.Lines) {
     $t = $line.Trim()
@@ -220,22 +221,38 @@ foreach ($b in $blocks) {
       $spr = $matches[1]
       $let = $matches[2]
       $i = [int]$matches[3]
-      if ($i -ge $frameCount) { $over++; continue }
-      if (-not $loose.Contains($i)) { $loose.Add($i) }
-      if ($cur2) {
-        if (-not $buckets.ContainsKey($cur2)) { $buckets[$cur2] = New-Object System.Collections.Generic.List[int] }
-        if (-not $buckets[$cur2].Contains($i)) { $buckets[$cur2].Add($i) }
-        # First sprite each section uses. This is the signal that separates a
-        # deploy from an idle -- see below.
-        if (-not $sprite.ContainsKey($cur2)) { $sprite[$cur2] = $spr }
-        if (-not $letter.ContainsKey($cur2)) { $letter[$cur2] = $let }
-        # LAST MAPPING WINS, which is what MODELDEF itself does. BD maps
-        # PIST A to frame 0 under //Ready weapon and to frame 3 again
-        # under //Aim and Fire; in its own game the second wins and
-        # frames 0-1 are dead -- the lowered pose, never displayed.
-        # Taking the first parked the pistol pointing at the floor.
-        $slot["$spr|$let"] = $i
-      }
+      # PASS 1: only build the sprite+letter -> LAST frame table here, and
+      # remember which section each reference belonged to. Buckets are
+      # filled in PASS 2, once $slot is complete for the whole block --
+      # MODELDEF assigns one frame per (sprite,letter) key GLOBALLY, so a
+      # section that reuses a letter an earlier section already used is not
+      # two frames, it is one, decided by whichever FrameIndex line comes
+      # LAST in the file. Bucketing on first sighting (the old code) kept
+      # the PRE-remap frame for every such letter -- the pistol's Ready
+      # section maps PIST A/B to 0/1, and Fire remaps the SAME letters to
+      # 3/4, so the old code parked the idle on a pose BD's own game never
+      # shows either, one letter later than the rifle bug this was meant
+      # to fix.
+      # Recorded even with no section (cur2 empty), so the loose-frame
+      # fallback below -- Boot.md3's unsectioned kick, Buzzsaw's swing --
+      # still sees every frame the block references, resolved the same way.
+      $refs.Add(@{sec=$cur2; spr=$spr; let=$let})
+      $slot["$spr|$let"] = $i
+    }
+  }
+
+  # PASS 2. Same references, now resolved through the completed $slot table.
+  foreach ($r in $refs) {
+    $cur2 = $r.sec; $spr = $r.spr; $let = $r.let
+    $i = $slot["$spr|$let"]
+    if ($i -ge $frameCount) { $over++; continue }
+    if (-not $loose.Contains($i)) { $loose.Add($i) }
+    if ($cur2) {
+      if (-not $buckets.ContainsKey($cur2)) { $buckets[$cur2] = New-Object System.Collections.Generic.List[int] }
+      if (-not $buckets[$cur2].Contains($i)) { $buckets[$cur2].Add($i) }
+      # First sprite/letter each section uses -- the deploy-vs-idle signal below.
+      if (-not $sprite.ContainsKey($cur2)) { $sprite[$cur2] = $spr }
+      if (-not $letter.ContainsKey($cur2)) { $letter[$cur2] = $let }
     }
   }
 
@@ -281,15 +298,13 @@ foreach ($b in $blocks) {
   }
   if ($buckets.Count -eq 0) { $notes += "SKIP $cls -- no frames at all"; $seen.Remove($cls); continue }
 
-  # Resolve the ready pose through the LAST mapping of its sprite+letter,
-  # not the first frame the section happened to list. BD remaps PIST A
-  # from 0 to 3 in a later section, so 0 is a frame its own game never
-  # shows -- and parking there pitched the pistol at the floor.
-  $rest = 0
-  if ($buckets.ContainsKey('ready') -and $buckets['ready'].Count) {
-    $k = "$($sprite['ready'])|$($letter['ready'])"
-    if ($slot.ContainsKey($k)) { $rest = $slot[$k] } else { $rest = ($buckets['ready'] | Sort-Object)[0] }
-  }
+  # The ready bucket is already resolved as of PASS 2 -- every frame in it
+  # went through the sprite+letter last-mapping table before being added, so
+  # its own lowest frame IS the rest pose. BD remaps PIST A from 0 to 3 in a
+  # later section; taking the bucket directly is what makes the pistol rest
+  # on 3 rather than the dead pre-remap 0, without a second, separate lookup
+  # that could drift from what the bucket actually contains.
+  $rest = if ($buckets.ContainsKey('ready') -and $buckets['ready'].Count) { ($buckets['ready'] | Sort-Object)[0] } else { 0 }
 
   # BD only comments some sections, so a mesh can carry a full reload with no
   # //Reload header above it. Where that happens, infer it: the frames past the
