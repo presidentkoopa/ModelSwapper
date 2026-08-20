@@ -1852,7 +1852,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 		{
 			Actor b = mOvlBound[i];
 			if (b == null) { mOvlBound.Delete(i); continue; }
-			if (b is 'Weapon')
+			// Anything that is not a kick was bound under the older, wider rule
+			// and is still drawing. Release it, not just the weapons.
+			string ba = RS_ForeignScanner.OverlayArchetype(("" .. b.GetClassName()).MakeLower());
+			if (b is 'Weapon' || ba != "kick")
 			{
 				b.A_ChangeModel("");
 				RS_Fork.ClearRows(b);
@@ -1887,6 +1890,20 @@ class RS_ForeignModelHandler : StaticEventHandler
 			string arch = RS_ForeignScanner.OverlayArchetype(("" .. c.GetClassName()).MakeLower());
 			if (arch.Length() == 0) continue;
 
+			// KICKS ONLY, AND NOTHING ELSE.
+			//
+			// This pass was built for one case: a mod running a kick from an
+			// inventory item on a psprite layer of its own. Letting it paint
+			// anything whose NAME classified was far too wide -- Project
+			// Brutality drives its own gun across layers -76 and -77 through
+			// handler actors, those names classified as rifles, and we bound a
+			// rifle to each. One weapon, three guns.
+			//
+			// A weapon's parts are drawn by the weapon. Anything else on a
+			// layer is somebody's machinery until it proves otherwise, and the
+			// only thing that proves it is classifying as a kick.
+			if (arch != "kick") continue;
+
 			string mcls, anchor; int heldFrame, restFrame, frameCount;
 			if (!mShelf.Get(arch, 0, mcls, anchor, heldFrame, restFrame, frameCount))
 				continue;
@@ -1906,7 +1923,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 						pushed++;
 				mOvlBound.Push(c);
 				if (RS_ForeignRemap.DebugOn())
-					Console.Printf("[RSRM] overlay layer %d: %s (%s) -> %s, %d/%d rows",
+					Console.Printf("[RSRM] overlay layer %d caller %s (%s) -> %s, %d/%d rows",
 						id, c.GetClassName(), arch, mcls, pushed, map.mStates.Size());
 			}
 
