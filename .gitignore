@@ -21,3 +21,4 @@ ModelSwapper-QUEST.pk3
 # Engine log, written into cwd when the engine is run from here
 questzdoom.log
 *.log
+doomxr-log.txt

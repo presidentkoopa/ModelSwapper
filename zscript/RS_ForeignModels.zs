@@ -1981,6 +1981,17 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 			int si = (c == mLastOff) ? mFlashSprOff : mFlashSprMain;
 			if (si < 0) continue;
+			// STOP THE LAYER DRAWING AT ALL.
+			//
+			// The out-of-range anchor below is not enough on Project Brutality.
+			// Its dump shows every layer resolving TWICE -- once at our 9999,
+			// which draws nothing, and again at frame 0, which draws a whole
+			// gun. Killing the first resolution never touched the second.
+			//
+			// NoDraw is the fork's own answer and skips frame resolution
+			// entirely. The pin stays underneath it for the static build, where
+			// there is no such field and the frame trick is all we have.
+			RS_Fork.SetNoDraw(psp, true);
 			psp.Sprite = si;
 			psp.Frame  = 1;      // letter B -- the out-of-range anchor
 
@@ -2025,7 +2036,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// carries the same serialised ModelFrame and would keep forcing a
 			// frame number onto whatever draws there next.
 			for (let psp = pi.psprites; psp != null; psp = psp.Next)
+			{
 				RS_Fork.ReleaseFrames(psp);
+				RS_Fork.SetNoDraw(psp, false);
+			}
 		}
 
 		mLastMain = null; mLastOff = null; mOvlBound.Clear();

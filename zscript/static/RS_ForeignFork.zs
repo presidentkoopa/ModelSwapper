@@ -38,6 +38,7 @@ class RS_Fork play
 	static clearscope bool HasOwnModel(class<Weapon> type) { return false; }
 
 	// No per-tick frame override exists to release.
+	static void SetNoDraw(PSprite psp, bool v) {}
 	static void ReleaseFrames(PSprite psp) {}
 
 	// No native state->frame table. Callers check Supported() before

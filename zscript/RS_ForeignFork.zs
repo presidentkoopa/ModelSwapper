@@ -53,6 +53,15 @@ class RS_Fork play
 	// Release the per-tick frame override. ModelFrame persists on the
 	// psprite layer and is serialised, so leaving it set would keep
 	// forcing a frame number onto whatever renders next.
+	// Stop a layer drawing outright. The weapon keeps its states, damage and
+	// slot; only the pixels stop. Fork-only -- the static build has no such
+	// field, and hiding a layer there falls back to pinning it at a frame the
+	// mesh does not have.
+	static void SetNoDraw(PSprite psp, bool v)
+	{
+		if (psp) psp.NoDraw = v;
+	}
+
 	static void ReleaseFrames(PSprite psp)
 	{
 		if (!psp) return;
