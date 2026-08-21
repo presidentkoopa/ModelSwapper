@@ -13,7 +13,7 @@ Big claim, and of course I haven't tested it with every mod.
 
 Tested with:
 
-Ashes 2063, Project Brutality 0.4.1, BD_V22 Test4, Golden Souls 1 / 2, DoomRL, LEDs GNRCWPN, DAKKA, Combine Arms, Weapons of Saturn... 
+Ashes 2063, Project Brutality 0.4.1, BD_V22 Test4, Abyssal Apocrypha, Golden Souls 1 / 2, DoomRL, LEDs GNRCWPN, DAKKA, Combine Arms, Weapons of Saturn... it SHOULD work with Trailblaser and Guncaster, as well. In theory it'll work for any weaponset. 
 
 
 41? or so models pulled from community weapon sets:
