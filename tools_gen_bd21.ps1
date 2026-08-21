@@ -306,6 +306,27 @@ foreach ($b in $blocks) {
   # that could drift from what the bucket actually contains.
   $rest = if ($buckets.ContainsKey('ready') -and $buckets['ready'].Count) { ($buckets['ready'] | Sort-Object)[0] } else { 0 }
 
+  # READY IS AN IDLE POSE, NOT AN ANIMATION. Held, one frame, period.
+  #
+  # A multi-frame ready bucket is real per the file -- MODELDEF's lookup is a
+  # global (sprite,letter)->frame hash, last declaration wins regardless of
+  # section, so when Fire reuses a letter Ready also used, EVERY reference to
+  # that letter resolves to Fire's frame, including Ready's own. BD_BrutalPistol
+  # ready came out as [3,4] this way -- Fire's own first two recoil frames --
+  # and since BD's Ready state genuinely alternates between those two letters
+  # every tic in ITS OWN state machine, the model visibly kicks between two
+  # recoil poses while standing still. Technically correct per the file,
+  # completely wrong to look at.
+  #
+  # Collapsed to $rest alone -- a single held pose, always. Whatever BD's own
+  # idle animation looked like before its letters got reused for the recoil,
+  # we do not have the original frames to recover, and a static hold beats an
+  # idle that plays part of the gun firing.
+  if ($buckets.ContainsKey('ready')) {
+    $r2 = New-Object System.Collections.Generic.List[int]; $r2.Add($rest)
+    $buckets['ready'] = $r2
+  }
+
   # BD only comments some sections, so a mesh can carry a full reload with no
   # //Reload header above it. Where that happens, infer it: the frames past the
   # end of every named section are the reload. Requires a real run (>=4 frames)
