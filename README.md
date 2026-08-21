@@ -13,7 +13,7 @@ Big claim, and of course I haven't tested it with every mod.
 
 Tested with:
 
-Ashes 2063, Project Brutality 0.4.1, BD_V22 Test4, Golden Souls 1 / 2, DoomRL, LEDs GNRCWPN, DAKKA, Weapons of Saturn... 
+Ashes 2063, Project Brutality 0.4.1, BD_V22 Test4, Golden Souls 1 / 2, DoomRL, LEDs GNRCWPN, DAKKA, Combine Arms, Weapons of Saturn... 
 
 
 41? or so models pulled from community weapon sets:
