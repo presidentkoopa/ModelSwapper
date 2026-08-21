@@ -237,7 +237,10 @@ class RS_ForeignShelf
 			// "Ready:" is the DEPLOY animation in this mod and would have put
 			// the Luger at frame 53.
 			"pistol|MS_BW_Colt|PISG|0|1|60",
-			"rifle|MS_BW_Kar98|CHGG|0|1|44",
+			// The Kar98 moved to the sniper shelf ONLY -- see below. A rifle
+			// pick can also serve as a sniper (sniper inherits every rifle row),
+			// but the reverse does not hold: the Kar98 reads as a marksman
+			// weapon, not a general-issue rifle, so it does not come back here.
 			"rifle|MS_BW_Garand|CHGG|0|1|36",
 			"rifle|MS_BW_STG44|CHGG|0|13|51",
 			"smg|MS_BW_MP40|CHGG|0|13|48",
@@ -251,14 +254,20 @@ class RS_ForeignShelf
 
 			// ---- sniper ----
 			// The Kar98 is a bolt-action: one shot, work the bolt, shoot
-			// again. It reads as a marksman weapon far better than as a
-			// battle rifle, and it is the only mesh here with that
-			// silhouette. The Garand backs it up. Brutal Doom's own scoped
-			// railgun, SnipaRG, used to be the sci-fi option here until the
-			// MD3 header showed it was a one-frame mesh -- a scope, not a
-			// rifle.
+			// again -- it reads as a marksman weapon, not a general-issue
+			// rifle, and stays off the rifle shelf for exactly that reason.
+			//
+			// Every other rifle can also stand in as a sniper (a battle
+			// rifle scoped up is still a believable long gun), so this shelf
+			// is the Kar98 plus a mirror of every current rifle row. One-
+			// way: rifle models answer for sniper, the Kar98 does not answer
+			// for rifle.
 			"sniper|MS_BW_Kar98|CHGG|0|1|44",
+			"sniper|RS_GH_Rifle|HBRI|0|3|32",
+			"sniper|VR_Rifle|RIFL|0|0|41",
+			"sniper|MS_BD_Rifle|CHGG|0|3|32",
 			"sniper|MS_BW_Garand|CHGG|0|1|36",
+			"sniper|MS_BW_STG44|CHGG|0|13|51",
 			"shotgun|MS_Shotgun|SHTG|0|0|32",
 			"shotgun|MS_MG_Shotgun|SHTG|0|0|4",
 			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
