@@ -1635,7 +1635,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 						int btn = pi.cmd.buttons;
 						bool off = (layer == PSP_OFFHANDWEAPON);
 						int gid = -1;
-						if (btn & (off ? BT_OFFHANDALTATTACK : BT_ALTATTACK))
+						if (btn & (off ? RS_Fork.OffhandAltAttackButton() : BT_ALTATTACK))
 							gid = map.FindGroupByClip("altfire");
 						// No BT_OFFHANDRELOAD -- verified against the fork's
 						// own constants.zs. It defines BT_OFFHANDATTACK,
@@ -1646,7 +1646,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 						// stand-in for a missing constant.
 						else if (btn & BT_RELOAD)
 							gid = map.FindGroupByClip("reload");
-						else if (btn & (off ? BT_OFFHANDATTACK : BT_ATTACK))
+						else if (btn & (off ? RS_Fork.OffhandAttackButton() : BT_ATTACK))
 							gid = map.FindGroupByClip("fire");
 
 						int startIdx = 0;   // a button press starts its clip

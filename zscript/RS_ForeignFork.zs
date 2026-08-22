@@ -37,6 +37,16 @@ class RS_Fork play
 	// Does this engine have the animation extensions?
 	static clearscope bool Supported() { return true; }
 
+	// BT_OFFHANDATTACK / BT_OFFHANDALTATTACK -- VR dual-wield button bits,
+	// fork-only like everything else here. Referenced directly by name
+	// anywhere in the pk3, they are a hard compile failure on stock
+	// GZDoom / QuestZDoom, same as every other symbol in this file --
+	// see the header note. Quest gets no offhand distinction either way
+	// (it never drives per-hand frames), so the static twin can return 0
+	// with nothing lost.
+	static clearscope int OffhandAttackButton() { return BT_OFFHANDATTACK; }
+	static clearscope int OffhandAltAttackButton() { return BT_OFFHANDALTATTACK; }
+
 	// AActor::hasmodel, set on class defaults by the MODELDEF parser --
 	// the same flag FindModelFrameRaw gates on, so it answers exactly
 	// "does this class already carry a HUD model of its own".

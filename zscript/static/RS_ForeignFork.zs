@@ -32,6 +32,12 @@ class RS_Fork play
 {
 	static clearscope bool Supported() { return false; }
 
+	// No per-hand button bits on this engine. Zero never matches a
+	// pressed button, which is correct: Quest never drives per-hand
+	// frames anyway, so the two hands are indistinguishable here.
+	static clearscope int OffhandAttackButton() { return 0; }
+	static clearscope int OffhandAltAttackButton() { return 0; }
+
 	// Needs AActor::hasmodel, a fork export. Answering false is the
 	// conservative direction: we paint, rather than silently declining
 	// to paint. See the header note.
