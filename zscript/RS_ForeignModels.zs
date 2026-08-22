@@ -1637,7 +1637,14 @@ class RS_ForeignModelHandler : StaticEventHandler
 						int gid = -1;
 						if (btn & (off ? BT_OFFHANDALTATTACK : BT_ALTATTACK))
 							gid = map.FindGroupByClip("altfire");
-						else if (btn & (off ? BT_OFFHANDRELOAD : BT_RELOAD))
+						// No BT_OFFHANDRELOAD -- verified against the fork's
+						// own constants.zs. It defines BT_OFFHANDATTACK,
+						// BT_OFFHANDALTATTACK and BT_OFFHANDDROPMAG, but
+						// reload is one shared button for both hands, not a
+						// per-hand pair like attack/altattack are. Checking
+						// BT_RELOAD unconditionally is correct here, not a
+						// stand-in for a missing constant.
+						else if (btn & BT_RELOAD)
 							gid = map.FindGroupByClip("reload");
 						else if (btn & (off ? BT_OFFHANDATTACK : BT_ATTACK))
 							gid = map.FindGroupByClip("fire");
