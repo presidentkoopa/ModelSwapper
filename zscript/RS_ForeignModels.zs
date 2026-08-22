@@ -1106,6 +1106,27 @@ class RS_ForeignModelHandler : StaticEventHandler
 	RS_ForeignHand  mHandMain;
 	RS_ForeignHand  mHandOff;
 
+	// THE WHEEL BRIDGE. Plain fields, republished once per tic in
+	// RefreshBridge -- the only cross-mod surface this file exposes. A
+	// reflection-based reader (RS_WeaponWheel's model-picker page, or
+	// anything else) finds this handler with the engine's own
+	// StaticEventHandler.Find("RS_ForeignModelHandler") and reads these by
+	// NAME, which needs no compile-time reference to this class at all --
+	// the same mechanism RS_WeaponWheel already uses to read every OTHER
+	// mod, just pointed back at us.
+	//
+	// mEntries is an Array<RS_ForeignEntry> -- a dynamic array -- and field
+	// reflection can only index a FIXED array (int[N]), never a dynamic
+	// one, so nothing about it is reachable from outside no matter what is
+	// exposed here. These fields exist because of that limit, not despite
+	// it: they are the answer already computed, republished as the flat
+	// scalars reflection actually can read.
+	bool   mBridgeHasMain,   mBridgeHasOff;
+	string mBridgeArcheMain, mBridgeArcheOff;
+	int    mBridgeCountMain, mBridgeCountOff;
+	int    mBridgePickMain,  mBridgePickOff;
+	string mBridgeDonorMain, mBridgeDonorOff;
+
 	static bool Enabled()
 	{
 		CVar c = CVar.FindCVar("rs_foreignmodels");
@@ -1765,6 +1786,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int mi = pi.ReadyWeapon   ? FindEntry("" .. pi.ReadyWeapon.GetClassName())   : -1;
 		int oi = pi.OffhandWeapon ? FindEntry("" .. pi.OffhandWeapon.GetClassName()) : -1;
 
+		// BEFORE painting, so a command consumed this tic is reflected in
+		// the SAME tic's paint rather than showing stale for one frame.
+		RefreshBridge(pi, mi, oi);
+
 		mLastMain = ApplyHand(pi, pi.ReadyWeapon, PSP_WEAPON,
 			mi >= 0 ? mEntries[mi].modelPick1 : 0, mLastMain, mHandMain);
 
@@ -2267,6 +2292,71 @@ class RS_ForeignModelHandler : StaticEventHandler
 			SavePick(j);
 		}
 		mLastMain = null; mLastOff = null; mOvlBound.Clear();      // force a re-bind on both hands
+	}
+
+	// THE WHEEL BRIDGE. Consumes one pending command per hand (a reader sets
+	// rs_fm_bridge_cmd_main/off to +1/-1 and we read-and-clear it, so a held
+	// value can never re-fire), then republishes fresh state for that same
+	// hand. CyclePick already does the group-propagate, persist and re-bind
+	// -- this only decides WHEN to call it and WHAT to publish afterward.
+	private void RefreshBridge(PlayerInfo pi, int mi, int oi)
+	{
+		let cm = CVar.FindCVar("rs_fm_bridge_cmd_main");
+		if (cm)
+		{
+			int d = cm.GetInt();
+			if (d != 0)
+			{
+				if (mi >= 0) CyclePick(mi, d);
+				cm.SetInt(0);
+			}
+		}
+
+		let co = CVar.FindCVar("rs_fm_bridge_cmd_off");
+		if (co)
+		{
+			int d = co.GetInt();
+			if (d != 0)
+			{
+				if (oi >= 0) CyclePick(oi, d);
+				co.SetInt(0);
+			}
+		}
+
+		// CyclePick can rewrite mi/oi's OWN entry (mirrored pick, same
+		// index) but never adds or removes rows, so the indices themselves
+		// stay valid to re-read here even after a cycle just ran.
+		mBridgeHasMain = (mi >= 0);
+		if (mBridgeHasMain)
+		{
+			mBridgeArcheMain = mEntries[mi].archetype;
+			mBridgePickMain  = mEntries[mi].modelPick1;
+			mBridgeCountMain = mShelf ? mShelf.Count(mBridgeArcheMain) : 0;
+
+			string dcls, anc; int hf, rf, fc;
+			mBridgeDonorMain = (mShelf && mShelf.Get(mBridgeArcheMain, mBridgePickMain,
+			                    dcls, anc, hf, rf, fc)) ? dcls : "";
+		}
+		else
+		{
+			mBridgeArcheMain = ""; mBridgePickMain = 0; mBridgeCountMain = 0; mBridgeDonorMain = "";
+		}
+
+		mBridgeHasOff = (oi >= 0);
+		if (mBridgeHasOff)
+		{
+			mBridgeArcheOff = mEntries[oi].archetype;
+			mBridgePickOff  = mEntries[oi].modelPick2;
+			mBridgeCountOff = mShelf ? mShelf.Count(mBridgeArcheOff) : 0;
+
+			string dcls2, anc2; int hf2, rf2, fc2;
+			mBridgeDonorOff = (mShelf && mShelf.Get(mBridgeArcheOff, mBridgePickOff,
+			                   dcls2, anc2, hf2, rf2, fc2)) ? dcls2 : "";
+		}
+		else
+		{
+			mBridgeArcheOff = ""; mBridgePickOff = 0; mBridgeCountOff = 0; mBridgeDonorOff = "";
+		}
 	}
 
 	// One-button "give everything a one-handed model" -- pistol, revolver or

@@ -93,3 +93,15 @@ server bool rs_foreignmodels_carried = false;
 // that had them would not need this one. So offering is the right default.
 // Turn this off to leave any modelled weapon alone.
 server bool rs_foreignmodels_replaceown = true;
+
+// THE WHEEL BRIDGE -- for RS_WeaponWheel's model-picker page, or any other
+// reflection-based reader. No compile-time dependency in either direction:
+// they find these two by NAME and write an int, we read and clear it once
+// per tic (RS_ForeignModelHandler.RefreshBridge, called from WorldTick).
+// +1/-1 cycles that hand's pick by one entry; 0 is "nothing pending".
+//
+// nosave, because a command flag has no business surviving to the next
+// session -- WorldTick clears it same-tick, so anything saved would only
+// ever be a stray nonzero from a crash mid-tic.
+user nosave int rs_fm_bridge_cmd_main = 0;
+user nosave int rs_fm_bridge_cmd_off  = 0;
