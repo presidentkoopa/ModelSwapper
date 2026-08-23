@@ -353,6 +353,17 @@ class RS_ForeignShelf
 		return n;
 	}
 
+	// THE DONOR CLASS NAME AT INDEX N, for anything that wants to show a
+	// shelf as a list instead of cycling through it one at a time. Same
+	// index space and same wrap as Get(), so a name and a pick always agree
+	// about which row they mean.
+	string NameAt(string arche, int pick) const
+	{
+		string cls, anchor; int frame, restFrame, frameCount;
+		if (!Get(arche, pick, cls, anchor, frame, restFrame, frameCount)) return "";
+		return cls;
+	}
+
 	// pick N off the shelf -> donor class, anchor sprite, rest letter,
 	// rest MODEL frame, and the donor's total frame count.
 	bool Get(string arche, int pick, out string cls, out string anchor,
@@ -1126,6 +1137,15 @@ class RS_ForeignModelHandler : StaticEventHandler
 	int    mBridgeCountMain, mBridgeCountOff;
 	int    mBridgePickMain,  mBridgePickOff;
 	string mBridgeDonorMain, mBridgeDonorOff;
+
+	// THE WHOLE SHELF, as one "|"-joined string per hand.
+	//
+	// A list, through a field, because field reflection is all a reader has:
+	// it cannot call NameAt() per row, and an Array<string> is a PDynArray
+	// that reflection cannot index either. One string it CAN read, and
+	// splitting it is the reader's problem rather than a reason to expose
+	// twelve fields.
+	string mBridgeNamesMain, mBridgeNamesOff;
 
 	static bool Enabled()
 	{
@@ -2299,6 +2319,18 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// value can never re-fire), then republishes fresh state for that same
 	// hand. CyclePick already does the group-propagate, persist and re-bind
 	// -- this only decides WHEN to call it and WHAT to publish afterward.
+	private string ShelfList(string arche, int count)
+	{
+		if (!mShelf || count <= 0) return "";
+		string joined = "";
+		for (int i = 0; i < count; ++i)
+		{
+			string n = mShelf.NameAt(arche, i);
+			joined = (i == 0) ? n : (joined .. "|" .. n);
+		}
+		return joined;
+	}
+
 	private void RefreshBridge(PlayerInfo pi, int mi, int oi)
 	{
 		let cm = CVar.FindCVar("rs_fm_bridge_cmd_main");
@@ -2313,6 +2345,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		}
 
 		let co = CVar.FindCVar("rs_fm_bridge_cmd_off");
+
 		if (co)
 		{
 			int d = co.GetInt();
@@ -2336,10 +2369,12 @@ class RS_ForeignModelHandler : StaticEventHandler
 			string dcls, anc; int hf, rf, fc;
 			mBridgeDonorMain = (mShelf && mShelf.Get(mBridgeArcheMain, mBridgePickMain,
 			                    dcls, anc, hf, rf, fc)) ? dcls : "";
+			mBridgeNamesMain = ShelfList(mBridgeArcheMain, mBridgeCountMain);
 		}
 		else
 		{
-			mBridgeArcheMain = ""; mBridgePickMain = 0; mBridgeCountMain = 0; mBridgeDonorMain = "";
+			mBridgeArcheMain = ""; mBridgePickMain = 0; mBridgeCountMain = 0;
+			mBridgeDonorMain = ""; mBridgeNamesMain = "";
 		}
 
 		mBridgeHasOff = (oi >= 0);
@@ -2352,10 +2387,12 @@ class RS_ForeignModelHandler : StaticEventHandler
 			string dcls2, anc2; int hf2, rf2, fc2;
 			mBridgeDonorOff = (mShelf && mShelf.Get(mBridgeArcheOff, mBridgePickOff,
 			                   dcls2, anc2, hf2, rf2, fc2)) ? dcls2 : "";
+			mBridgeNamesOff = ShelfList(mBridgeArcheOff, mBridgeCountOff);
 		}
 		else
 		{
-			mBridgeArcheOff = ""; mBridgePickOff = 0; mBridgeCountOff = 0; mBridgeDonorOff = "";
+			mBridgeArcheOff = ""; mBridgePickOff = 0; mBridgeCountOff = 0;
+			mBridgeDonorOff = ""; mBridgeNamesOff = "";
 		}
 	}
 
