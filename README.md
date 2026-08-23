@@ -27,6 +27,22 @@ BFG for some John Wick nonsense? Also two clicks.
 
 ![Assigning models](media/demo-2.gif)
 
+### Or do it all in VR, without a menu
+
+Load [RS_WeaponWheel](https://github.com/presidentkoopa/RS_WeaponWheel)
+alongside and assignment moves into the game world. Open the wheel, page over
+to the model view, and the ring fills with the models available for the gun in
+your hand — the one you're wearing highlighted, the rest a trigger pull away.
+Point, pull, it's on. The wheel stays open so you can flick through a few and
+compare.
+
+It shows that weapon's own matching models first, so a shotgun offers shotguns.
+The everything-goes list is still there behind them, for when you *do* want a
+boot on a chaingun.
+
+No flat menu, no pausing, no taking the headset off. Desktop VR only — the
+wheel needs the UZDXREMA engine.
+
 ---
 
 ## Does it work with my mod?
