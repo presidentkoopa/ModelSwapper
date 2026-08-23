@@ -1,37 +1,61 @@
-Their code, their damage, their sounds, their timing... these models.
+# ModelSwapper
 
+**Their code, their damage, their sounds, their timing — these models.**
 
-This miracle mod does one thing: bring true, universal 3d weapons to any and all Doom mods.
-
-It is possible to assign a boot to a chaingun, if you wanted to kill with your feet. 
+Real 3D weapons in any Doom mod. Load it alongside whatever weapon set you
+already play, and the flat sprites in your hands become models. Nothing else
+changes: the mod you loaded still does all the shooting.
 
 ![ModelSwapper](media/demo-1.gif)
 
+---
 
-Big claim, and of course I haven't tested it with every mod.
+## What you get
 
+**44 models**, pulled from community weapon sets — Ermac's VanillaVR Plus,
+Alek's DoomGuns, Brutal Wolfenstein 5.0, and Brutal Doom v21.
 
-Tested with:
+**It guesses for you.** Load a mod and every weapon gets a sensible model
+straight away, worked out from its name, its ammo and its slot. Nothing is
+left as a bare sprite.
 
-Ashes 2063, Project Brutality 0.4.1, BD_V22 Test4, Abyssal Apocrypha, Golden Souls 1 / 2, DoomRL, LEDs GNRCWPN, DAKKA, Combine Arms, Weapons of Saturn... it SHOULD work with Trailblaser and Guncaster, as well. In theory it'll work for any weaponset. 
+**Then you overrule it.** A menu lets you set any model on any weapon. If it
+guessed your shotgun is a rifle, fix it in two clicks. Want a pistol on the
+BFG for some John Wick nonsense? Also two clicks.
 
+**Your choices stick.** Preferences save between sessions, per weapon.
 
-41? or so models pulled from community weapon sets:
+![Assigning models](media/demo-2.gif)
 
-Ermac's VanillaVR Plus, Alek's DoomGuns (both combined to make the VanAlek set in the mod), Brutal Wolfenstein 5.0, BrutalDoom v21.
+---
 
+## Does it work with my mod?
 
-Menu allows assignment per-weapon, per-model. Also allows options for weapon scanning if you odn't see the weapon for which you want to assign a model. Allows to assign handguns for any and all weapons, too, for some BFG and RocketBased John Wick shit lol.
+Probably. It doesn't need to know anything about a weapon set — it reads what's
+loaded at runtime, so a mod released tomorrow works the same as one from 2016.
 
+Confirmed working with Ashes 2063, Project Brutality 0.4.1, Brutal Doom v22
+Test4, Abyssal Apocrypha, Golden Souls 1 & 2, DoomRL Arsenal, LEDs GNRCWPN,
+DAKKA, Combined Arms, and Weapons of Saturn. Trailblazer and Guncaster should
+be fine too.
 
-Model Preferences are saved between playsessions.
+Obviously not every mod ever made has been tested. If one misbehaves, the
+menu's manual override is the escape hatch.
 
+---
 
-REQUIRES UZDXREMA ENGINE FOR ANIMATED WEAPON MODELS - INC RELOADING ANIMATIONS ---
-QUESTZDOOM VERSION TESTED AGAINST https://github.com/emawind84/QuestZDoom Release 17 ---
-NEEDED ENGINE FEATURES MEANS WEAPON MODELS ARE STATIC ON QUEST
+## Which version do I want?
 
+| | |
+| --- | --- |
+| **`ModelSwapper.pk3`** | Desktop VR, on the [UZDXREMA](https://github.com/presidentkoopa/UZDXREMA) engine. **Animated** — including reload animations. |
+| **`ModelSwapper-QUEST.pk3`** | Standalone Quest, on [QuestZDoom](https://github.com/emawind84/QuestZDoom) Release 17. Models are **static** — the animation needs engine features Quest doesn't have. |
 
+Same models either way. Grab one, load it after your weapon mod, done.
+
+---
+
+## Digging deeper
 
 - **[INTERNALS.md](INTERNALS.md)** — how it works, what it can't do, and why
 - **[ENGINE_CHANGES.md](ENGINE_CHANGES.md)** — the engine-side changes animation needs
