@@ -1,1 +1,4 @@
 alias weaponmodels "openmenu RSFM_Main"
+// The model zoo: one of every pickup model, in a grid in front of you.
+// A netevent rather than a CCMD because only the play side can spawn.
+alias ms_modelzoo "netevent ms_modelzoo"

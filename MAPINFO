@@ -3,5 +3,18 @@
 // it is loaded next to.
 GameInfo
 {
-    AddEventHandlers = "RS_ForeignModelHandler", "MS_HitscanHandler", "MS_BulletTimeHandler"
+    AddEventHandlers = "RS_ForeignModelHandler", "MS_PickupHandler", "MS_HitscanHandler", "MS_BulletTimeHandler"
+}
+
+// The model zoo. A NEW map name, not an override: nothing else defines MSZOO,
+// so adding it cannot change any map a loaded mod ships. `map MSZOO` from the
+// console, or use `ms_modelzoo` to get the same grid in the map you are in.
+map MSZOO "ModelSwapper -- model zoo"
+{
+    Sky1 = "SKY1"
+    Music = "D_RUNNIN"
+    Cluster = 1
+    NoIntermission
+    NoCrouch
+    AllowMonsterTelefrags
 }

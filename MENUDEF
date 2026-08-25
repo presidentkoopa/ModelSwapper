@@ -24,6 +24,16 @@ OptionMenu "RSFM_Main"
     Option "Enable", "rs_foreignmodels", "OnOff"
     StaticText " "
 
+    Option "Models on Floor Pickups", "rs_foreignmodels_pickups", "OnOff"
+    StaticText "ON: a weapon lying on the floor wears the same model you", "DarkGray"
+    StaticText "will be holding once you pick it up, sized from the mesh", "DarkGray"
+    StaticText "itself rather than by eye.", "DarkGray"
+    StaticText "OFF: pickups stay exactly the sprites your mod drew. Some", "DarkGray"
+    StaticText "mods have art worth keeping, and a hand-drawn pickup can", "DarkGray"
+    StaticText "read better at a distance than a small 3D one.", "DarkGray"
+    StaticText "Takes effect immediately -- no rescan, no map change.", "DarkGray"
+    StaticText " "
+
     Slider "Muzzle Flash Opacity", "r_hudflatoverlay", 0.0, 1.0, 0.05, 2
     StaticText "A muzzle flash is a separate FLAT sprite, drawn by the weapon", "DarkGray"
     StaticText "on its own layer. Beside a 3D model it hangs in the air like a", "DarkGray"

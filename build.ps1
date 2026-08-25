@@ -32,7 +32,8 @@ $include = @('zscript.txt', 'modeldef', 'MENUDEF', 'CVARINFO', 'MAPINFO', 'KEYCO
 # Donors still anchor on stock Doom sprite names and ship no sprites of their
 # own. sprites/ carries exactly one thing: RSB0, the ballistic round. That name
 # is ours, collides with nothing stock, and overrides nothing a mod defines.
-$dirs    = @('zscript', 'models', 'sprites')
+# maps/ is one map, MSZOO, under a name nothing else uses -- the model zoo.
+$dirs    = @('zscript', 'models', 'sprites', 'maps')
 
 $files = @()
 foreach ($f in $include) {
@@ -61,9 +62,26 @@ foreach ($f in $files) {
         $src = Join-Path $root 'zscript/static/RS_ForeignFork.zs'
     }
 
+    $b = [System.IO.File]::ReadAllBytes($src)
+
+    # PlacementCVars is a fork-only MODELDEF property, and an unrecognised
+    # property is a FATAL parse error in the stock parser rather than something
+    # it skips -- shipping the line to QuestZDoom would take the whole pk3 down
+    # on load, not just the sliders. Stripped as text rather than kept in a
+    # second copy of modeldef, for the same reason the fork shim is swapped and
+    # not duplicated: one source, one place to edit.
+    if ($Static -and $rel -eq 'modeldef') {
+        # Line based, because a regex full of backslashes is the one thing
+        # that does not survive being written by a generator. Splitting on LF
+        # only leaves any CR attached to the line it came from, so the file
+        # comes out of this with its line endings unchanged.
+        $keep = ([System.Text.Encoding]::UTF8.GetString($b) -split "`n") |
+                Where-Object { $_ -notmatch 'PlacementCVars' }
+        $b    = [System.Text.Encoding]::UTF8.GetBytes(($keep -join "`n"))
+    }
+
     $e   = $zip.CreateEntry($rel, [System.IO.Compression.CompressionLevel]::Optimal)
     $st  = $e.Open()
-    $b   = [System.IO.File]::ReadAllBytes($src)
     $st.Write($b, 0, $b.Length)
     $st.Close()
 }
