@@ -31,6 +31,7 @@ rather than guessed. Some mods have pickup art worth keeping, so it's a toggle â
 **Models on Floor Pickups** in the menu, on by default.
 
 ![Assigning models](media/demo-2.gif)
+ghost model bug has been fixed!
 
 ### Or do it all in VR, without a menu
 
