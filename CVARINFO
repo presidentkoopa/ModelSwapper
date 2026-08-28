@@ -54,16 +54,17 @@ server int rs_fm_muzzle = 0;   // map units, clamped -20..80
 
 // Collapse the picker to ONE ROW PER FAMILY -- one shotgun row, one smg row.
 //
-// ON by default. Off, the menu lists one row per weapon CLASS, and mods
-// manufacture classes without limit: Brutal Doom 22 shows 85 rows, DoomRL
-// Arsenal about 150, and across the test corpus there are 934 weapon classes
-// of which only 276 even declare a slot. Nobody dresses 85 guns one at a
-// time, and most of those rows are the same gun in a different mode --
-// BrutalPistol, DualPistols and PuristPistol are all your pistol.
+// OFF by default. The picker exists to show the weapons the scan actually
+// found, by name, and let you put a model on each one. A row labelled
+// "all shotgun" answers a question nobody asked first.
 //
-// Turn it off to address every class individually. The freedom is still
-// there; it just is not the thing you meet first.
-server bool rs_foreignmodels_byfamily = true;
+// Turn it ON when a mod's class count makes that unworkable: Brutal Doom 22
+// shows 85 rows, DoomRL Arsenal about 150, and across the test corpus there
+// are 934 weapon classes of which only 276 even declare a slot. Most of
+// those rows are the same gun in a different mode -- BrutalPistol,
+// DualPistols and PuristPistol are all your pistol -- and one row per
+// family is the escape hatch for exactly that case.
+server bool rs_foreignmodels_byfamily = false;
 
 // Show only weapons you are CARRYING. The cheapest honest filter there is:
 // a mod can invent classes without limit, but you only ever hold the ones
@@ -113,7 +114,7 @@ user nosave int rs_fm_bridge_cmd_off  = 0;
 //
 // Off leaves every pickup as the sprite its own mod drew, and unbinds any
 // pickup already wearing one -- this is a live switch, not a load-time one.
-server bool rs_foreignmodels_pickups = true;
+server bool rs_foreignmodels_pickups = false;
 
 // PLACEMENT SLIDERS for the pickup blocks, named by their PlacementCVars line
 // in modeldef. Every MS_PU_ block shares the "ms_pu" prefix on purpose: these

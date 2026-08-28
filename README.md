@@ -28,7 +28,7 @@ BFG for some John Wick nonsense? Also two clicks.
 **The guns on the floor match.** A weapon lying in the level wears the same model
 you'll be holding once you pick it up, at a size worked out from the mesh itself
 rather than guessed. Some mods have pickup art worth keeping, so it's a toggle —
-**Models on Floor Pickups** in the menu, on by default.
+**Models on Floor Pickups** in the menu, off by default.
 
 ![Assigning models](media/demo-2.gif)
 ghost model bug has been fixed!
