@@ -121,7 +121,7 @@ class RS_ForeignShelf
 			"bfg|MS_VR_BFG9000|BFGG|0|6|16",
 			"smg|MS_BD_BrutalSMG|CHGG|0|3|27",
 			"smg|MS_MG_Tec9|CHGG|0|0|6",
-			"machinegun|MS_BD_Machinegun|CHGG|0|4|36",
+			"machinegun|MS_BD_Machinegun|CHGG|0|10|36",
 			"launcher|MS_BD_M79|MISG|0|3|33",
 			"launcher|MS_RC_M32|MISG|0|0|37",
 			"grenade|MS_BD_nade|MISG|0|0|27",

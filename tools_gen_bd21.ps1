@@ -105,7 +105,13 @@ function Sect([string]$c){
   # and "//Fire" four times. Matching only the long form cost the
   # Dragonslayer its entire swing -- the sword had a ready pose and nothing
   # to play when you attacked. "aim.*fir" covers every spelling BD uses.
-  if ($c -match 'aim.*fir|^fire|alt-?fire|^throw') { return 'fire' }
+  # ALT-FIRE IS ITS OWN CLIP. These used to share the 'fire' bucket, which
+  # merged two different pose sets into one run -- BD's Machinegun fires
+  # across MGN1 4-10 and alt-fires across MGN2 11-17, and the merged clip
+  # played straight through both, so the gun changed stance mid-burst.
+  # Tested first: 'Alt-Fire' also matches 'aim.*fir' spellings below.
+  if ($c -match 'alt-?fire|alt.*fir')      { return 'altfire' }
+  if ($c -match 'aim.*fir|^fire|^throw')   { return 'fire' }
   if ($c -match '^reload')                   { return 'reload'  }
   if ($c -match '^zoom')                     { return 'ads'     }
   if ($c -match '^sprint')                   { return 'sprint'  }

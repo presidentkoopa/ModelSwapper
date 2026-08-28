@@ -173,7 +173,7 @@ Model MS_BD_Machinegun
 	Offset 0.0 0.0 0.0
 	ZOffset -5
 	NoInterpolation
-	FrameIndex CHGG A 0 4
+	FrameIndex CHGG A 0 10
 	FrameIndex CHGG B 0 9999
 }
 
