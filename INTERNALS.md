@@ -191,11 +191,12 @@ all, assembly systems, and ZScript weapons rather than DECORATE ones.
 |---|---|---|
 | **Golden Souls 2 / Remastered** | Whimsical, custom ammo, weapons with no Doom archetype | Tested — binds, classifies, animates |
 | **Ashes 2063 / Afterglow** | Post-apocalyptic, magazine reloads, realistic small arms | Tested — binds, classifies, animates |
-| **Brutal Doom v22** | Heavy state machines, reload system | Under audit |
-| **DoomRL Arsenal** | Assembly weapons, many variants per gun | Under audit |
+| **Brutal Doom v22** | Heavy state machines, reload system | Tested — binds, classifies, animates |
+| **Project Brutality** | One gun composed across several psprite layers; models its pickup but not its first-person view | Tested — binds, classifies, animates |
+| **DoomRL Arsenal** | Assembly weapons, many variants per gun | Tested — binds, classifies, animates |
 | **Guncaster** | ZScript weapons rather than DECORATE | Under audit |
 | **MetaDoom** | Weapons evolve and upgrade mid-game | Under audit |
-| **Trailblazer** | Elaborate reload and alt-fire animations | Under audit |
+| **Trailblazer** | Elaborate reload and alt-fire animations | Tested — binds, classifies, animates |
 
 "Binds" means the models attach and are pickable. "Animates" means fire and
 reload play against that weapon's own timing.
