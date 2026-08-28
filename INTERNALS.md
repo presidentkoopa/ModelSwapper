@@ -217,22 +217,7 @@ Travel time means shots miss movers that instant ones would have hit, and a weap
 changes at range. That is the point of the feature and also its risk, which is why it is
 opt-in and why the speed is a slider.
 
-A twenty-pellet shotgun blast converts all twenty pellets — half-travelling and
-half-instant would be worse than either — but only the first eight per tic draw a trail.
-
-**No dynamic lights.** `RSB0`, vendored from RS_Main, is a genuinely tiny source image —
-5×5 to 15×15px, no soft radial falloff baked in — which reads fine at ordinary Doom
-viewing distance but can read as a small hard-edged square up close in VR. A `PointLight`
-attached to the round was tried as a fix and pulled: this mod doesn't carry dynamic
-lights.
-
-The fix that stayed is texture-only: `MS_BallisticGlow`, a second, much bigger (`1.1`),
-much fainter (`0.22` alpha) copy of the same sprite, additively stacked directly behind
-the sharp one — one riding along with the round for its whole flight, one paired with
-every trail bit. A single hard-edged texture still has a hard edge; several overlapping
-copies at different sizes and low alpha blur that edge out through sheer accumulation —
-the trick behind most halo/flare sprites that predate dynamic lighting entirely. No
-lighting engine involvement, no cost to nearby geometry, nothing added to GLDEFS.
+A twenty-pellet shotgun blast converts all twenty pellets — half-travelling and half-instant would be worse than either.
 
 **No engine change is needed for this.** `WorldHitscanPreFired` is stock, it is
 cancellable, and `P_LineAttack` is the single funnel every hitscan in the game passes
@@ -296,7 +281,6 @@ zscript/
   RS_ForeignBulletTime.zs    Bullet Time X compensation (inert without it)
 modeldef                     32 donor blocks, one per model
 models/                      the meshes and skins
-sprites/                     RSB0 — the ballistic round, and nothing else
 tools_gen_bd21.ps1           generates the BD21 shelf from BD's own MODELDEFs
 MENUDEF  CVARINFO  MAPINFO  KEYCONF
 ```

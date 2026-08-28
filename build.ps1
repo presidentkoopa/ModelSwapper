@@ -1,4 +1,4 @@
-﻿# Package ModelSwapper.pk3.
+# Package ModelSwapper.pk3.
 #
 # A pk3 is a zip, and zip entries must use forward slashes. Compress-Archive on
 # Windows PowerShell writes BACKSLASHES, which GZDoom cannot read -- so this
@@ -29,11 +29,10 @@ $out  = Join-Path $root $(if ($Static) { 'ModelSwapper-QUEST.pk3' } else { 'Mode
 # Everything that belongs in the pk3. Anything else in the repo (README, this
 # script, .git) stays out.
 $include = @('zscript.txt', 'modeldef', 'MENUDEF', 'CVARINFO', 'MAPINFO', 'KEYCONF')
-# Donors still anchor on stock Doom sprite names and ship no sprites of their
-# own. sprites/ carries exactly one thing: RSB0, the ballistic round. That name
-# is ours, collides with nothing stock, and overrides nothing a mod defines.
-$dirs    = @('zscript', 'models', 'sprites')
-
+# Donors anchor on stock Doom sprite names, and the ballistic round now uses
+# stock PUFF, so this pk3 ships no sprite lumps at all.
+$dirs    = @('zscript', 'models')
+# Donors anchor on stock Doom sprite names, and the ballistic round now usesrn# stock PUFF, so this pk3 ships no sprite lumps at all.rn$dirs    = @('zscript', 'models')rn
 $files = @()
 foreach ($f in $include) {
     $p = Join-Path $root $f

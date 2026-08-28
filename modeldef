@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // ModelSwapper -- donor MODELDEF blocks.
 //
 // Every donor lives under models/hud/, one folder per weapon. Where two
@@ -17,7 +17,7 @@ Model MS_Pistol
 	Path "models/hud/Pistol"
 	Model 0 "pistolet.md3"
 	Skin 0 "WPN-9mm.png"
-	Scale -1.0 1.0 1.0
+	Scale 1.35 1.35 1.35
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -27,7 +27,7 @@ Model MS_Pistol2
 	Path "models/hud/Pistol"
 	Model 0 "pistolet.md3"
 	Skin 0 "WPN-9mm2.png"
-	Scale -1.0 1.0 1.0
+	Scale 1.35 1.35 1.35
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -38,6 +38,9 @@ Model MS_BD_BrutalPistol
 	Model 0 "BrutalPistol.md3"
 	Skin 0 "BrutalPistol.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 -4.0 0.0
+	ZOffset -5
+	NoInterpolation
 	FrameIndex PISG A 0 3
 	FrameIndex PISG B 0 9999
 }
@@ -47,7 +50,7 @@ Model MS_Revolver
 	Path "models/hud/Revolver"
 	Model 0 "rev.md3"
 	Skin 0 "WPN-REV.png"
-	Scale -1.0 1.0 1.0
+	Scale 1.35 1.35 1.35
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -57,7 +60,7 @@ Model MS_Revolver2
 	Path "models/hud/Revolver"
 	Model 0 "rev.md3"
 	Skin 0 "WPN-REV2.png"
-	Scale -1.0 1.0 1.0
+	Scale 1.35 1.35 1.35
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -67,7 +70,7 @@ Model MS_Rifle
 	Path "models/hud/Rifle"
 	Model 0 "m16.md3"
 	Skin 0 "WPN-M16.png"
-	Scale -1.0 1.0 1.0
+	Scale 1.35 1.35 1.35
 	FrameIndex CHGG A 0 0
 	FrameIndex CHGG B 0 9999
 }
@@ -77,7 +80,7 @@ Model MS_Shotgun
 	Path "models/hud/Shotgun"
 	Model 0 "shotgun.md3"
 	Skin 0 "WPN-GUNS.png"
-	Scale -1.0 1.0 1.0
+	Scale 1.35 1.35 1.35
 	FrameIndex SHTG A 0 0
 	FrameIndex SHTG B 0 9999
 }
@@ -87,7 +90,7 @@ Model MS_SuperShotgun
 	Path "models/hud/SuperShotgun"
 	Model 0 "ssg.md3"
 	Skin 0 "WPN-GUNS.png"
-	Scale -1.0 1.0 1.0
+	Scale 1.35 1.35 1.35
 	FrameIndex SHT2 A 0 0
 	FrameIndex SHT2 B 0 9999
 }
@@ -97,7 +100,7 @@ Model MS_Chainsaw
 	Path "models/hud/Chainsaw"
 	Model 0 "chainsaw.md3"
 	Skin 0 "chainsaw.png"
-	Scale -1.0 1.0 1.0
+	Scale 1.35 1.35 1.35
 	FrameIndex SAWG A 0 13
 	FrameIndex SAWG B 0 9999
 }
@@ -108,6 +111,8 @@ Model MS_Chaingun
 	Model 0 "Chaingun.md3"
 	Skin 0 "chaingun.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	NoInterpolation
 	FrameIndex CHGG A 0 4
 	FrameIndex CHGG B 0 9999
 }
@@ -118,6 +123,7 @@ Model MS_PlasmaRifle
 	Model 0 "PlasmaRifle.md3"
 	Skin 0 "PlasmaRifle.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
 	FrameIndex PLSG A 0 4
 	FrameIndex PLSG B 0 9999
 }
@@ -128,6 +134,7 @@ Model MS_RocketLauncher
 	Model 0 "RPG.md3"
 	Skin 0 "RPG.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
 	FrameIndex MISG A 0 5
 	FrameIndex MISG B 0 9999
 }
@@ -138,6 +145,8 @@ Model MS_VR_BFG9000
 	Model 0 "BFG.md3"
 	Skin 0 "bfg.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	NoInterpolation
 	FrameIndex BFGG A 0 6
 	FrameIndex BFGG B 0 9999
 }
@@ -148,6 +157,9 @@ Model MS_BD_BrutalSMG
 	Model 0 "BrutalSMG.md3"
 	Skin 0 "BrutalSMG.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	NoInterpolation
 	FrameIndex CHGG A 0 3
 	FrameIndex CHGG B 0 9999
 }
@@ -158,6 +170,9 @@ Model MS_BD_Machinegun
 	Model 0 "Machinegun.md3"
 	Skin 0 "Machinegun.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	NoInterpolation
 	FrameIndex CHGG A 0 4
 	FrameIndex CHGG B 0 9999
 }
@@ -168,6 +183,9 @@ Model MS_BD_M79
 	Model 0 "M79.md3"
 	Skin 0 "M79.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	NoInterpolation
 	FrameIndex MISG A 0 3
 	FrameIndex MISG B 0 9999
 }
@@ -178,6 +196,9 @@ Model MS_BD_nade
 	Model 0 "nade.md3"
 	Skin 0 "nade.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	NoInterpolation
 	FrameIndex MISG A 0 0
 	FrameIndex MISG B 0 9999
 }
@@ -188,6 +209,9 @@ Model MS_BD_RailGun
 	Model 0 "RailGun.md3"
 	Skin 0 "RailGun.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	NoInterpolation
 	FrameIndex PLSG A 0 3
 	FrameIndex PLSG B 0 9999
 }
@@ -198,6 +222,9 @@ Model MS_BD_Flamethrower2
 	Model 0 "Flamethrower2.md3"
 	Skin 0 "Flamethrower2.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	NoInterpolation
 	FrameIndex PLSG A 0 0
 	FrameIndex PLSG B 0 9999
 }
@@ -208,6 +235,8 @@ Model MS_BD_Unmaker
 	Model 0 "Unmaker.md3"
 	Skin 0 "Unmaker.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
 	FrameIndex BFGG A 0 4
 	FrameIndex BFGG B 0 9999
 }
@@ -217,7 +246,11 @@ Model MS_BD_BrutalAxe
 	Path "models/hud/Axe"
 	Model 0 "BrutalAxe.md3"
 	Skin 0 "BrutalAxe.png"
-	Scale -1.0 1.0 1.0
+	Scale -1.5 1.5 1.5
+	Offset 0.0 10.0 0.0
+	ZOffset 5
+	PitchOffset -10
+	NoInterpolation
 	FrameIndex PUNG A 0 5
 	FrameIndex PUNG B 0 9999
 }
@@ -228,6 +261,9 @@ Model MS_BD_Boot
 	Model 0 "Boot.md3"
 	Skin 0 "Boot.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 0.0 0.0
+	ZOffset -5
+	NoInterpolation
 	FrameIndex PUNG A 0 0
 	FrameIndex PUNG B 0 9999
 }
@@ -237,6 +273,7 @@ Model MS_MG_Tec9
 	Model 0 "tec9.md3"
 	Skin 0 "tec9.png"
 	Scale -1.1 1.1 1.1
+	Offset 0.0 0.0 0.0
 	ZOffset -6
 	FrameIndex CHGG A 0 0
 	FrameIndex CHGG B 0 9999
@@ -248,6 +285,7 @@ Model MS_MG_Bolter
 	Model 0 "Bolter.md3"
 	Skin 0 "bolter.png"
 	Scale -1.1 1.1 1.1
+	Offset 0.0 0.0 0.0
 	ZOffset -6
 	FrameIndex PLSG A 0 0
 	FrameIndex PLSG B 0 9999
@@ -259,6 +297,7 @@ Model MS_AE_Pistol
 	Model 0 "m4a3.md3"
 	Skin 0 "m4a3.png"
 	Scale -0.82 0.82 0.82
+	Offset 0.0 -29.0 -8.0
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -269,6 +308,7 @@ Model MS_AE_Shotgun
 	Model 0 "m37a2.md3"
 	Skin 0 "m37a2.png"
 	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
 	FrameIndex SHTG A 0 0
 	FrameIndex SHTG B 0 9999
 }
@@ -279,6 +319,7 @@ Model MS_AE_Flamer
 	Model 0 "m260b.md3"
 	Skin 0 "m260b.png"
 	Scale -1.1 1.1 1.1
+	Offset 0.0 -30.0 -7.0
 	FrameIndex PLSG A 0 0
 	FrameIndex PLSG B 0 9999
 }
@@ -289,6 +330,7 @@ Model MS_RC_Auto9
 	Model 0 "auto9.md3"
 	Skin 0 "auto9.png"
 	Scale -0.65 0.65 0.65
+	Offset 0.0 -30.0 -8.0
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -299,6 +341,7 @@ Model MS_Cola_Revolver
 	Model 0 "revolver.md3"
 	Skin 0 "revolver.png"
 	Scale -0.7 0.7 0.7
+	Offset 0.0 -28.0 -7.0
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -311,6 +354,7 @@ Model MS_Jackhammer
 	SurfaceSkin 0 0 "jackhammer.png"
 	SurfaceSkin 0 1 "gas_label.png"
 	Scale -1.0 1.0 1.0
+	Offset 0.0 -28.0 -8.0
 	FrameIndex SAWG A 0 0
 	FrameIndex SAWG B 0 9999
 }
@@ -322,6 +366,7 @@ Model MS_RC_Chainsaw
 	Model 0 "chainsaw.md3"
 	Skin 0 "chainsaw.jpg"
 	Scale -0.85 0.85 0.85
+	Offset 0.0 -22.0 -10.0
 	FrameIndex SAWG A 0 0
 	FrameIndex SAWG B 0 9999
 }
@@ -341,6 +386,8 @@ Model MS_RC_M32
 	SurfaceSkin 0 7 "m32_tex2.png"
 	SurfaceSkin 0 8 "m32_tex1.png"
 	Scale -0.62 0.62 0.62
+	Offset 0.0 -30.0 -8.0
+	NoInterpolation
 	FrameIndex MISG A 0 0
 	FrameIndex MISG B 0 9999
 }
