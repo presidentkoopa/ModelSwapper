@@ -1,4 +1,15 @@
 // ModelSwapper cvars.
+
+// CONFIG VERSION. Bumped whenever a shipped DEFAULT changes, so an existing
+// ini picks the change up instead of silently overriding it -- an archived
+// server cvar always beats this file. See RS_ForeignModelHandler.MigrateConfig,
+// which applies the change once and stamps this.
+//
+//   0 -- never migrated. A fresh install starts here, already holds the
+//        current defaults from below, and is stamped on first load.
+//   1 -- rs_foreignmodels_byfamily and rs_foreignmodels_pickups default off.
+server int rs_fm_cfgver = 0;
+
 server bool rs_foreignmodels         = true;   // master switch
 server bool rs_foreignmodels_dump    = false;  // dump the scan to console
 server bool rs_foreignmodels_showall = false;  // include weapons with no slot binding

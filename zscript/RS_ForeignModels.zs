@@ -1196,8 +1196,65 @@ class RS_ForeignModelHandler : StaticEventHandler
 		return RS_ForeignModelHandler(StaticEventHandler.Find("RS_ForeignModelHandler"));
 	}
 
+	// -----------------------------------------------------------------
+	// CONFIG MIGRATION -- a changed default has to reach people who
+	// already have an ini.
+	//
+	// Every setting here is a `server` cvar, so GZDoom archives it, and an
+	// archived value beats whatever CVARINFO now says. That is right for a
+	// setting the player CHOSE and wrong for one they merely inherited:
+	// when byfamily and pickups changed to default off, every existing
+	// install kept the old behaviour and the only route back was typing
+	// into the console -- which in VR means taking the headset off.
+	//
+	// So stamp a config version and, one version behind, apply that
+	// version's changes ONCE. Anyone who then sets one back keeps it: the
+	// stamp has already advanced and this never looks at them again.
+	//
+	// Only writes a cvar that is actually still on the old value, so a
+	// fresh install migrates silently -- it already has the new defaults
+	// from CVARINFO and there is nothing to announce.
+	// -----------------------------------------------------------------
+	const CFG_VERSION = 1;
+
+	static void MigrateConfig()
+	{
+		CVar v = CVar.FindCVar("rs_fm_cfgver");
+		if (!v) return;
+
+		int have = v.GetInt();
+		if (have >= CFG_VERSION) return;
+
+		// Server cvars: in a netgame only the arbitrator may move them
+		// without the clients disagreeing about what is loaded. Same rule
+		// MS_BulletTimeHandler.Apply takes.
+		if (multiplayer && consoleplayer != Net_Arbitrator) return;
+
+		bool changed = false;
+
+		// v1 -- the picker lists weapons by name again, and floor pickup
+		// models start off. Both were defaults nobody chose.
+		if (have < 1)
+		{
+			CVar f = CVar.FindCVar("rs_foreignmodels_byfamily");
+			if (f && f.GetBool())  { f.SetBool(false); changed = true; }
+			CVar p = CVar.FindCVar("rs_foreignmodels_pickups");
+			if (p && p.GetBool())  { p.SetBool(false); changed = true; }
+		}
+
+		v.SetInt(CFG_VERSION);
+
+		if (changed)
+			Console.Printf("\cd[ModelSwapper]\c- settings updated: the weapon list now shows each weapon by name, and floor pickups keep their own sprites. Both are switches in Options -> Weapon Model Swap Program.");
+	}
+
 	override void WorldLoaded(WorldEvent e)
 	{
+		// Before the Enabled() gate on purpose: a player who has the mod
+		// switched off still gets the new defaults, so turning it back on
+		// later behaves like a fresh install rather than like 2026.
+		MigrateConfig();
+
 		if (!Enabled()) return;
 		Rescan();
 
