@@ -1087,20 +1087,18 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		bool changed = false;
 
-		// v1 -- the picker lists weapons by name again, and floor pickup
-		// models start off. Both were defaults nobody chose.
+		// v1 -- the picker lists weapons by name again. That was a
+		// default nobody chose.
 		if (have < 1)
 		{
 			CVar f = CVar.FindCVar("rs_foreignmodels_byfamily");
 			if (f && f.GetBool())  { f.SetBool(false); changed = true; }
-			CVar p = CVar.FindCVar("rs_foreignmodels_pickups");
-			if (p && p.GetBool())  { p.SetBool(false); changed = true; }
 		}
 
 		v.SetInt(CFG_VERSION);
 
 		if (changed)
-			Console.Printf("\cd[ModelSwapper]\c- settings updated: the weapon list now shows each weapon by name, and floor pickups keep their own sprites. Both are switches in Options -> Weapon Model Swap Program.");
+			Console.Printf("\cd[ModelSwapper]\c- settings updated: the weapon list now shows each weapon by name. That is a switch in Options -> Weapon Model Swap Program.");
 	}
 
 	override void WorldLoaded(WorldEvent e)
@@ -1310,7 +1308,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 					{
 						sc = dc.FindState('Select');
 						sp = dp.FindState('Select');
-					}
+		}
 					if (sc != null && sc == sp) best = j;
 				}
 			}
@@ -1667,7 +1665,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 								row = map.LookupIndex(cur);
 							}
 						}
-					}
+		}
 
 					if (row >= 0)
 					{
@@ -1675,14 +1673,14 @@ class RS_ForeignModelHandler : StaticEventHandler
 						hs.lastMesh   = map.mMesh[row];
 						hs.lastMap    = map;
 						hs.lastHitRow = row;
-					}
+		}
 					else if (cur.Tics != 0)   // 0-tic states never display; not a hole
 					{
 						hs.misses++;
 						hs.missSprite = cur.sprite;
 						hs.missFrame  = cur.Frame;
 						hs.missTics   = cur.Tics;
-					}
+		}
 				}
 			}
 		}

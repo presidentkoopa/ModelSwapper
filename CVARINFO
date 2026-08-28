@@ -1,4 +1,4 @@
-// ModelSwapper cvars.
+﻿// ModelSwapper cvars.
 
 // CONFIG VERSION. Bumped whenever a shipped DEFAULT changes, so an existing
 // ini picks the change up instead of silently overriding it -- an archived
@@ -7,7 +7,7 @@
 //
 //   0 -- never migrated. A fresh install starts here, already holds the
 //        current defaults from below, and is stamped on first load.
-//   1 -- rs_foreignmodels_byfamily and rs_foreignmodels_pickups default off.
+//   1 -- rs_foreignmodels_byfamily defaults off.
 server int rs_fm_cfgver = 0;
 
 server bool rs_foreignmodels         = true;   // master switch
@@ -117,33 +117,3 @@ server bool rs_foreignmodels_replaceown = true;
 // ever be a stray nonzero from a crash mid-tic.
 user nosave int rs_fm_bridge_cmd_main = 0;
 user nosave int rs_fm_bridge_cmd_off  = 0;
-
-// ---------------------------------------------------------------------------
-// IN-WORLD PICKUP MODELS. The weapon lying on the floor wears the same donor
-// mesh you will be holding once you pick it up, at a size solved from the
-// mesh itself. See zscript/RS_ForeignPickups.zs.
-//
-// Off leaves every pickup as the sprite its own mod drew, and unbinds any
-// pickup already wearing one -- this is a live switch, not a load-time one.
-server bool rs_foreignmodels_pickups = false;
-
-// PLACEMENT SLIDERS for the pickup blocks, named by their PlacementCVars line
-// in modeldef. Every MS_PU_ block shares the "ms_pu" prefix on purpose: these
-// are for finding a GLOBAL correction to the generator's numbers, not for
-// tuning one gun. Nudge until a whole shelf of them sits right, then move the
-// value into tools_gen_pickups.ps1 and set these back to zero -- the engine
-// folds them into the same translate and rotate calls the MODELDEF values go
-// through, so a number found here transfers verbatim (r_data/models.cpp, the
-// PlacementCVars block).
-//
-// Fork only. The static build strips the PlacementCVars line at package time,
-// because an unknown MODELDEF property is a fatal parse error on stock GZDoom
-// rather than something it skips. These stay declared in both builds so the
-// menu and any saved config do not care which one is loaded.
-user float ms_pu_ofs_x = 0.0;
-user float ms_pu_ofs_y = 0.0;
-user float ms_pu_ofs_z = 0.0;
-user float ms_pu_yaw   = 0.0;
-user float ms_pu_pitch = 0.0;
-user float ms_pu_roll  = 0.0;
-user float ms_pu_scale = 1.0;
