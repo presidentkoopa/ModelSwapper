@@ -19,6 +19,7 @@ class MS_BD_M79 : Actor {}
 class MS_BD_Machinegun : Actor {}
 class MS_BD_nade : Actor {}
 class MS_BD_RailGun : Actor {}
+class MS_BD_Rifle : Actor {}
 class MS_BD_Unmaker : Actor {}
 class MS_Chaingun : Actor {}
 class MS_Chainsaw : Actor {}
@@ -43,11 +44,51 @@ class MS_SuperShotgun : Actor {}
 class MS_SuperShotgun2 : Actor {}
 class MS_VR_BFG9000 : Actor {}
 
+// World-anchored display classes. Named by RS_Holsters via string
+// substitution -- see zscript/RS_ForeignWorldModels.zs.
+class MS_PU_AE_Flamer : MS_PickupModel {}
+class MS_PU_AE_Pistol : MS_PickupModel {}
+class MS_PU_AE_Shotgun : MS_PickupModel {}
+class MS_PU_BD_Boot : MS_PickupModel {}
+class MS_PU_BD_BrutalAxe : MS_PickupModel {}
+class MS_PU_BD_BrutalPistol : MS_PickupModel {}
+class MS_PU_BD_BrutalSMG : MS_PickupModel {}
+class MS_PU_BD_Flamethrower2 : MS_PickupModel {}
+class MS_PU_BD_M79 : MS_PickupModel {}
+class MS_PU_BD_Machinegun : MS_PickupModel {}
+class MS_PU_BD_nade : MS_PickupModel {}
+class MS_PU_BD_RailGun : MS_PickupModel {}
+class MS_PU_BD_Rifle : MS_PickupModel {}
+class MS_PU_BD_Unmaker : MS_PickupModel {}
+class MS_PU_Chaingun : MS_PickupModel {}
+class MS_PU_Chainsaw : MS_PickupModel {}
+class MS_PU_Cola_Revolver : MS_PickupModel {}
+class MS_PU_Jackhammer : MS_PickupModel {}
+class MS_PU_MG_Bolter : MS_PickupModel {}
+class MS_PU_MG_Tec9 : MS_PickupModel {}
+class MS_PU_Pistol : MS_PickupModel {}
+class MS_PU_Pistol2 : MS_PickupModel {}
+class MS_PU_PlasmaRifle : MS_PickupModel {}
+class MS_PU_RC_Auto9 : MS_PickupModel {}
+class MS_PU_RC_Chainsaw : MS_PickupModel {}
+class MS_PU_RC_M32 : MS_PickupModel {}
+class MS_PU_Revolver : MS_PickupModel {}
+class MS_PU_Revolver2 : MS_PickupModel {}
+class MS_PU_Rifle : MS_PickupModel {}
+class MS_PU_Rifle2 : MS_PickupModel {}
+class MS_PU_RocketLauncher : MS_PickupModel {}
+class MS_PU_Shotgun : MS_PickupModel {}
+class MS_PU_Shotgun2 : MS_PickupModel {}
+class MS_PU_SuperShotgun : MS_PickupModel {}
+class MS_PU_SuperShotgun2 : MS_PickupModel {}
+class MS_PU_VR_BFG9000 : MS_PickupModel {}
+
 #include "zscript/RS_ForeignFork.zs"
 #include "zscript/RS_ForeignPersist.zs"
 #include "zscript/RS_ForeignAnim.zs"
 #include "zscript/RS_ForeignRemap.zs"
 #include "zscript/RS_ForeignModels.zs"
 #include "zscript/RS_ForeignModelsMenu.zs"
+#include "zscript/RS_ForeignWorldModels.zs"
 #include "zscript/RS_ForeignBallistic.zs"
 #include "zscript/RS_ForeignBulletTime.zs"
