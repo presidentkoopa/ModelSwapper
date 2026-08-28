@@ -1,4 +1,4 @@
-// TOP LEVEL, not nested. This sits directly in Options as a peer of
+﻿// TOP LEVEL, not nested. This sits directly in Options as a peer of
 // "Radiant Silvergun Options" rather than inside it -- the swapper works
 // standalone next to any mod, so burying it under one particular mod's
 // page would be wrong even when that mod is loaded.
@@ -79,15 +79,6 @@ OptionMenu "RSFM_Main"
     StaticText "Slaps a random pistol, revolver or smg model on every weapon", "DarkGray"
     StaticText "in the list -- a mixed, varied loadout in one press. Overwrites", "DarkGray"
     StaticText "any models you already picked.", "DarkGray"
-    StaticText " "
-
-    Command  "Assign All -- VanAlek", "netevent rs-fm-assign-set 0"
-    Command  "Assign All -- Bv21",    "netevent rs-fm-assign-set 1"
-    Command  "Assign All -- MeatG",   "netevent rs-fm-assign-set 2"
-    Command  "Assign All -- BWolf",   "netevent rs-fm-assign-set 3"
-    StaticText "One press: every weapon wears that set, keeping its family --", "DarkGray"
-    StaticText "a shotgun gets that set's shotgun. Families the set has no", "DarkGray"
-    StaticText "model for keep whatever they had. Overwrites your picks.", "DarkGray"
     StaticText " "
 
     Command  "Forget Saved Models", "netevent rs-fm-forget-picks"

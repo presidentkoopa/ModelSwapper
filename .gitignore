@@ -22,3 +22,6 @@ ModelSwapper-QUEST.pk3
 questzdoom.log
 *.log
 doomxr-log.txt
+
+# engine load-test artifact, written into the repo root by doomxr.exe
+log-debug.txt
