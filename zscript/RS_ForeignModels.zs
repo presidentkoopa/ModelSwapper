@@ -714,6 +714,19 @@ class RS_ForeignScanner
 		     || cn.IndexOf("VR_") == 0 || cn.IndexOf("Vanilla_") == 0);
 	}
 
+	// The nine Chex Quest weapons, which GZDoom compiles into every session
+	// exactly like the Heretic/Hexen/Strife arsenals -- but which subclass
+	// Doom's weapons instead of sharing a base of their own, so they cannot
+	// be excluded by ancestry without taking Doom's arsenal too. See Scan().
+	static bool IsChexWeapon(string cn)
+	{
+		return cn == "Bootspoon"         || cn == "SuperBootspork"
+		    || cn == "MiniZorcher"       || cn == "LargeZorcher"
+		    || cn == "SuperLargeZorcher" || cn == "RapidZorcher"
+		    || cn == "ZorchPropulsor"    || cn == "PhasingZorcher"
+		    || cn == "LAZDevice";
+	}
+
 
 	// Does this class already carry a HUD model of its own? Never paint over a
 	// mod that shipped 3D weapons.
@@ -952,19 +965,44 @@ class RS_ForeignScanner
 			// that they never bind to a Doom player's slots, which meant the
 			// "List Unbound Weapons" switch put them right back.
 			//
-			// Excluded by ANCESTRY, not by name: every one of them descends
-			// from one of these five bases, so this covers the whole arsenal
-			// including anything a Raven-game mod adds on top of them.
-			// Beak and Snout are the exceptions -- Heretic's chicken and
-			// Hexen's pig morph weapons inherit straight from Weapon.
+			// Excluded by ANCESTRY wherever a base exists, so this covers the
+			// whole arsenal including anything a Raven-game mod adds on top.
 			//
-			// HacX and Chex need nothing here: both reuse Doom's own weapon
-			// classes rather than defining their own.
+			// The last three are not strays. Heretic's Gauntlets and Phoenix
+			// Rod and Strife's Sigil inherit straight from Weapon rather than
+			// from their own game's base, so the five-base test walked right
+			// past them and "List Unbound Weapons" put them in the menu. Each
+			// has variants -- GauntletsPowered, PhoenixRodPowered, Sigil1
+			// through Sigil5 -- that `is` picks up for free.
 			if (type is 'HereticWeapon' || type is 'FighterWeapon'
 			 || type is 'ClericWeapon'  || type is 'MageWeapon'
-			 || type is 'StrifeWeapon') continue;
+			 || type is 'StrifeWeapon'
+			 || type is 'Gauntlets'     || type is 'PhoenixRod'
+			 || type is 'Sigil') continue;
+
+			// Beak and Snout are Heretic's chicken and Hexen's pig morph
+			// weapons, which also inherit straight from Weapon.
+			//
+			// CHEX WAS NEVER COVERED, and the note that used to sit here --
+			// "HacX and Chex need nothing: both reuse Doom's own weapon
+			// classes" -- was wrong in the way that matters. HacX does reuse
+			// them. Chex SUBCLASSES them: Bootspoon is `: Fist`, MiniZorcher
+			// is `: Pistol`, LAZDevice is `: BFG9000`, and so on for all nine
+			// (zscript/actors/chex/chexweapons.zs in the engine pk3). That
+			// makes them distinct classes, so they get scanned -- and because
+			// not one of them declares a SlotNumber of its own they INHERIT
+			// the Doom weapon's slot, LocateWeapon finds them, and `located`
+			// comes back true. So unlike the Raven arsenals, which at least
+			// needed the showall switch to appear, all nine Chex weapons were
+			// in the picker on every single load.
+			//
+			// By NAME here, not ancestry: their parents are Doom's own
+			// weapons, which are exactly what we do want to swap, so an `is`
+			// test would take the entire Doom arsenal down with them. Nothing
+			// in the engine subclasses the nine, so a name test loses nothing.
 			string cn0 = "" .. type.GetClassName();
 			if (cn0 == "Beak" || cn0 == "Snout") continue;
+			if (IsChexWeapon(cn0)) continue;
 
 			// A MOD THAT SHIPS ITS OWN 3D WEAPONS IS NOT ASKING FOR OURS --
 			// unless you say otherwise.
@@ -2447,9 +2485,16 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// 2 MeatG, 3 BWolf.
 	static int SetOfDonor(string cls)
 	{
+		// MS_BD_ is the Bv21 set. RS_GH_ stays because RS_Main, when it is
 		// sideloaded, supplies its own classes under that prefix and the
 		// shelf keeps rows for them -- they are the same guns, so they
 		// belong on the same button.
+		//
+		// This line was lost in 198c0b1 and the loss was silent: with no
+		// branch returning 1, "Assign All -- Bv21" matched nothing and
+		// reported "assigned 0 weapons", while every MS_BD_ donor fell
+		// through to 0 and rode out under the VanAlek button instead.
+		if (cls.IndexOf("MS_BD_") == 0 || cls.IndexOf("RS_GH_") == 0) return 1;
 		if (cls.IndexOf("MS_MG_") == 0 || cls.IndexOf("RS_PS_") == 0) return 2;
 		if (cls.IndexOf("MS_BW_") == 0)                               return 3;
 		return 0;   // VanAlek: the plain MS_/VR_ donors
