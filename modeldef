@@ -391,3 +391,33 @@ Model MS_RC_M32
 	FrameIndex MISG A 0 0
 	FrameIndex MISG B 0 9999
 }
+
+Model MS_Rifle2
+{
+	Path "models/hud/Rifle"
+	Model 0 "m16.md3"
+	Skin 0 "WPN-M16-k1.png"
+	Scale 1.35 1.35 1.35
+	FrameIndex CHGG A 0 0
+	FrameIndex CHGG B 0 9999
+}
+
+Model MS_Shotgun2
+{
+	Path "models/hud/Shotgun"
+	Model 0 "shotgun.md3"
+	Skin 0 "WPN-GUNS-k1.png"
+	Scale 1.35 1.35 1.35
+	FrameIndex SHTG A 0 0
+	FrameIndex SHTG B 0 9999
+}
+
+Model MS_SuperShotgun2
+{
+	Path "models/hud/SuperShotgun"
+	Model 0 "ssg.md3"
+	Skin 0 "WPN-GUNS-k1.png"
+	Scale 1.35 1.35 1.35
+	FrameIndex SHT2 A 0 0
+	FrameIndex SHT2 B 0 9999
+}

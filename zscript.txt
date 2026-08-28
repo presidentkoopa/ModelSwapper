@@ -1,4 +1,4 @@
-﻿version "4.13"
+version "4.13"
 
 // ============================================================================
 // ModelSwapper -- donor stubs. A MODELDEF block is inert unless a real Actor
@@ -35,9 +35,12 @@ class MS_RC_M32 : Actor {}
 class MS_Revolver : Actor {}
 class MS_Revolver2 : Actor {}
 class MS_Rifle : Actor {}
+class MS_Rifle2 : Actor {}
 class MS_RocketLauncher : Actor {}
 class MS_Shotgun : Actor {}
+class MS_Shotgun2 : Actor {}
 class MS_SuperShotgun : Actor {}
+class MS_SuperShotgun2 : Actor {}
 class MS_VR_BFG9000 : Actor {}
 
 #include "zscript/RS_ForeignFork.zs"

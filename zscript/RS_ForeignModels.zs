@@ -1,4 +1,4 @@
-﻿// =====================================================================
+// =====================================================================
 // RS_ForeignModels -- OUR MODELS ON THEIR WEAPONS.
 //
 // Scans every weapon class loaded alongside us (any wad/pk3), guesses an
@@ -104,10 +104,14 @@ class RS_ForeignShelf
 			"revolver|MS_Revolver2|PISG|0|0|41",
 			"revolver|MS_Cola_Revolver|PISG|0|0|55",
 			"rifle|MS_Rifle|CHGG|0|0|41",
+			"rifle|MS_Rifle2|CHGG|0|0|41",
 			"sniper|MS_Rifle|CHGG|0|0|41",
+			"sniper|MS_Rifle2|CHGG|0|0|41",
 			"shotgun|MS_Shotgun|SHTG|0|0|32",
+			"shotgun|MS_Shotgun2|SHTG|0|0|32",
 			"shotgun|MS_AE_Shotgun|SHTG|0|0|29",
 			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
+			"supershotgun|MS_SuperShotgun2|SHT2|0|0|26",
 			"saw|MS_Chainsaw|SAWG|0|13|16",
 			"saw|MS_RC_Chainsaw|SAWG|0|0|45",
 			"saw|MS_Jackhammer|SAWG|0|0|20",
