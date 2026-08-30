@@ -1005,6 +1005,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 	bool   mBound;        // something is currently wearing one of our models
 	bool   mLocatedDone;  // slot flags refreshed after the level settled
+	bool   mReported;     // scan report printed, once, after that refresh
 
 	RS_ForeignShelf mShelf;   // built once at world-load
 	RS_ForeignClip  mClips;   // our animation clips, per donor
@@ -1181,7 +1182,16 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		mScanned  = true;
 		mLastMain = null; mLastOff = null; mOvlBound.Clear();
-		ReportScan();
+
+		// NOT ReportScan() here. Rescan runs at WorldLoaded, before the
+		// player's weapon slot table is populated, so LocateWeapon says
+		// false for every weapon and the report counted zero listed --
+		// on every load, however many weapons the mod actually had. The
+		// picker recovers on its own (WorldTick redoes the flags once the
+		// level has settled); only the printed line was wrong, which made
+		// it useless for exactly the job it exists for. WorldTick calls
+		// it after that refresh instead. See mLocatedDone.
+		mReported = false;
 	}
 
 	// WHICH MOD IS THIS. The engine prints its "adding X.pk3" list before
@@ -1218,6 +1228,44 @@ class RS_ForeignModelHandler : StaticEventHandler
 			Console.Printf("[RSRM]   from %s: %d", srcNames[k], srcCounts[k]);
 		if (unknown > 0)
 			Console.Printf("[RSRM]   slot-bound only, no source archive: %d", unknown);
+
+		// WHERE THE CLASSIFIER PUT THEM, and how many it had to guess.
+		//
+		// The count above says how many weapons were found; it does not say
+		// whether they were read or merely filed. On a big arsenal those are
+		// different questions -- Brutal Doom and Project Brutality throw
+		// enough classes at this that a rule which is subtly wrong shows up
+		// as a family holding forty weapons, or as a '?' count that is most
+		// of the list. Neither is visible from a total.
+		//
+		// Only families that actually got something are printed: twenty-odd
+		// zero lines would bury the ones that matter.
+		Array<string> famNames;
+		Array<int>    famCounts;
+		int unsure = 0;
+		for (int i = 0; i < mEntries.Size(); ++i)
+		{
+			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+			if (mEntries[i].guessedBySlot) unsure++;
+
+			string a = mEntries[i].archetype;
+			int at = -1;
+			for (int k = 0; k < famNames.Size(); ++k)
+				if (famNames[k] == a) { at = k; break; }
+			if (at < 0) { famNames.Push(a); famCounts.Push(1); }
+			else        { famCounts[at] = famCounts[at] + 1; }
+		}
+
+		string line = "";
+		for (int k = 0; k < famNames.Size(); ++k)
+		{
+			if (line.Length() > 0) line = line .. ", ";
+			line = line .. famNames[k] .. " " .. famCounts[k];
+		}
+		if (line.Length() > 0)
+			Console.Printf("[RSRM]   families: %s", line);
+		if (visible > 0)
+			Console.Printf("[RSRM]   guessed from slot only: %d of %d", unsure, visible);
 	}
 
 	// -----------------------------------------------------------------
@@ -1810,6 +1858,13 @@ class RS_ForeignModelHandler : StaticEventHandler
 				[loc, sl, prio] = pi.weapons.LocateWeapon(t);
 				mEntries[i].located = loc;
 				if (loc) { mEntries[i].slot = sl; mEntries[i].slotPos = prio; }
+			}
+
+			// NOW the report means something. See the note in Rescan.
+			if (!mReported)
+			{
+				mReported = true;
+				ReportScan();
 			}
 		}
 	}

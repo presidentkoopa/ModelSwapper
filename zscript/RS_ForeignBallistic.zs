@@ -33,16 +33,17 @@
 // The round.
 //
 // FastProjectile because it moves fast enough that ordinary projectile
-// stepping would tunnel through thin geometry -- and because it gives us
-// the trail for free. Setting MissileType makes the engine spawn that
-// actor at every movement substep (FastProjectile::Effect), which is the
-// same job the hand-rolled Tick() used to do with its own spacing budget,
-// interpolated positions and paired glow actors. That is all gone; the
-// engine does it, and we ship no sprites of our own for it.
+// stepping would tunnel through thin geometry.
 //
-// BulletPuff is the trail because it is stock, in every IWAD, and is
-// literally the graphic Doom already uses for a bullet in flight meeting
-// something. PUFF is the round itself for the same reason.
+// NO TRAIL. FastProjectile will draw one for free -- set MissileType and
+// Effect() spawns that actor at every movement substep -- and this used
+// to. It is deliberately not set now: the point of the feature is that a
+// shot takes time to arrive, not that it paints a line showing where it
+// went. A streak reads as a tracer round, which is a different thing, and
+// in a headset it is a bright object crossing your view every time you
+// pull the trigger.
+//
+// The round itself is stock PUFF, so this ships no sprites of its own.
 //
 // Tick() survives in a much smaller form because the engine has no notion
 // of a projectile that expires at a distance. A hitscan stops at
@@ -83,8 +84,6 @@ class MS_Ballistic : FastProjectile
 		Species "Player";
 		RenderStyle "Add";
 		Alpha 0.9;
-		MissileType "BulletPuff";   // the engine's own trail
-		MissileHeight 8;
 	}
 
 	override void Tick()
