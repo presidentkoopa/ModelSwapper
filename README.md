@@ -1,12 +1,10 @@
 # ModelSwapper
 
-**Their code, their damage, their sounds, their timing — these models.**
+**A universal 3D weapon mod for Doom.**
 
-Real 3D weapons in any Doom mod. Load it alongside whatever weapon set you
-already play, and the flat sprites in your hands become models. Nothing else
-changes: the mod you loaded still does all the shooting.
-
-![ModelSwapper](media/demo-1.gif)
+Load it alongside whatever weapon set you already play and the flat sprites in
+your hands become models. Nothing else changes: their code, their damage, their
+sounds, their timing. The mod you loaded still does all the shooting.
 
 ## Any mod. Any weapon.
 
@@ -26,25 +24,30 @@ timing — fire, reload, raise, lower — because the mod's own state machine dr
 the frames rather than anything guessing at them.
 
 Optional: turn hitscan weapons into rounds that actually travel, so shots can be
-led and dodged.
+led and dodged. Five looks to pick from, and it only ever touches your own
+hitscan — projectiles, melee and monsters are left alone.
+
+Ships with a compensator for **Bullet Time X**, so you can slow the world down
+and still move at full speed while you dodge the rounds coming back. One slider,
+inert unless that mod is loaded.
 
 ## Light
 
-**31 models covering 20 weapon families, in about 28 MB** — 36 to pick from once
+**32 models covering 20 weapon families, in about 29 MB** — 37 to pick from once
 alternate finishes are counted. Deliberately small: one good model per shape
 rather than everything that would fit, so it loads fast and stays out of the way.
 
 It also leaves the world alone. Weapons lying on the ground keep the art their
 own author drew.
 
-![Assigning models](media/demo-2.gif)
-
 ## Does it work with my mod?
 
-Tested against Ashes, Brutal Doom v21 and v22, Project Brutality, Golden Souls,
-DoomRL Arsenal, Trailblazer, Combined Arms, DAKKA, Doomablo and Borderdoom,
-among others. When one misbehaves, the menu's manual override is the escape
-hatch.
+Tested against Dakka, vanilla Doom, Brutal Doom v21 and v22, Project Brutality
+0.4.1, Ashes (all episodes), Combined Arms, Final Doomer, LegenDoom, Doomablo,
+BorderDoom, Complex Doom, Trailblazer, Guncaster, DoomRL Arsenal, MetaDoom, and
+Golden Souls 1 and 2, among others.
+
+When one misbehaves, the menu's manual override is the escape hatch.
 
 ## Which version?
 
@@ -53,7 +56,8 @@ hatch.
 | **`ModelSwapper.pk3`** | Desktop VR, on [UZDXREMA](https://github.com/presidentkoopa/UZDXREMA). **Animated**, reloads included. |
 | **`ModelSwapper-QUEST.pk3`** | Standalone Quest, on [QuestZDoom](https://github.com/emawind84/QuestZDoom). Models are **static** — the animation needs engine features Quest doesn't have. |
 
-Same models either way. Grab one, load it after your weapon mod, done.
+Same models either way. No dependencies, nothing to patch. Grab one, load it
+after your weapon mod, done.
 
 ---
 
