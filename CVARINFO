@@ -1,4 +1,4 @@
-﻿// ModelSwapper cvars.
+// ModelSwapper cvars.
 
 // CONFIG VERSION. Bumped whenever a shipped DEFAULT changes, so an existing
 // ini picks the change up instead of silently overriding it -- an archived
@@ -44,6 +44,23 @@ server bool rs_fm_ballistic       = false;  // player hitscans become travelling
 // units, 24 per tic, so 300 units of travel is 25 requested against 24 allowed.
 // Faster than this and the streak starts to gap.
 server int  rs_fm_ballistic_speed = 300;    // map units per tic, clamped 10-400
+
+// WHICH ROUND YOU SEE. Behaviour is identical across all five -- same
+// travel time, same range cutoff, same damage, same impact puff handed
+// back to the mod. Only the look differs.
+//
+//   1  plain    -- a round in flight, nothing behind it (default)
+//   2  zdoom    -- small clean dot, no trail
+//   3  lpuf     -- glowing streak, tapers as it fades
+//   4  dpuf     -- two-frame round, four bouncing sparks on impact
+//   5  layered  -- six-particle wake; the densest, and the only one that
+//                  stays continuous at 300 units/tic
+//
+// Types 2-5 are HF's VR_ZDoomBullet, VR_LPUFBullet, VR_DPUFBullet and
+// HF_LayeredBullet. Its sprites are not ours to ship (its own
+// ASSET_PROVENANCE.md files LPUF and DPUF as unresolved rips), so all
+// four draw on the stock PUFF instead.
+server int rs_fm_ballistic_type = 1;   // clamped 1-5
 
 // Bullet Time X compensation. Inert unless that mod is loaded alongside.
 // 0.0 = player as slow as the monsters, 1.0 = normal player movement speed

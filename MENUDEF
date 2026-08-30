@@ -110,6 +110,13 @@ OptionMenu "RSFM_Ballistic"
     StaticText "wrong upgrades.", "DarkGray"
     StaticText " "
 
+    Option "Round Look", "rs_fm_ballistic_type", "RSFM_BallisticType"
+    StaticText "Cosmetic only -- every look flies, hits and damages the", "DarkGray"
+    StaticText "same. Ported from Hideous Farrago's ballistic FX.", "DarkGray"
+    StaticText "Type 5 spawns the most particles; drop to 2 if a", "DarkGray"
+    StaticText "heavy firefight starts to cost you frames.", "DarkGray"
+    StaticText " "
+
     Slider "Muzzle Trim", "rs_fm_muzzle", -20, 80, 1, 0
     StaticText "The engine fires from your hand -- it has no idea where a", "DarkGray"
     StaticText "barrel ends. Each weapon family already gets its own guess;", "DarkGray"
@@ -149,4 +156,21 @@ OptionMenu "RSFM_Report"
 {
     class RS_Menu_ForeignReport
     Title "Scan Report"
+}
+
+// ---------------------------------------------------------------------
+// The five round looks. Behaviour is identical across all of them --
+// same travel time, same range cutoff, same damage, same impact puff
+// handed back to the mod. Only what you see in flight changes.
+//
+// All five draw on the stock PUFF sprite, so this pk3 still ships no
+// sprite lumps of its own.
+// ---------------------------------------------------------------------
+OptionValue "RSFM_BallisticType"
+{
+    1, "Plain -- a round, nothing behind it"
+    2, "ZDoom -- small clean dot, no trail"
+    3, "LPUF -- glowing streak that tapers"
+    4, "DPUF -- two-frame round, sparks on impact"
+    5, "Layered -- six-particle wake, densest"
 }

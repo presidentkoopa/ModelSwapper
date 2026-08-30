@@ -122,6 +122,257 @@ class MS_Ballistic : FastProjectile
 		TNT1 A 1 { SpawnStoredPuff(); }
 		Stop;
 	}
+
+	// Which round class rs_fm_ballistic_type selects. Type 1 is this class;
+	// Which round class rs_fm_ballistic_type selects. Type 1 is this class;
+	// 2 to 5 are the four ported from Hideous Farrago below.
+	static string TypeClass()
+	{
+		CVar c = CVar.FindCVar("rs_fm_ballistic_type");
+		int t = c ? c.GetInt() : 1;
+		switch (t)
+		{
+		case 2:  return "MS_Ballistic_ZDoom";
+		case 3:  return "MS_Ballistic_LPUF";
+		case 4:  return "MS_Ballistic_DPUF";
+		case 5:  return "MS_Ballistic_Layered";
+		default: return "MS_Ballistic";
+		}
+	}
+}
+
+// ---------------------------------------------------------------------
+// THE OTHER FOUR ROUNDS -- ported from Hideous Farrago's
+// hf_ballistic_fx.zs: VR_ZDoomBullet, VR_LPUFBullet, VR_DPUFBullet and
+// HF_LayeredBullet, in that order. Scales, alphas, trail densities and
+// timings are HF's, carried over rather than reinvented.
+//
+// WHAT CHANGED IN THE PORT, and only this:
+//
+//  - PARENT. HF's sit on VR_BaseBullet; ours sit on MS_Ballistic, so
+//    each keeps the stored puff on impact, the range cutoff and the
+//    lifetime backstop. HF hands its Death to its own VR_GlowPuff; ours
+//    has to hand it back to whatever mod is loaded, so every Death here
+//    calls SpawnStoredPuff() where HF called SpawnPuff.
+//
+//  - SPRITE. HF draws these on LPUF and DPUF. Its own
+//    ASSET_PROVENANCE.md files both as rips -- LPUF from GunBonsai,
+//    DPUF from Dakka -- marked RIP-UNTIL-CLEARED with a standing TODO to
+//    replace them. They are not ours to ship, so all four draw on the
+//    stock PUFF instead. Point these four letters at real art later and
+//    it is one line each.
+//
+// Everything else -- damage, speed, range, the puff the mod gets back --
+// is identical across all five types.
+// ---------------------------------------------------------------------
+
+// ===================================================================
+// TYPE 2 -- ZDOOM BULLET. HF's VR_ZDoomBullet: a small clean round with
+// nothing trailing it.
+// ===================================================================
+class MS_Ballistic_ZDoom : MS_Ballistic
+{
+	Default
+	{
+		Scale 0.08;
+		Alpha 0.95;
+		RenderStyle "Add";
+	}
+	States
+	{
+	Spawn:
+		PUFF A 1 Bright;
+		Loop;
+	Death:
+		TNT1 A 0 { SpawnStoredPuff(); }
+		PUFF ABCD 2 Bright A_FadeOut(0.2);
+		Stop;
+	}
+}
+
+// ===================================================================
+// TYPE 3 -- LPUF BULLET. HF's VR_LPUFBullet: a glowing streak, drawn by
+// the engine. MissileType is FastProjectile's own trail hook -- Effect()
+// spawns one of these at every movement substep, so the line is
+// continuous however fast the round is travelling.
+// ===================================================================
+class MS_Ballistic_LPUF : MS_Ballistic
+{
+	Default
+	{
+		MissileType "MS_LPUFTrail";
+		MissileHeight 8;
+		RenderStyle "Add";
+		Scale 0.4;
+		Alpha 0.9;
+	}
+	States
+	{
+	Spawn:
+		PUFF A 1 Bright;
+		Loop;
+	Death:
+		TNT1 A 0 { SpawnStoredPuff(); }
+		PUFF ABCD 2 Bright;
+		Stop;
+	}
+}
+
+class MS_LPUFTrail : Actor
+{
+	Default
+	{
+		Speed 0;
+		Scale 0.4;
+		Alpha 0.75;
+		RenderStyle "Add";
+		+NOBLOCKMAP +NOGRAVITY +NOTELEPORT +CANNOTPUSH +NODAMAGETHRUST
+	}
+	States
+	{
+	Spawn:
+		// Shrink AND fade together, so the streak tapers as it dies
+		// rather than blinking out at a uniform width.
+		PUFF A 1 Bright
+		{
+			A_SetScale(scale.x - 0.04, scale.y - 0.04);
+			A_FadeOut(0.12);
+			if (scale.x <= 0.05) Destroy();
+		}
+		Loop;
+	}
+}
+
+// ===================================================================
+// TYPE 4 -- DPUF BULLET. HF's VR_DPUFBullet: two-frame round in flight,
+// and four bouncing sparks thrown backwards where it lands.
+// ===================================================================
+class MS_Ballistic_DPUF : MS_Ballistic
+{
+	Default
+	{
+		RenderStyle "Add";
+		Scale 0.4;
+		Alpha 0.9;
+	}
+	States
+	{
+	Spawn:
+		PUFF A 0 NoDelay;
+		PUFF A 1 Bright;
+		PUFF B 1 Bright;
+		Loop;
+	Death:
+		TNT1 A 0
+		{
+			for (int i = 0; i < 4; i++)
+				A_SpawnItemEx("MS_DakkaSpark", 0, 0, 0,
+					frandom(3.0, 12.0), frandom(-4.0, 4.0), frandom(0.5, 8.0),
+					180 + frandom(-30, 30), SXF_CLIENTSIDE);
+			SpawnStoredPuff();
+		}
+		Stop;
+	}
+}
+
+class MS_DakkaSpark : Actor
+{
+	Default
+	{
+		+CLIENTSIDEONLY
+		+THRUACTORS
+		+BOUNCEONWALLS
+		+FORCEXYBILLBOARD
+		+DONTSPLASH
+		+NOTRIGGER
+		Projectile;
+		-NOGRAVITY
+		Radius 1; Height 1;
+		Gravity 0.5;
+		BounceFactor 0.1;
+		RenderStyle "Add";
+		Scale 0.25;
+	}
+	States
+	{
+	Spawn:
+		PUFF A 105 Bright;
+		Stop;
+	}
+}
+
+// ===================================================================
+// TYPE 5 -- LAYERED. HF's HF_LayeredBullet: six particles at fractional
+// offsets behind the round every tic, plus a faint cloud on top of it.
+// Stays continuous at speeds that would otherwise strobe, and the
+// densest of the four.
+// ===================================================================
+class MS_Ballistic_Layered : MS_Ballistic
+{
+	Default
+	{
+		RenderStyle "Add";
+		Scale 0.5;
+		Alpha 0.95;
+		+BRIGHT
+	}
+	States
+	{
+	Spawn:
+		PUFF A 1 Bright
+		{
+			for (int i = 1; i <= 6; i++)
+			{
+				double f = i * 0.14;
+				Actor p = Spawn("MS_LayerTrailParticle",
+					pos - (vel.x * f, vel.y * f, vel.z * f), ALLOW_REPLACE);
+				if (p)
+				{
+					p.scale = (0.42 - i * 0.05, 0.42 - i * 0.05);
+					p.A_SetRenderStyle(0.9 - i * 0.1, STYLE_Add);
+				}
+			}
+			Spawn("MS_LayerCloud", pos, ALLOW_REPLACE);
+		}
+		Loop;
+	Death:
+		TNT1 A 0 { SpawnStoredPuff(); }
+		PUFF ABCD 2 Bright;
+		Stop;
+	}
+}
+
+class MS_LayerTrailParticle : Actor
+{
+	Default
+	{
+		+NOINTERACTION +CLIENTSIDEONLY +FORCEXYBILLBOARD +NOGRAVITY
+		RenderStyle "Add";
+		Scale 0.3;
+	}
+	States
+	{
+	Spawn:
+		PUFF B 3 Bright A_FadeOut(0.2);
+		Loop;
+	}
+}
+
+class MS_LayerCloud : Actor
+{
+	Default
+	{
+		+NOINTERACTION +CLIENTSIDEONLY +FORCEXYBILLBOARD +NOGRAVITY
+		RenderStyle "Add";
+		Scale 0.6;
+		Alpha 0.06;
+	}
+	States
+	{
+	Spawn:
+		PUFF C 4 Bright A_FadeOut(0.015);
+		Loop;
+	}
 }
 
 // ---------------------------------------------------------------------
@@ -290,7 +541,7 @@ class MS_HitscanHandler : StaticEventHandler
 			origin += (cos(ang) * cos(pit), sin(ang) * cos(pit), -sin(pit)) * reach;
 		}
 
-		let b = MS_Ballistic(Actor.Spawn("MS_Ballistic", origin, ALLOW_REPLACE));
+		let b = MS_Ballistic(Actor.Spawn(MS_Ballistic.TypeClass(), origin, ALLOW_REPLACE));
 		if (!b) return false;   // could not spawn -- let the hitscan happen
 
 		b.target      = shooter;
