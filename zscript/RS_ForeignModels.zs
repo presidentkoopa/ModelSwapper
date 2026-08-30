@@ -112,6 +112,7 @@ class RS_ForeignShelf
 			"shotgun|MS_Shotgun|SHTG|0|0|32",
 			"shotgun|MS_Shotgun2|SHTG|0|0|32",
 			"shotgun|MS_AE_Shotgun|SHTG|0|0|29",
+			"shotgun|MS_BD_AssaultShotgun|SHTG|0|4|32",
 			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
 			"supershotgun|MS_SuperShotgun2|SHT2|0|0|26",
 			"saw|MS_Chainsaw|SAWG|0|13|16",

@@ -32,7 +32,6 @@ $include = @('zscript.txt', 'modeldef', 'MENUDEF', 'CVARINFO', 'MAPINFO', 'KEYCO
 # Donors anchor on stock Doom sprite names, and the ballistic round now uses
 # stock PUFF, so this pk3 ships no sprite lumps at all.
 $dirs    = @('zscript', 'models')
-# Donors anchor on stock Doom sprite names, and the ballistic round now usesrn# stock PUFF, so this pk3 ships no sprite lumps at all.rn$dirs    = @('zscript', 'models')rn
 $files = @()
 foreach ($f in $include) {
     $p = Join-Path $root $f
