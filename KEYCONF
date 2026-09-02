@@ -1,1 +1,16 @@
 alias weaponmodels "openmenu RSFM_Main"
+
+// DEBUG.
+//
+// msdebug dumps the weapon table, every psprite layer, and what we have
+// bound models to -- then writes the whole console to E:/ModelSwapper/
+// msdebug.txt so it can be read without anyone scrolling. condump takes
+// the WHOLE console, so the file has everything above it too, which is
+// usually the useful part.
+//
+// mstrace watches the mesh frame of the gun in your hands and prints only
+// when it CHANGES. Toggle it on, stand still, and anything it prints is a
+// twitch you can see.
+alias msdebug "netevent rs-fm-debug; condump E:/ModelSwapper/msdebug.txt"
+alias mstrace "netevent rs-fm-trace"
+alias mssave  "condump E:/ModelSwapper/msdebug.txt"

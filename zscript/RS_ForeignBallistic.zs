@@ -302,10 +302,27 @@ class MS_DakkaSpark : Actor
 }
 
 // ===================================================================
-// TYPE 5 -- LAYERED. HF's HF_LayeredBullet: six particles at fractional
-// offsets behind the round every tic, plus a faint cloud on top of it.
-// Stays continuous at speeds that would otherwise strobe, and the
-// densest of the four.
+// TYPE 5 -- LAYERED. HF's HF_LayeredBullet: six particles strung out
+// behind the round every tic, plus a faint cloud on top of it. Stays
+// continuous at speeds that would otherwise strobe, and the densest of
+// the four.
+//
+// THE ONE THING THAT IS NOT HF'S. HF spaces the six by VELOCITY --
+// pos - vel * (i * 0.14), so the tail reaches 0.84 of a tic's travel
+// behind the round. That is fine in HF, which flies these at Speed 160
+// from the player's eye. It is not fine here. We default to 300 units
+// per tic, so the same fractions reach 252 units back; and our round is
+// spawned at the muzzle of a tracked controller, not inside the
+// player's head. On the round's very FIRST tic it has not travelled
+// yet, so all six land 252 units behind a gun held at arm's length --
+// which is to say through the player's face and out behind them.
+//
+// So the tail is strung along the gap the round has ACTUALLY flown,
+// pos back to lastPos, which the range counter already tracks. Before
+// the round has moved that gap is zero and the six stack at the muzzle,
+// invisible. After it has moved they fill exactly the space it crossed,
+// which is what a wake is for. Identical to HF wherever HF's own
+// assumption held, and it can no longer paint anything behind the gun.
 // ===================================================================
 class MS_Ballistic_Layered : MS_Ballistic
 {
@@ -321,11 +338,14 @@ class MS_Ballistic_Layered : MS_Ballistic
 	Spawn:
 		PUFF A 1 Bright
 		{
+			// The gap the round actually crossed since the last tic.
+			// Zero on the first one, which is the whole point.
+			Vector3 back = hasLastPos ? (lastPos - pos) : (0, 0, 0);
 			for (int i = 1; i <= 6; i++)
 			{
-				double f = i * 0.14;
+				double f = i / 7.0;
 				Actor p = Spawn("MS_LayerTrailParticle",
-					pos - (vel.x * f, vel.y * f, vel.z * f), ALLOW_REPLACE);
+					pos + back * f, ALLOW_REPLACE);
 				if (p)
 				{
 					p.scale = (0.42 - i * 0.05, 0.42 - i * 0.05);

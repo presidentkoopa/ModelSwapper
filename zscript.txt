@@ -92,4 +92,5 @@ class MS_PU_VR_BFG9000 : MS_PickupModel {}
 #include "zscript/RS_ForeignModelsMenu.zs"
 #include "zscript/RS_ForeignWorldModels.zs"
 #include "zscript/RS_ForeignBallistic.zs"
+#include "zscript/RS_ForeignDebug.zs"
 #include "zscript/RS_ForeignBulletTime.zs"

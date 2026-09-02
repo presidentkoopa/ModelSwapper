@@ -1658,6 +1658,16 @@ class RS_ForeignModelHandler : StaticEventHandler
 				{
 					int row = map.LookupIndex(cur);
 
+					// mstrace: report the frame this state resolves to,
+					// but only when it CHANGES. Silent while a weapon
+					// genuinely holds still, so anything it prints during
+					// an idle IS the twitch. Inert unless toggled on.
+					if (RS_ForeignDebug.TraceOn())
+					{
+						RS_ForeignDebug.Frame(w, cur, row,
+							row >= 0 ? map.mMesh[row] : -1);
+					}
+
 					if (row < 0 && cur.Tics != 0)
 					{
 						// WHICH CLIP DOES THE ORPHAN CHAIN BELONG TO?

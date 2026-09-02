@@ -25,3 +25,6 @@ doomxr-log.txt
 
 # engine load-test artifact, written into the repo root by doomxr.exe
 log-debug.txt
+
+# Python tool scratch
+__pycache__/
