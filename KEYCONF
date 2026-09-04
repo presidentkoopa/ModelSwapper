@@ -11,6 +11,6 @@ alias weaponmodels "openmenu RSFM_Main"
 // mstrace watches the mesh frame of the gun in your hands and prints only
 // when it CHANGES. Toggle it on, stand still, and anything it prints is a
 // twitch you can see.
-alias msdebug "netevent rs-fm-debug; condump E:/ModelSwapper/msdebug.txt"
+alias msdebug "netevent rs-fm-debug; condump E:/DOOMWork/RS_ModelSwapper/msdebug.txt"
 alias mstrace "netevent rs-fm-trace"
-alias mssave  "condump E:/ModelSwapper/msdebug.txt"
+alias mssave  "condump E:/DOOMWork/RS_ModelSwapper/msdebug.txt"

@@ -1550,15 +1550,47 @@ class RS_ForeignModelHandler : StaticEventHandler
 		State sel = d.FindState('Select');
 		State dsl = d.FindState('Deselect');
 
+		// WALK UNTIL THE CHAIN ANSWERS, NOT UNTIL WE GET BORED.
+		//
+		// The walk ends for a real reason when it falls into Ready, Select
+		// or Deselect, or loops back on itself: a Fire that reaches one of
+		// those without ever displaying a frame is a weapon that does not
+		// fire. The counter is only a runaway stop.
+		//
+		// IT USED TO BE 64, AND THAT WAS A BUG. Mods open a state with a
+		// long run of zero-tic sprite references to force the textures to
+		// precache -- a standard DECORATE idiom. Project Brutality's
+		// chainsaw opens Fire with 372 of them, listing every blood-splatter
+		// variant of its sprites, before the first line that does anything.
+		// The old bound gave up on state 64, still inside the precache, and
+		// concluded the chainsaw was not a gun. It never got a model, and
+		// nothing said why -- ApplyHand returns null before the bind trace
+		// prints.
+		//
+		// So: a bound big enough that a precache block cannot exhaust it,
+		// and -- more importantly -- running out is now INCONCLUSIVE rather
+		// than a verdict. A chain we could not finish reading tells us
+		// nothing, and the mod's standing rule is that nothing goes
+		// unmodelled, so an unread chain is treated as a weapon.
+		int fireWalkMax = 1024;
+
 		int total = 0;
+		bool decided = false;            // reached a real end, not the bound
 		State s = f;
-		for (int guard = 0; guard < 64 && s != null; ++guard)
+		for (int guard = 0; guard < fireWalkMax && s != null; ++guard)
 		{
-			if (guard > 0 && (s == rdy || s == sel || s == dsl || s == f)) break;
+			if (guard > 0 && (s == rdy || s == sel || s == dsl || s == f))
+			{
+				decided = true;
+				break;
+			}
 			if (s.Tics > 0) total += s.Tics;
 			if (total > 0) return false;     // it displays something: a weapon
 			s = s.NextState;
 		}
+		if (s == null) decided = true;   // ran off the end of the chain
+
+		if (!decided) return false;      // gave up reading: assume it fires
 		return total <= 0;
 	}
 

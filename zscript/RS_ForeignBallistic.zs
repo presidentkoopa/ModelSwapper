@@ -124,7 +124,6 @@ class MS_Ballistic : FastProjectile
 	}
 
 	// Which round class rs_fm_ballistic_type selects. Type 1 is this class;
-	// Which round class rs_fm_ballistic_type selects. Type 1 is this class;
 	// 2 to 5 are the four ported from Hideous Farrago below.
 	static string TypeClass()
 	{
@@ -407,6 +406,23 @@ class MS_HitscanHandler : StaticEventHandler
 	// fist with a plain short-range LineAttack and no flag. Sending a
 	// flying round out of a melee weapon would be absurd, so range is the
 	// backstop the flag misses.
+	//
+	// IT IS ONLY A BACKSTOP, and on its own it is not enough. A_Saw --
+	// which is how chainsaws, axes and most powered melee actually swing --
+	// never sets LAF_ISMELEEATTACK. Its LineAttack call passes only
+	// LAF_NORANDOMPUFFZ and LAF_ISOFFHAND (weaponchainsaw.zs), so the flag
+	// test cannot see it at all. Vanilla's own saw stayed under this cutoff
+	// by luck: A_Saw defaults its range to MeleeRange + MELEEDELTA, which
+	// lands just short of 96. Project Brutality's axe passes range 120
+	// explicitly and sailed straight over, so swinging it fired a bullet.
+	//
+	// The damage-type test in WorldHitscanPreFired is what actually
+	// catches it. A_Saw passes damage type 'Melee', and so does
+	// A_CustomPunch -- a statement of intent from the attack itself rather
+	// than a guess from how far it reached, so it holds at any range and
+	// needs no threshold to tune. (Not a const: ZScript consts take ints,
+	// floats and strings, and a Name is none of those -- "Bad type for
+	// constant definiton".)
 	const MELEE_CUTOFF = 96.0;
 
 	// ---------------------------------------------------------------------
@@ -485,6 +501,7 @@ class MS_HitscanHandler : StaticEventHandler
 
 		// Melee stays melee.
 		if (e.AttackLineFlags & LAF_ISMELEEATTACK) return false;
+		if (e.DamageType == 'Melee') return false;
 		if (e.AttackDistance <= MELEE_CUTOFF) return false;
 
 		// Reproduce the origin and direction the hitscan itself would
