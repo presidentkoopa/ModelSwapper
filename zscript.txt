@@ -21,6 +21,7 @@ class MS_BD_nade : Actor {}
 class MS_BD_RailGun : Actor {}
 class MS_BD_Rifle : Actor {}
 class MS_BD_AssaultShotgun : Actor {}
+class MS_Beretta : Actor {}
 class MS_BD_Unmaker : Actor {}
 class MS_Chaingun : Actor {}
 class MS_Chainsaw : Actor {}

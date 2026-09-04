@@ -100,6 +100,7 @@ class RS_ForeignShelf
 			"pistol|MS_MG_Bolter|PLSG|0|0|5",
 			"pistol|MS_AE_Pistol|PISG|0|0|20",
 			"pistol|MS_RC_Auto9|PISG|0|0|3",
+			"pistol|MS_Beretta|PISG|0|23|24",
 			"revolver|MS_Revolver|PISG|0|0|41",
 			"revolver|MS_Revolver2|PISG|0|0|41",
 			"revolver|MS_Cola_Revolver|PISG|0|0|55",
@@ -1021,8 +1022,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// The other half of that decision: layers we looked at once and left
 	// alone because their state named them as somebody's muzzle flash,
 	// casing or legs rather than part of the gun. Cached for the same
-	// reason -- naming a state is a walk of the whole label table.
-	Array<string> mBlankSkip;
+
 
 	bool   mBound;        // something is currently wearing one of our models
 	bool   mLocatedDone;  // slot flags refreshed after the level settled
@@ -2124,33 +2124,33 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// does not change: -40 is that weapon's muzzle flash for the
 			// whole session, -1000 is its legs.
 			string key = c.GetClassName() .. "#" .. id;
-			if (mBlankSkip.Find(key) != mBlankSkip.Size()) continue;
-
 			if (mBlankSeen.Find(key) == mBlankSeen.Size())
 			{
 				string lbl = RS_ForeignDebug.StateLabel(c, psp.CurState);
-				string low = lbl.MakeLower();
 
-				// FIRST-PERSON LEGS GO, even though they are not the gun.
+				// EVERY LAYER STILL GOES, including the flash.
 				//
-				// A flat sprite pair of legs painted along the bottom of
-				// the view is a monitor effect: it does not move with your
-				// head, it sits at a height chosen for a flat screen, and
-				// in a headset you are already looking down at a tracked
-				// body. RS_VR_Unified draws a real boot model there.
+				// There was briefly a filter here that spared any layer
+				// whose state was named like an effect -- muzzle, flash,
+				// smoke, casing. It was a misreading and it is recorded
+				// here so nobody adds it back.
 				//
-				// Deliberate, and separate from the duplicate-gun rule
-				// below -- see RS_ForeignRemap.IsFirstPersonBody for why
-				// the fact and the preference are two functions.
-				if (!RS_ForeignRemap.IsFirstPersonBody(low)
-				 && RS_ForeignRemap.IsNotGunLayer(low))
-				{
-					mBlankSkip.Push(key);
-					if (RS_ForeignRemap.DebugOn())
-						Console.Printf("[RSRM] leaving layer %d of %s alone -- state '%s' is not the gun",
-							id, c.GetClassName(), lbl);
-					continue;
-				}
+				// The report showed us blanking PB's 'NormalMuzzle4', and
+				// that looked like the cause of a complaint about its
+				// effects being wrong. It was not. The complaint was that
+				// effects appeared IN THE WRONG PLACE, and blanking a layer
+				// cannot move anything -- it only hides it. Sparing the
+				// flash layer did nothing for that and switched off the
+				// thing this function is named after: the flat muzzle flash
+				// drew straight over the model again, which is the exact
+				// artefact the mod exists to remove.
+				//
+				// So the rule stands as it was. If a mod's effect really is
+				// being lost to this, the fix has to distinguish a layer
+				// drawing the GUN from one drawing an effect by something
+				// sturdier than its state's name -- and the misplacement
+				// bug needs its own diagnosis first, because nothing here
+				// moves a sprite.
 				mBlankSeen.Push(key);
 				if (RS_ForeignRemap.DebugOn())
 					Console.Printf("[RSRM] blanking layer %d of %s -- was sprite %d frame %d, state '%s'",

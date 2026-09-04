@@ -75,6 +75,10 @@ class RS_ForeignClip
 			"MS_SuperShotgun2|ready|0@1|-1|-1|-1",
 			"MS_SuperShotgun2|reload|8@2,9-17@3,18@2,19-21@3,23@2,24@2,24@1|0|-1|-1",
 
+			"MS_Beretta|fire|1@1,2@1,3@1,4@1,5@1,6@1,7@1|0|-1|-1",
+			"MS_Beretta|ready|23@1|-1|-1|-1",
+			"MS_Beretta|reload|22@1|-1|-1|-1",
+			"MS_Beretta|select|23@1|-1|-1|-1",
 			"MS_BD_AssaultShotgun|ads|4@1,5@1,6@1,7@1,8@1,9@1,10@1|-1|-1|-1",
 			"MS_BD_AssaultShotgun|fire|4@1,5@1,6@1,7@1,8@1,9@1,10@1|0|-1|-1",
 			"MS_BD_AssaultShotgun|ready|4@1|-1|-1|-1",

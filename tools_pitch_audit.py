@@ -10,7 +10,9 @@ import io, re, os, sys, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tools_md3_pitch import read_md3, principal_pitch
 
-R = r"E:\ModelSwapper"
+# Follow the repo rather than a path baked in when this was written --
+# the tree moved once already and this silently pointed at the old one.
+R = os.path.dirname(os.path.abspath(__file__))
 TOL = 12.0          # degrees away from the rest pose before it reads as a swing
 
 # ---- donor -> mesh path, from MODELDEF -------------------------------
