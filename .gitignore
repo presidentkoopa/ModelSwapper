@@ -28,3 +28,10 @@ log-debug.txt
 
 # Python tool scratch
 __pycache__/
+
+# Engine logs, when a run is launched from inside the repo. autoexec.cfg
+# switches the logfile name mid-startup (logfile debug, then netcvarflood),
+# so these land wherever the working directory happens to be.
+log-*.txt
+doomxr-log.txt
+msdebug.txt

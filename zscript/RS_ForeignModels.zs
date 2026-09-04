@@ -1004,6 +1004,26 @@ class RS_ForeignModelHandler : StaticEventHandler
 	int mFlashSprMain;
 	int mFlashSprOff;
 
+	// LAYERS WE HAVE BLANKED, one entry per (caller, layer) the first time
+	// we touch it. Purely a report -- nothing reads it back.
+	//
+	// BlankWeaponFlashes hides every extra psprite layer a weapon draws,
+	// because a mod may build one gun out of several and the leftovers draw
+	// through our mesh. The rule it uses is "the caller is a Weapon", which
+	// is also true of a layer drawing smoke, a muzzle flash or a casing --
+	// the weapon is what called A_Overlay either way. There is no way to
+	// tell those apart from inside the loop, so this records what the rule
+	// actually caught, in the ordinary log, without anyone typing a console
+	// command. If a mod's effects go missing or move, the layer responsible
+	// is named here.
+	Array<string> mBlankSeen;
+
+	// The other half of that decision: layers we looked at once and left
+	// alone because their state named them as somebody's muzzle flash,
+	// casing or legs rather than part of the gun. Cached for the same
+	// reason -- naming a state is a walk of the whole label table.
+	Array<string> mBlankSkip;
+
 	bool   mBound;        // something is currently wearing one of our models
 	bool   mLocatedDone;  // slot flags refreshed after the level settled
 	bool   mReported;     // scan report printed, once, after that refresh
@@ -2094,6 +2114,49 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 			int si = (c == mLastOff) ? mFlashSprOff : mFlashSprMain;
 			if (si < 0) continue;
+
+			// IS THIS LAYER EVEN THE GUN?
+			//
+			// Decided once per (caller, layer) and remembered, because
+			// naming a state means walking the whole label table -- 307
+			// labels on a Project Brutality weapon -- which is far too
+			// expensive to repeat every tic for every layer. A layer's role
+			// does not change: -40 is that weapon's muzzle flash for the
+			// whole session, -1000 is its legs.
+			string key = c.GetClassName() .. "#" .. id;
+			if (mBlankSkip.Find(key) != mBlankSkip.Size()) continue;
+
+			if (mBlankSeen.Find(key) == mBlankSeen.Size())
+			{
+				string lbl = RS_ForeignDebug.StateLabel(c, psp.CurState);
+				string low = lbl.MakeLower();
+
+				// FIRST-PERSON LEGS GO, even though they are not the gun.
+				//
+				// A flat sprite pair of legs painted along the bottom of
+				// the view is a monitor effect: it does not move with your
+				// head, it sits at a height chosen for a flat screen, and
+				// in a headset you are already looking down at a tracked
+				// body. RS_VR_Unified draws a real boot model there.
+				//
+				// Deliberate, and separate from the duplicate-gun rule
+				// below -- see RS_ForeignRemap.IsFirstPersonBody for why
+				// the fact and the preference are two functions.
+				if (!RS_ForeignRemap.IsFirstPersonBody(low)
+				 && RS_ForeignRemap.IsNotGunLayer(low))
+				{
+					mBlankSkip.Push(key);
+					if (RS_ForeignRemap.DebugOn())
+						Console.Printf("[RSRM] leaving layer %d of %s alone -- state '%s' is not the gun",
+							id, c.GetClassName(), lbl);
+					continue;
+				}
+				mBlankSeen.Push(key);
+				if (RS_ForeignRemap.DebugOn())
+					Console.Printf("[RSRM] blanking layer %d of %s -- was sprite %d frame %d, state '%s'",
+						id, c.GetClassName(), psp.Sprite, psp.Frame, lbl);
+			}
+
 			// STOP THE LAYER DRAWING AT ALL.
 			//
 			// The out-of-range anchor below is not enough on Project Brutality.

@@ -261,6 +261,68 @@ class RS_ForeignRemap play
 		    || lname.IndexOf("fireoffset")  >= 0;
 	}
 
+	// LAYERS THAT ARE NOT THE GUN, and so are not ours to hide.
+	//
+	// BlankWeaponFlashes hides the extra psprite layers a weapon draws,
+	// because a mod may build one gun across several of them and the
+	// leftovers draw straight through our mesh. Its test is "the caller is
+	// a Weapon", which is equally true of a layer drawing a muzzle flash, a
+	// casing or the player's own legs -- the weapon called A_Overlay for
+	// all of them.
+	//
+	// Measured against Project Brutality, which is where this was found:
+	//
+	//     layer -40    state 'NormalMuzzle4'        its muzzle flash
+	//     layer -1000  state 'FirstPersonLegsStand' its first-person legs
+	//
+	// Both were being blanked on every weapon. The mod names its own
+	// layers, so the label is the signal -- the same reasoning IsEffectLabel
+	// above already uses, kept separate from it because that one also
+	// decides which states get MAPPED and widening it would move frames.
+	//
+	// Deliberately broader than IsEffectLabel: "muzzle" rather than
+	// "muzzleflash", because PB's is NormalMuzzle4 and a label with muzzle
+	// in the name is never the gun body.
+	static bool IsNotGunLayer(string lname)
+	{
+		return IsEffectLabel(lname)
+		    || lname.IndexOf("muzzle")  >= 0
+		    || lname.IndexOf("flash")   >= 0
+		    || lname.IndexOf("smoke")   >= 0
+		    || lname.IndexOf("casing")  >= 0
+		    || lname.IndexOf("shell")   >= 0   // ejected brass, not a shotgun
+		    || lname.IndexOf("brass")   >= 0
+		    || lname.IndexOf("tracer")  >= 0
+		    || lname.IndexOf("spark")   >= 0
+		    || lname.IndexOf("visor")   >= 0
+		    || lname.IndexOf("blood")   >= 0
+		    || lname.IndexOf("crosshair") >= 0
+		    || lname.IndexOf("reticle") >= 0;
+	}
+
+	// FIRST-PERSON BODY -- legs, and the sprite arms that come with them.
+	//
+	// Kept OUT of IsNotGunLayer on purpose, because it is a different kind
+	// of statement. That function answers a question of fact: is this layer
+	// drawing the weapon. Legs are not, and the honest answer is no.
+	//
+	// This one answers a question of taste, and the taste is the headset's.
+	// A flat sprite pair of legs painted across the bottom of the view is a
+	// screen-space effect: it does not move with your head, it is drawn at
+	// a height someone chose for a monitor, and in VR you are looking down
+	// at your actual tracked body instead. Project Brutality draws them on
+	// layer -1000 (FirstPersonLegsStand / Walk1 / Walk2 / Crouch / Jump).
+	//
+	// So BlankWeaponFlashes hides these deliberately, as a separate rule
+	// from hiding duplicate gun art, and the comment there says so. Splitting
+	// it this way means a future reader can drop the taste and keep the fact.
+	static bool IsFirstPersonBody(string lname)
+	{
+		return lname.IndexOf("firstpersonlegs") >= 0
+		    || lname.IndexOf("firstpersonarm")  >= 0
+		    || lname.IndexOf("playerlegs")      >= 0;
+	}
+
 	// Labels that mean "whatever follows is NOT part of a psprite
 	// sequence" -- world-actor and inventory labels. A custom label that
 	// follows one of these in source order belongs to it, not to us.
