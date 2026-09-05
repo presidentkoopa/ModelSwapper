@@ -14,32 +14,36 @@
 
 Model MS_Pistol
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Pistol"
 	Model 0 "pistolet.md3"
 	Skin 0 "WPN-9mm.png"
 	Scale 1.35 1.35 1.35
+	Offset 0.148 -30.839 -4.177
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
 
 Model MS_Pistol2
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Pistol"
 	Model 0 "pistolet.md3"
 	Skin 0 "WPN-9mm2.png"
 	Scale 1.35 1.35 1.35
+	Offset 0.148 -30.839 -4.177
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
 
 Model MS_BD_BrutalPistol
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/PistolBD"
 	Model 0 "BrutalPistol.md3"
 	Skin 0 "BrutalPistol.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 -4.0 0.0
-	ZOffset -5
+	Offset -0.000 -32.656 -8.516
 	NoInterpolation
 	FrameIndex PISG A 0 3
 	FrameIndex PISG B 0 9999
@@ -47,71 +51,84 @@ Model MS_BD_BrutalPistol
 
 Model MS_Revolver
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Revolver"
 	Model 0 "rev.md3"
 	Skin 0 "WPN-REV.png"
 	Scale 1.35 1.35 1.35
+	Offset 9.935 -38.328 -35.416
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
 
 Model MS_Revolver2
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Revolver"
 	Model 0 "rev.md3"
 	Skin 0 "WPN-REV2.png"
 	Scale 1.35 1.35 1.35
+	Offset 9.935 -38.328 -35.416
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
 
 Model MS_Rifle
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Rifle"
 	Model 0 "m16.md3"
 	Skin 0 "WPN-M16.png"
 	Scale 1.35 1.35 1.35
+	Offset 0.169 -45.878 -2.784
 	FrameIndex CHGG A 0 0
 	FrameIndex CHGG B 0 9999
 }
 
 Model MS_Shotgun
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Shotgun"
 	Model 0 "shotgun.md3"
 	Skin 0 "WPN-GUNS.png"
 	Scale 1.35 1.35 1.35
+	Offset 0.042 -41.745 -4.028
 	FrameIndex SHTG A 0 0
 	FrameIndex SHTG B 0 9999
 }
 
 Model MS_SuperShotgun
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/SuperShotgun"
 	Model 0 "ssg.md3"
 	Skin 0 "WPN-GUNS.png"
 	Scale 1.35 1.35 1.35
+	Offset 0.485 -30.438 -2.805
 	FrameIndex SHT2 A 0 0
 	FrameIndex SHT2 B 0 9999
 }
 
 Model MS_Chainsaw
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Chainsaw"
 	Model 0 "chainsaw.md3"
 	Skin 0 "chainsaw.png"
 	Scale 1.35 1.35 1.35
+	Offset -2.468 -45.120 -15.378
 	FrameIndex SAWG A 0 13
 	FrameIndex SAWG B 0 9999
 }
 
 Model MS_Chaingun
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Chaingun"
 	Model 0 "Chaingun.md3"
 	Skin 0 "chaingun.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
+	Offset -0.484 -69.328 -8.469
 	NoInterpolation
 	FrameIndex CHGG A 0 4
 	FrameIndex CHGG B 0 9999
@@ -119,33 +136,36 @@ Model MS_Chaingun
 
 Model MS_PlasmaRifle
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/PlasmaRifle"
 	Model 0 "PlasmaRifle.md3"
 	Skin 0 "PlasmaRifle.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
+	Offset 0.469 -60.688 -1.266
 	FrameIndex PLSG A 0 4
 	FrameIndex PLSG B 0 9999
 }
 
 Model MS_RocketLauncher
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/RocketLauncher"
 	Model 0 "RPG.md3"
 	Skin 0 "RPG.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
+	Offset 3.250 -14.172 8.828
 	FrameIndex MISG A 0 5
 	FrameIndex MISG B 0 9999
 }
 
 Model MS_VR_BFG9000
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/BFG9000"
 	Model 0 "BFG.md3"
 	Skin 0 "bfg.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
+	Offset 0.078 -54.500 1.016
 	NoInterpolation
 	FrameIndex BFGG A 0 6
 	FrameIndex BFGG B 0 9999
@@ -153,12 +173,12 @@ Model MS_VR_BFG9000
 
 Model MS_BD_BrutalSMG
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/SMG"
 	Model 0 "BrutalSMG.md3"
 	Skin 0 "BrutalSMG.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset -0.156 -38.438 -10.984
 	NoInterpolation
 	FrameIndex CHGG A 0 3
 	FrameIndex CHGG B 0 9999
@@ -166,12 +186,12 @@ Model MS_BD_BrutalSMG
 
 Model MS_BD_Machinegun
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Machinegun"
 	Model 0 "Machinegun.md3"
 	Skin 0 "Machinegun.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset -0.203 -52.594 -4.188
 	NoInterpolation
 	FrameIndex CHGG A 0 10
 	FrameIndex CHGG B 0 9999
@@ -179,12 +199,12 @@ Model MS_BD_Machinegun
 
 Model MS_BD_M79
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/GrenadeLauncher"
 	Model 0 "M79.md3"
 	Skin 0 "M79.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset 0.047 -41.297 -5.828
 	NoInterpolation
 	FrameIndex MISG A 0 3
 	FrameIndex MISG B 0 9999
@@ -192,12 +212,12 @@ Model MS_BD_M79
 
 Model MS_BD_nade
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Grenade"
 	Model 0 "nade.md3"
 	Skin 0 "nade.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset -0.297 -20.922 -23.031
 	NoInterpolation
 	FrameIndex MISG A 0 0
 	FrameIndex MISG B 0 9999
@@ -205,12 +225,12 @@ Model MS_BD_nade
 
 Model MS_BD_RailGun
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/RailGun"
 	Model 0 "RailGun.md3"
 	Skin 0 "RailGun.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset -0.141 -52.516 -2.250
 	NoInterpolation
 	FrameIndex PLSG A 0 3
 	FrameIndex PLSG B 0 9999
@@ -218,12 +238,12 @@ Model MS_BD_RailGun
 
 Model MS_BD_Flamethrower2
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Flamethrower"
 	Model 0 "Flamethrower2.md3"
 	Skin 0 "Flamethrower2.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset -0.469 -57.031 -13.359
 	NoInterpolation
 	FrameIndex PLSG A 0 0
 	FrameIndex PLSG B 0 9999
@@ -231,24 +251,24 @@ Model MS_BD_Flamethrower2
 
 Model MS_BD_Unmaker
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Unmaker"
 	Model 0 "Unmaker.md3"
 	Skin 0 "Unmaker.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset 0.016 -56.438 -8.641
 	FrameIndex BFGG A 0 4
 	FrameIndex BFGG B 0 9999
 }
 
 Model MS_BD_BrutalAxe
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Axe"
 	Model 0 "BrutalAxe.md3"
 	Skin 0 "BrutalAxe.png"
 	Scale -1.5 1.5 1.5
-	Offset 0.0 10.0 0.0
-	ZOffset 5
+	Offset -0.047 -45.912 7.613
 	PitchOffset -10
 	NoInterpolation
 	FrameIndex PUNG A 0 5
@@ -257,91 +277,96 @@ Model MS_BD_BrutalAxe
 
 Model MS_BD_Boot
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Kick"
 	Model 0 "Boot.md3"
 	Skin 0 "Boot.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset -0.016 -32.250 -40.109
 	NoInterpolation
 	FrameIndex PUNG A 0 0
 	FrameIndex PUNG B 0 9999
 }
 Model MS_MG_Tec9
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Tec9"
 	Model 0 "tec9.md3"
 	Skin 0 "tec9.png"
 	Scale -1.1 1.1 1.1
-	Offset 0.0 0.0 0.0
-	ZOffset -6
+	Offset -0.086 -43.243 -7.822
 	FrameIndex CHGG A 0 0
 	FrameIndex CHGG B 0 9999
 }
 
 Model MS_MG_Bolter
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Bolter"
 	Model 0 "Bolter.md3"
 	Skin 0 "bolter.png"
 	Scale -1.1 1.1 1.1
-	Offset 0.0 0.0 0.0
-	ZOffset -6
+	Offset -0.223 -41.439 -10.916
 	FrameIndex PLSG A 0 0
 	FrameIndex PLSG B 0 9999
 }
 // Aliens: Eradication. Scales are the addon's own.
 Model MS_AE_Pistol
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/AE_Pistol"
 	Model 0 "m4a3.md3"
 	Skin 0 "m4a3.png"
 	Scale -0.82 0.82 0.82
-	Offset 0.0 -29.0 -8.0
+	Offset 0.013 -28.103 -8.435
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
 
 Model MS_AE_Shotgun
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/AE_Shotgun"
 	Model 0 "m37a2.md3"
 	Skin 0 "m37a2.png"
 	Scale -1.1 1.1 1.1
-	Offset 0.0 -30.0 -7.0
+	Offset -0.257 -49.130 -5.625
 	FrameIndex SHTG A 0 0
 	FrameIndex SHTG B 0 9999
 }
 
 Model MS_AE_Flamer
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/AE_Flamer"
 	Model 0 "m260b.md3"
 	Skin 0 "m260b.png"
 	Scale -1.1 1.1 1.1
-	Offset 0.0 -30.0 -7.0
+	Offset -0.378 -62.450 -4.043
 	FrameIndex PLSG A 0 0
 	FrameIndex PLSG B 0 9999
 }
 // Ermac's Robocop Doom and Cola 3 sets. Scales are theirs.
 Model MS_RC_Auto9
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/RC_Auto9"
 	Model 0 "auto9.md3"
 	Skin 0 "auto9.png"
 	Scale -0.65 0.65 0.65
-	Offset 0.0 -30.0 -8.0
+	Offset -0.071 -32.224 -7.045
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
 
 Model MS_Cola_Revolver
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Cola_Revolver"
 	Model 0 "revolver.md3"
 	Skin 0 "revolver.png"
 	Scale -0.7 0.7 0.7
-	Offset 0.0 -28.0 -7.0
+	Offset 0.022 -31.992 -3.959
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -349,12 +374,13 @@ Model MS_Cola_Revolver
 // Two surfaces: the tool body and its gas label.
 Model MS_Jackhammer
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Jackhammer"
 	Model 0 "jackhammer.md3"
 	SurfaceSkin 0 0 "jackhammer.png"
 	SurfaceSkin 0 1 "gas_label.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 -28.0 -8.0
+	Offset 1.375 -24.953 -3.734
 	FrameIndex SAWG A 0 0
 	FrameIndex SAWG B 0 9999
 }
@@ -362,11 +388,12 @@ Model MS_Jackhammer
 // Its own MODELDEF names chainsaw.png; the file shipped is chainsaw.jpg.
 Model MS_RC_Chainsaw
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/RC_Chainsaw"
 	Model 0 "chainsaw.md3"
 	Skin 0 "chainsaw.jpg"
 	Scale -0.85 0.85 0.85
-	Offset 0.0 -22.0 -10.0
+	Offset 0.212 -32.465 -7.901
 	FrameIndex SAWG A 0 0
 	FrameIndex SAWG B 0 9999
 }
@@ -374,6 +401,7 @@ Model MS_RC_Chainsaw
 // Nine surfaces alternating two textures.
 Model MS_RC_M32
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/RC_M32"
 	Model 0 "m32.md3"
 	SurfaceSkin 0 0 "m32_tex1.png"
@@ -386,7 +414,7 @@ Model MS_RC_M32
 	SurfaceSkin 0 7 "m32_tex2.png"
 	SurfaceSkin 0 8 "m32_tex1.png"
 	Scale -0.62 0.62 0.62
-	Offset 0.0 -30.0 -8.0
+	Offset -0.097 -55.847 -3.292
 	NoInterpolation
 	FrameIndex MISG A 0 0
 	FrameIndex MISG B 0 9999
@@ -394,40 +422,47 @@ Model MS_RC_M32
 
 Model MS_Rifle2
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Rifle"
 	Model 0 "m16.md3"
 	Skin 0 "WPN-M16-k1.png"
 	Scale 1.35 1.35 1.35
+	Offset 0.169 -45.878 -2.784
 	FrameIndex CHGG A 0 0
 	FrameIndex CHGG B 0 9999
 }
 
 Model MS_Shotgun2
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Shotgun"
 	Model 0 "shotgun.md3"
 	Skin 0 "WPN-GUNS-k1.png"
 	Scale 1.35 1.35 1.35
+	Offset 0.042 -41.745 -4.028
 	FrameIndex SHTG A 0 0
 	FrameIndex SHTG B 0 9999
 }
 
 Model MS_SuperShotgun2
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/SuperShotgun"
 	Model 0 "ssg.md3"
 	Skin 0 "WPN-GUNS-k1.png"
 	Scale 1.35 1.35 1.35
+	Offset 0.485 -30.438 -2.805
 	FrameIndex SHT2 A 0 0
 	FrameIndex SHT2 B 0 9999
 }
 Model MS_Beretta
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Beretta"
 	Model 0 "Beretta.md3"
 	Skin 0 "Beretta.jpg"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 -24.0 -10.0
+	Offset -0.078 -34.125 -4.406
 	NoInterpolation
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
@@ -435,12 +470,12 @@ Model MS_Beretta
 
 Model MS_BD_AssaultShotgun
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/AssaultShotgun"
 	Model 0 "AssaultShotgun.md3"
 	Skin 0 "AssaultShotgun.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset 0.047 -54.656 -5.906
 	NoInterpolation
 	FrameIndex SHTG A 0 4
 	FrameIndex SHTG B 0 9999
@@ -448,12 +483,12 @@ Model MS_BD_AssaultShotgun
 
 Model MS_BD_Rifle
 {
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/RifleBD"
 	Model 0 "Rifle.md3"
 	Skin 0 "Rifle.png"
 	Scale -1.0 1.0 1.0
-	Offset 0.0 0.0 0.0
-	ZOffset -5
+	Offset -0.344 -39.516 -2.734
 	NoInterpolation
 	FrameIndex CHGG A 0 3
 	FrameIndex CHGG B 0 9999
