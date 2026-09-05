@@ -72,8 +72,15 @@ class RS_ForeignClip
 			"MS_RC_Auto9|ready|0@1|-1|-1|-1",
 			"MS_RC_Auto9|fire|1@2,1@2,1@2,2@8|0|-1|-1",
 			"MS_Cola_Revolver|ready|0@1|-1|-1|-1",
-			"MS_Cola_Revolver|fire|1-6@1|0|-1|-1",
-			"MS_Cola_Revolver|reload|7-30@2|-1|0|20",
+			// FROM THE SOURCE (Cola-3-VR-Weapons, modeldef.revolver.txt): Ready 0,
+			// then SIX fire cycles of five frames, one per chamber -- 1-5, 6-10,
+			// 11-15, 16-20, 21-25, 26-30 -- and the reload at 31-54: eject 31-33,
+			// drop 34-37, insert 38-41, close 42-44, spin-up 45-54. Our old rows
+			// called 7-30 "reload" (it is fire cycles two to six) and never
+			// reached the reload at all. Fire is one chamber cycle; the mod's
+			// own fire states already repeat it per shot.
+			"MS_Cola_Revolver|fire|1-5@1|0|-1|-1",
+			"MS_Cola_Revolver|reload|31-54@1|-1|0|20",
 			"MS_RC_Chainsaw|ready|0-10@1|-1|-1|-1",
 			"MS_RC_Chainsaw|fire|11-24@1|0|-1|-1",
 			// A RECIPROCATING STROKE, and the duplicate analysis shows it
