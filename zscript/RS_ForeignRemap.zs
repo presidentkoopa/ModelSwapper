@@ -316,12 +316,23 @@ class RS_ForeignRemap play
 	// legs already hidden the boot has no business drawing either.
 	static bool IsModsOwnFlash(string lname)
 	{
-		if (lname == "flash") return false;
+		// "FLASH" IS NOT IN THIS LIST, and that is the whole lesson.
+		//
+		// It was, briefly, on the reasoning that a flash with a qualifier
+		// must be the mod's own. It is not: Project Brutality names its
+		// ORDINARY muzzle-flash sprite states Flash1, Flash2, Flash10,
+		// BigFlash1-6, BeltFlash. Sparing those puts the flat sprite back
+		// over every gun -- the exact artefact this function exists to
+		// remove -- and it is not a small set: PB has dozens.
+		//
+		// glow, beam and muzzle carry no such collision. They cost two
+		// labels, CausticFlash and InfernoFlash on the DemonTech, which
+		// stay blanked. That is a fair trade against flat sprites on
+		// every weapon, and it is the narrow rule that was working.
 		if (lname.IndexOf("kick") >= 0 || lname.IndexOf("punch") >= 0) return false;
 		return lname.IndexOf("muzzle") >= 0
 		    || lname.IndexOf("glow")   >= 0
-		    || lname.IndexOf("beam")   >= 0
-		    || lname.IndexOf("flash")  >= 0;
+		    || lname.IndexOf("beam")   >= 0;
 	}
 
 	// Labels that mean "whatever follows is NOT part of a psprite
