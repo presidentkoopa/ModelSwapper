@@ -85,6 +85,65 @@ OptionMenu "RSFM_Main"
     StaticText " "
 
     Submenu "Ballistics", "RSFM_Ballistic"
+    Submenu "Fit In Hand", "RSFM_Fit"
+}
+
+// ---------------------------------------------------------------------
+// FIT IN HAND. Nothing here is ours: every slider is an engine cvar the
+// fork already applies in its HUD-model matrix (hw_vrmodes.cpp), and it
+// is applied AFTER the model is rotated. NOTE the per-hand offsets go
+// into the matrix as (x, z, y): hand_ofs_z is the UP slot and hand_ofs_y
+// is the IN/OUT slot (models.cpp, the translate that also carries Offset),
+// so the labels below follow the slot, not the letter.
+// The whole-weapon offsets are applied -- so "in/out, left/right,
+// up/down" mean the hand's own frame, which is what they should mean in
+// a headset. Exposed rather than reinvented: a value dialled in here can
+// be baked into a MODELDEF Offset later and mean exactly the same thing.
+//
+// Engine settings: do nothing on the Quest build, same as Muzzle Flash
+// Opacity above. Units are map units; angles are degrees.
+// ---------------------------------------------------------------------
+OptionMenu "RSFM_Fit"
+{
+    Title "Fit In Hand"
+    StaticText " "
+    StaticText "Move and size every model at once, in the hand's own", "DarkGray"
+    StaticText "frame. All engine settings -- nothing here is ModelSwapper's,", "DarkGray"
+    StaticText "so they also apply to any other 3D weapon you load.", "DarkGray"
+    StaticText "Engine settings: do nothing on the Quest build.", "DarkGray"
+    StaticText " "
+
+    StaticText "Size", "Gold"
+    Slider "Weapon Scale",        "vr_weaponScale",       0.50, 2.00, 0.01, 2
+    StaticText " "
+
+    StaticText "Position -- every weapon", "Gold"
+    Slider "In / Out",            "vr_3dweaponOffsetZ",   -40, 40, 0.5, 1
+    Slider "Left / Right",        "vr_3dweaponOffsetX",   -40, 40, 0.5, 1
+    Slider "Down / Up",           "vr_3dweaponOffsetY",   -40, 40, 0.5, 1
+    StaticText "Applied after the model is rotated, so these follow the", "DarkGray"
+    StaticText "hand rather than the map.", "DarkGray"
+    StaticText " "
+
+    StaticText "Main hand", "Gold"
+    Slider "Down / Up",           "vr_hand_ofs_z",        -20, 20, 0.25, 2
+    Slider "Left / Right",        "vr_hand_ofs_x",        -20, 20, 0.25, 2
+    Slider "In / Out",            "vr_hand_ofs_y",        -20, 20, 0.25, 2
+    Slider "Yaw",                 "vr_hand_yaw",          -45, 45, 1, 0
+    Slider "Pitch",               "vr_hand_pitch",        -45, 45, 1, 0
+    Slider "Roll",                "vr_hand_roll",         -45, 45, 1, 0
+    StaticText " "
+
+    StaticText "Off hand", "Gold"
+    Slider "Down / Up",           "vr_offhand_ofs_z",     -20, 20, 0.25, 2
+    Slider "Left / Right",        "vr_offhand_ofs_x",     -20, 20, 0.25, 2
+    Slider "In / Out",            "vr_offhand_ofs_y",     -20, 20, 0.25, 2
+    Slider "Yaw",                 "vr_offhand_yaw",       -45, 45, 1, 0
+    Slider "Pitch",               "vr_offhand_pitch",     -45, 45, 1, 0
+    Slider "Roll",                "vr_offhand_roll",      -45, 45, 1, 0
+    StaticText " "
+    StaticText "Every model is now centred on its own origin, so these", "DarkGray"
+    StaticText "rotate a gun about its middle rather than a point off it.", "DarkGray"
 }
 
 // Kept on its own page and off the main one on purpose. Everything else
