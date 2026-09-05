@@ -117,6 +117,14 @@ OptionMenu "RSFM_Ballistic"
     StaticText "heavy firefight starts to cost you frames.", "DarkGray"
     StaticText " "
 
+    Option "Effects Follow The Gun", "rs_fm_effects", "OnOff"
+    StaticText "Mods spawn brass and smoke relative to the PLAYER, because", "DarkGray"
+    StaticText "on a monitor the player and the gun are the same place. In a", "DarkGray"
+    StaticText "headset they are not, so the casings leave your face. This", "DarkGray"
+    StaticText "shifts them onto the muzzle, keeping the arc the author drew.", "DarkGray"
+    StaticText "Only affects weapons wearing one of our models.", "DarkGray"
+    StaticText " "
+
     Slider "Muzzle Trim", "rs_fm_muzzle", -20, 80, 1, 0
     StaticText "The engine fires from your hand -- it has no idea where a", "DarkGray"
     StaticText "barrel ends. Each weapon family already gets its own guess;", "DarkGray"

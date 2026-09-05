@@ -1019,6 +1019,11 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// is named here.
 	Array<string> mBlankSeen;
 
+	// The other half of that decision: layers looked at once and left
+	// alone, because the state named them as the mod's own muzzle flash.
+	// Cached for the same reason -- naming a state walks the label table.
+	Array<string> mBlankSkip;
+
 	// The other half of that decision: layers we looked at once and left
 	// alone because their state named them as somebody's muzzle flash,
 	// casing or legs rather than part of the gun. Cached for the same
@@ -2124,33 +2129,44 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// does not change: -40 is that weapon's muzzle flash for the
 			// whole session, -1000 is its legs.
 			string key = c.GetClassName() .. "#" .. id;
+			if (mBlankSkip.Find(key) != mBlankSkip.Size()) continue;
 			if (mBlankSeen.Find(key) == mBlankSeen.Size())
 			{
 				string lbl = RS_ForeignDebug.StateLabel(c, psp.CurState);
 
-				// EVERY LAYER STILL GOES, including the flash.
+				// A NAMED MUZZLE FLASH IS THE MOD'S, NOT OURS TO ERASE.
 				//
-				// There was briefly a filter here that spared any layer
-				// whose state was named like an effect -- muzzle, flash,
-				// smoke, casing. It was a misreading and it is recorded
-				// here so nobody adds it back.
+				// Two different layers show up here, and they are not the same
+				// thing even though both are "the flash":
 				//
-				// The report showed us blanking PB's 'NormalMuzzle4', and
-				// that looked like the cause of a complaint about its
-				// effects being wrong. It was not. The complaint was that
-				// effects appeared IN THE WRONG PLACE, and blanking a layer
-				// cannot move anything -- it only hides it. Sparing the
-				// flash layer did nothing for that and switched off the
-				// thing this function is named after: the flat muzzle flash
-				// drew straight over the model again, which is the exact
-				// artefact the mod exists to remove.
+				//   layer 1000  state 'Flash'          the STANDARD flash layer
+				//   layer -40   state 'NormalMuzzle4'  Project Brutality's own
 				//
-				// So the rule stands as it was. If a mod's effect really is
-				// being lost to this, the fix has to distinguish a layer
-				// drawing the GUN from one drawing an effect by something
-				// sturdier than its state's name -- and the misplacement
-				// bug needs its own diagnosis first, because nothing here
-				// moves a sprite.
+				// The standard one is the flat sprite this function exists to
+				// kill -- leave it and vanilla's muzzle flash draws straight
+				// through the model. The mod's own is an effect it authored and
+				// placed, and erasing it is us taking something away.
+				//
+				// The test is "muzzle" ALONE, deliberately narrow. An earlier
+				// version of this matched "flash" as well, which caught the
+				// standard layer too and put vanilla's sprite back on screen.
+				// The standard label is exactly "Flash" and contains no "muzzle",
+				// so this one token separates them and nothing wider is safe.
+				//
+				// This does NOT address effects appearing in the wrong place.
+				// Blanking hides, it never moves; PB spawns its casings and
+				// smoke from player.viewz rotated by head angle and pitch
+				// (PB_SpawnCasing, BaseWeapon_Functions.zsc), which is why they
+				// come out of your face in a headset. Nothing here reaches that.
+				if (lbl.MakeLower().IndexOf("muzzle") >= 0)
+				{
+					mBlankSkip.Push(key);
+					if (RS_ForeignRemap.DebugOn())
+						Console.Printf("[RSRM] leaving layer %d of %s alone -- '%s' is the mod's own muzzle flash",
+							id, c.GetClassName(), lbl);
+					continue;
+				}
+
 				mBlankSeen.Push(key);
 				if (RS_ForeignRemap.DebugOn())
 					Console.Printf("[RSRM] blanking layer %d of %s -- was sprite %d frame %d, state '%s'",

@@ -62,6 +62,23 @@ server int  rs_fm_ballistic_speed = 300;    // map units per tic, clamped 10-400
 // four draw on the stock PUFF instead.
 server int rs_fm_ballistic_type = 1;   // clamped 1-5
 
+// THEIR CASINGS COME OUT OF YOUR FACE. A weapon mod spawns brass, smoke
+// and ejection effects relative to the PLAYER, because on a monitor the
+// player and the gun are the same place. In a headset they are not: the
+// gun is in a tracked hand and the eye is your face, so the brass leaves
+// your cheekbone and swings around as you look up and down.
+//
+// This shifts anything a mod spawns next to the eye, in the moment after
+// you work the weapon, by the vector from the eye to the muzzle. It
+// TRANSLATES rather than repositions, so every offset and every velocity
+// the author wrote survives intact -- the ejection arc is the one they
+// drew, starting from the gun instead of your face.
+//
+// Only for weapons wearing one of our models, because we are the reason
+// the gun moved. On by default: the displacement it corrects is one this
+// mod causes.
+server bool rs_fm_effects = true;
+
 // Bullet Time X compensation. Inert unless that mod is loaded alongside.
 // 0.0 = player as slow as the monsters, 1.0 = normal player movement speed
 // -- their own player-divisor cvar has no faster setting than that, so 1.0
