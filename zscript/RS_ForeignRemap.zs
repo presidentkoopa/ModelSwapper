@@ -238,8 +238,43 @@ class RS_ForeignRemap play
 		if (lname == "select")   return "select";
 		if (lname == "deselect") return "deselect";
 		if (lname == "zoom")   return "ads";
-		if (lname == "ready"  || lname == "user1"    || lname == "user2"
-		 || lname == "user3"  || lname == "user4") return "ready";
+		// USER KEYS ARE NOT IDLE. A mod binds User1-4 to whatever it
+		// likes, and "whatever it likes" is very often a reload, an
+		// unload, or a mag check -- so folding them into ready smeared
+		// the ONE-FRAME idle clip across a whole reload animation and
+		// cached it. Ask the name first; fall back to ready only when the
+		// name says nothing, which is the old behaviour for a label that
+		// really is just another idle.
+		if (lname == "user1" || lname == "user2"
+		 || lname == "user3" || lname == "user4")
+		{
+			string byName = NamedClip(lname);
+			return byName.Length() > 0 ? byName : "ready";
+		}
+		if (lname == "ready") return "ready";
+		return "";
+	}
+
+	// WHAT A LABEL'S NAME SAYS IT IS.
+	//
+	// A custom label normally joins whichever standard group precedes it
+	// in source order, which is right almost always: ReloadDone written
+	// under Reload: belongs to the reload. It is wrong when the mod
+	// declares its reload chain BEFORE Reload:, or hangs it off a user
+	// key, because then source order attributes a reload to the fire
+	// group or to the one-frame idle.
+	//
+	// So a name that plainly states its purpose beats position. Kept
+	// narrow on purpose -- only words that cannot mean anything else on a
+	// weapon. "load" alone is not here: it catches "Loaded", "Reloading"
+	// and also "Unloadable", but it also catches nothing useful that
+	// "reload"/"unload" miss.
+	static string NamedClip(string lname)
+	{
+		if (lname.IndexOf("reload")  >= 0
+		 || lname.IndexOf("unload")  >= 0
+		 || lname.IndexOf("chamber") >= 0
+		 || lname.IndexOf("magazine")>= 0) return "reload";
 		return "";
 	}
 
@@ -356,6 +391,27 @@ class RS_ForeignRemap play
 			if (i < n && IsEffectLabel(lname)) continue;
 
 			string std = (i < n) ? PspriteClip(lname) : "";
+
+			// A CUSTOM LABEL WHOSE NAME CONTRADICTS ITS POSITION.
+			//
+			// Source order is right almost always, and where it is right
+			// this must not interfere. The case it fixes: Project
+			// Brutality declares ReloadUnloaded inside its ALTFIRE block,
+			// so a reload-from-empty was wearing the altfire clip.
+			//
+			// Guarded by "byName != groupClip", and that guard is doing
+			// the real work. Without it, ContinueReload and LoadChamber --
+			// which sit correctly inside the reload group -- would each
+			// CLOSE it and open a reload group of their own, shattering
+			// one 449-state animation into nineteen fragments that each
+			// replay the whole clip. Only a name that disagrees with the
+			// group it landed in gets to break out.
+			if (i < n && std.Length() == 0)
+			{
+				string byName = NamedClip(lname);
+				if (byName.Length() > 0 && byName != groupClip) std = byName;
+			}
+
 			bool closer = (i >= n) || (std.Length() > 0) || ClosesGroup(lname);
 
 			if (closer)

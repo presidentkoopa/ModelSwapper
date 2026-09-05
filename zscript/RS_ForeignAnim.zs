@@ -51,8 +51,19 @@ class RS_ForeignClip
 			"MS_AE_Shotgun|ready|0@1|-1|-1|-1",
 			"MS_AE_Shotgun|fire|0@1,1@1,1@2,2@2,0@1,3@1,3@1,4@1,4@1,5@1,5@1,4@1,4@1,3@1,3@1,0@2|1|-1|-1",
 			"MS_AE_Shotgun|reload|14-28@2|-1|0|12",
+			// FROM THE SOURCE'S OWN SECTION COMMENTS (Aliens Eradication,
+			// modeldef.flamethrower.txt): Ready 0, Fire 1-3, "Reloading -
+			// drop canister" 5-9, "Reloading - add new canister" 11-19.
+			// Frame 4 duplicates 0; frame 10 is its no-canister ready pose.
+			//
+			// The reload is fourteen frames and nothing had ever played it.
+			// It also explains the pitch readings on 7-10: the canister
+			// leaves the gun, so the measured long axis briefly becomes the
+			// canister's path rather than the barrel.
+			"MS_AE_Flamer|fire|1@1,2@1,3@1|0|-1|-1",
 			"MS_AE_Flamer|ready|0@1|-1|-1|-1",
-			"MS_AE_Flamer|fire|0@2,1@2,1@2,2@2,3@2,0@2,1@2,1@2,1@1,0@1|0|-1|-1",
+			"MS_AE_Flamer|reload|5@1,6@1,7@1,8@1,9@1,11@1,12@1,13@1,14@1,15@1,16@1,17@1,18@1,19@1|-1|-1|-1",
+			"MS_AE_Flamer|select|0@1|-1|-1|-1",
 			"MS_RC_Auto9|ready|0@1|-1|-1|-1",
 			"MS_RC_Auto9|fire|1@2,1@2,1@2,2@8|0|-1|-1",
 			"MS_Cola_Revolver|ready|0@1|-1|-1|-1",
@@ -60,8 +71,20 @@ class RS_ForeignClip
 			"MS_Cola_Revolver|reload|7-30@2|-1|0|20",
 			"MS_RC_Chainsaw|ready|0-10@1|-1|-1|-1",
 			"MS_RC_Chainsaw|fire|11-24@1|0|-1|-1",
+			// A RECIPROCATING STROKE, and the duplicate analysis shows it
+			// plainly: frames 6/19, 7/18, 8/17 and 9/16 are IDENTICAL pairs
+			// and 10-15 are one held pose. The animation drives out to the
+			// top of the stroke, holds, and returns along the same poses.
+			// 0-5 are all the same idle.
+			//
+			// So fire is the whole stroke. It reaches 19 degrees above the
+			// rest pose at the top, which is the tool working rather than
+			// the gun swinging, and fire carries no pitch tolerance for
+			// exactly that reason.
+			"MS_Jackhammer|fire|6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1,16@1,17@1,18@1,19@1|0|-1|-1",
+			"MS_Jackhammer|altfire|6@1,7@1,8@1,9@1,10@1,16@1,17@1,18@1,19@1|0|-1|-1",
 			"MS_Jackhammer|ready|0@1|-1|-1|-1",
-			"MS_Jackhammer|fire|1@1,2@1,3@1,4@1,5@1|0|-1|-1",
+			"MS_Jackhammer|select|0@1|-1|-1|-1",
 			"MS_RC_M32|ready|0@1|-1|-1|-1",
 			"MS_RC_M32|fire|1@3,2@3,3@3,4@3,5@3,6@3|0|-1|-1",
 			"MS_RC_M32|reload|7-36@2|-1|0|24",
@@ -76,14 +99,14 @@ class RS_ForeignClip
 			"MS_SuperShotgun2|reload|8@2,9-17@3,18@2,19-21@3,23@2,24@2,24@1|0|-1|-1",
 
 			"MS_Beretta|fire|1@1,2@1,3@1,4@1,5@1,6@1,7@1|0|-1|-1",
-			"MS_Beretta|ready|23@1|-1|-1|-1",
+			"MS_Beretta|ready|0@1|-1|-1|-1",
 			"MS_Beretta|reload|22@1|-1|-1|-1",
-			"MS_Beretta|select|23@1|-1|-1|-1",
+			"MS_Beretta|select|0@1|-1|-1|-1",
 			"MS_BD_AssaultShotgun|ads|4@1,5@1,6@1,7@1,8@1,9@1,10@1|-1|-1|-1",
 			"MS_BD_AssaultShotgun|fire|4@1,5@1,6@1,7@1,8@1,9@1,10@1|0|-1|-1",
 			"MS_BD_AssaultShotgun|ready|4@1|-1|-1|-1",
 			"MS_BD_AssaultShotgun|reload|11@1,12@1,13@1,14@1,15@1,16@1,17@1,18@1,19@1,20@1,21@1,22@1,23@1,24@1,25@1,26@1,27@1,28@1,29@1,30@1,31@1|-1|-1|-1",
-			"MS_BD_AssaultShotgun|select|0@1|-1|-1|-1",
+			"MS_BD_AssaultShotgun|select|3@1,4@1|-1|-1|-1",
 			"MS_BD_AssaultShotgun|sprint|3@1|-1|-1|-1",
 			"MS_BD_Rifle|ads|27@1,28@1,29@1|-1|-1|-1",
 			"MS_BD_Rifle|fire|3@1,4@1,5@1,6@1|0|-1|-1",
@@ -136,8 +159,35 @@ class RS_ForeignClip
 			"MS_BD_RailGun|sprint|2@1|-1|-1|-1",
 			"MS_BD_Unmaker|ready|4@1|-1|-1|-1",
 			"MS_BD_Unmaker|reload|5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1|-1|-1|-1",
-			"MS_Chaingun|fire|4@2,10@2|0|-1|-1",
+			// THE SOURCE ONLY EVER USED TWO FRAMES OF SIXTEEN.
+			//
+			// VanAlek's own modeldef declares CHGG A -> 4 and CHGG B -> 10
+			// and stops, because vanilla Doom's chaingun psprite alternates
+			// exactly two frames and nothing more was needed. We copied
+			// that faithfully, so on a mod with a real chaingun animation
+			// the model sat on one pose.
+			//
+			// Measured off the mesh, it holds far more than that:
+			//
+			//   0       exploded -- 1382 units on a 103-unit gun, unusable
+			//   1-4     the raise, -31 to -6 degrees
+			//   5-15    level at -1.5, length cycling 102.8 -> 103.0:
+			//           eleven frames of the barrels turning
+			//
+			// So fire is the whole spin rather than two poses of it, and
+			// select is the tail of the raise. Frames 1 and 2 are left out:
+			// they sit 22 and 26 degrees off the rest pose, and a gun that
+			// swings that far in a tracked hand is the artefact the pitch
+			// pass exists to remove.
+			//
+			// No reload clip. The mesh has no reload frames and inventing
+			// one from the spin would be a lie -- a weapon with nothing to
+			// show holds its rest pose, which is honest.
+			"MS_Chaingun|fire|4@1,5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1|0|-1|-1",
+			"MS_Chaingun|altfire|4@1,5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1|0|-1|-1",
 			"MS_Chaingun|ready|4@1|-1|-1|-1",
+			"MS_Chaingun|select|3@1,4@1|-1|-1|-1",
+			"MS_Chaingun|sprint|4@1|-1|-1|-1",
 			"MS_Chainsaw|deselect|11@1|-1|-1|-1",
 			"MS_Chainsaw|fire|6@1,7@1,8@1,9@1,10@1,11@1,12@1,7@1|0|-1|-1",
 			"MS_Chainsaw|ready|13@4,14@4|-1|-1|-1",
@@ -183,8 +233,20 @@ class RS_ForeignClip
 			"MS_SuperShotgun|fire|0@2,1-7@2|0|-1|-1",
 			"MS_SuperShotgun|ready|0@1|-1|-1|-1",
 			"MS_SuperShotgun|reload|8@2,9-17@3,18@2,19-21@3,23@2,24@2,24@1|0|-1|-1",
-			"MS_VR_BFG9000|fire|7@3,8@3,9@3,6@1|0|-1|-1",
-			"MS_VR_BFG9000|ready|6@1|-1|-1|-1"
+			// MEASURED, because no source modeldef documents this mesh --
+			// RS_Main's only declares BFGG A->6, B->7, C->14. Distinct-frame
+			// analysis gives the real shape:
+			//
+			//   0-5      six distinct poses: the raise
+			//   6-11     one pose repeated six times: the idle
+			//   12-15    four distinct poses: the shot
+			//
+			// So the fire clip is 12-15, not the single frame 14 the source
+			// named, and select is the tail of the raise. Frames 0-3 are
+			// left out: 3 sits 22 degrees off the rest pose.
+			"MS_VR_BFG9000|fire|12@1,13@1,14@1,15@1|0|-1|-1",
+			"MS_VR_BFG9000|ready|6@1|-1|-1|-1",
+			"MS_VR_BFG9000|select|4@1,5@1,6@1|-1|-1|-1",
 		};
 		mRows.Clear();
 		for (int i = 0; i < CLIP.Size(); ++i) mRows.Push(CLIP[i]);

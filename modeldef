@@ -429,7 +429,7 @@ Model MS_Beretta
 	Scale -1.0 1.0 1.0
 	Offset 0.0 -24.0 -10.0
 	NoInterpolation
-	FrameIndex PISG A 0 23
+	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
 

@@ -1,16 +1,40 @@
+// NO BOM IN THIS FILE. A UTF-8 byte order mark makes GZDoom read the
+// first alias name as "\xEF\xBB\xBFalias", so `weaponmodels` silently did
+// nothing for a release. Whatever writes this must write it plain.
+
 alias weaponmodels "openmenu RSFM_Main"
 
+// ---------------------------------------------------------------------
+// BINDABLE KEYS.
+//
+// WE DO NOT TOUCH User1-4. Those four belong to whatever weapon mod is
+// loaded -- it is where mods put reload, mag check, firemode, bipod,
+// bayonet -- and taking one would fight the mod we exist to serve. These
+// are our own named actions instead, so they can never collide.
+//
+// addkeysection puts a "Weapon Model Swap" block in Customize Controls;
+// addmenukey lists each action inside it. NOTHING IS BOUND BY DEFAULT.
+// A mod that helps itself to a key is a mod that stole a key somebody
+// had already assigned, so the bindings are offered and left unset.
+// ---------------------------------------------------------------------
+addkeysection "Weapon Model Swap" RSFM
+
+addmenukey "Model Menu"       weaponmodels
+addmenukey "Model Report"     msdebug
+addmenukey "Frame Trace"      mstrace
+
+// ---------------------------------------------------------------------
 // DEBUG.
 //
-// msdebug dumps the weapon table, every psprite layer, and what we have
-// bound models to -- then writes the whole console to E:/ModelSwapper/
-// msdebug.txt so it can be read without anyone scrolling. condump takes
-// the WHOLE console, so the file has everything above it too, which is
-// usually the useful part.
+// msdebug dumps the weapon table, every psprite layer and what we have
+// bound models to, then condumps the console to a file so it can be read
+// without anyone scrolling. condump takes the WHOLE console, so the file
+// carries everything above it too, which is usually the useful part.
 //
 // mstrace watches the mesh frame of the gun in your hands and prints only
 // when it CHANGES. Toggle it on, stand still, and anything it prints is a
 // twitch you can see.
+// ---------------------------------------------------------------------
 alias msdebug "netevent rs-fm-debug; condump E:/DOOMWork/RS_ModelSwapper/msdebug.txt"
 alias mstrace "netevent rs-fm-trace"
 alias mssave  "condump E:/DOOMWork/RS_ModelSwapper/msdebug.txt"

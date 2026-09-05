@@ -16,7 +16,17 @@ def read_md3(path):
     for _ in range(num_surfaces):
         name = b[o+4:o+68].split(b"\0")[0].decode("latin1")
         num_verts = struct.unpack_from("<i", b, o+80)[0]
-        ofs_xyz   = struct.unpack_from("<i", b, o+96)[0]
+        # MD3 SURFACE HEADER, and getting this wrong is silent:
+        #   80 numVerts   84 numTriangles  88 ofsTriangles
+        #   92 ofsShaders 96 ofsST        100 ofsXYZNormal  104 ofsEnd
+        #
+        # Offset 96 is the TEXTURE COORDINATES, not the vertices. Reading
+        # from there returned texcoord bytes as "frame 0" -- which looked
+        # like a scattered mesh, so 24 of 38 donors appeared to have a
+        # degenerate first frame -- and shifted every real frame down by
+        # one, because the ST array is exactly numVerts*8 bytes, the same
+        # stride as one frame of vertices.
+        ofs_xyz   = struct.unpack_from("<i", b, o+100)[0]
         ofs_end   = struct.unpack_from("<i", b, o+104)[0]
         for f in range(num_frames):
             base = o + ofs_xyz + (f*num_verts)*8

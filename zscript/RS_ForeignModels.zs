@@ -100,7 +100,7 @@ class RS_ForeignShelf
 			"pistol|MS_MG_Bolter|PLSG|0|0|5",
 			"pistol|MS_AE_Pistol|PISG|0|0|20",
 			"pistol|MS_RC_Auto9|PISG|0|0|3",
-			"pistol|MS_Beretta|PISG|0|23|24",
+			"pistol|MS_Beretta|PISG|0|0|24",
 			"revolver|MS_Revolver|PISG|0|0|41",
 			"revolver|MS_Revolver2|PISG|0|0|41",
 			"revolver|MS_Cola_Revolver|PISG|0|0|55",

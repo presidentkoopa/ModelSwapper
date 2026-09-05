@@ -77,6 +77,56 @@ class MS_EffectRelocator : StaticEventHandler
 	// from the eye and is not ours.
 	const EYE_RADIUS = 56.0;
 
+	// WHAT WE MOVED AND WHAT WE LET PAST, one line per class, once each.
+	//
+	// The detector is deliberately mod-agnostic, so trying it against
+	// another mod validates it but cannot discover the NEXT thing of this
+	// shape. This can. Every actor that spawned next to the eye while the
+	// weapon was working gets reported with the reason it was moved or
+	// skipped, so simply playing anything produces the list -- including
+	// the false positives, which are the dangerous half.
+	//
+	// The known gap it should surface first: a missile is skipped on
+	// purpose, because a thrown grenade has to leave from where the mod
+	// aimed it. A mod that draws its TRACER as a missile from the eye is
+	// the same bug wearing a different flag, and there is no way to tell
+	// those two apart from here. Seeing one named in this log is what
+	// would justify doing something about it.
+	Array<string> mReported;
+
+	// WHY WE DID NOTHING. Every gate below can silently disable the whole
+	// feature, and silence is indistinguishable from "there was nothing to
+	// move" -- which is exactly how the first build of this shipped
+	// looking like it worked. Each reason announces itself once.
+	string mLastGate;
+
+	void Gate(string why)
+	{
+		if (!RS_ForeignRemap.DebugOn()) return;
+		if (mLastGate == why) return;
+		mLastGate = why;
+		Console.Printf("\c[Brick][RSFX] standing down: %s", why);
+	}
+
+	void Armed()
+	{
+		if (!RS_ForeignRemap.DebugOn()) return;
+		if (mLastGate == "armed") return;
+		mLastGate = "armed";
+		Console.Printf("\c[Green][RSFX] armed -- shift is %.1f,%.1f,%.1f units from the eye",
+			mShift.x, mShift.y, mShift.z);
+	}
+
+	void Report(Actor a, string what)
+	{
+		if (!RS_ForeignRemap.DebugOn()) return;
+		string key = what .. ":" .. a.GetClassName();
+		if (mReported.Find(key) != mReported.Size()) return;
+		mReported.Push(key);
+		Console.Printf("[RSFX] %-7s %-28s %.0f units from the eye",
+			what, a.GetClassName(), (a.Pos - mEye).Length());
+	}
+
 	static bool Enabled()
 	{
 		CVar c = CVar.FindCVar("rs_fm_effects");
@@ -102,7 +152,17 @@ class MS_EffectRelocator : StaticEventHandler
 			mActionTic = level.maptime;
 
 		let pmo = pi.mo;
-		if (!pmo || !pmo.OverrideAttackPosDir || multiplayer) return;
+		if (!pmo) return;
+		if (multiplayer) { Gate("multiplayer"); return; }
+
+		// NOT A HARD GATE ANY MORE. The ballistic converter treats
+		// OverrideAttackPosDir as a BRANCH -- controller transform when it
+		// is set, computed eye position when it is not -- and making it a
+		// return here meant the whole feature vanished silently on any
+		// setup where the flag reads false. If there is no controller
+		// transform there is also no displacement to correct, so say so
+		// rather than disappearing.
+		if (!pmo.OverrideAttackPosDir) { Gate("no controller transform (OverrideAttackPosDir false)"); return; }
 
 		// ONLY FOR WEAPONS WE MOVED. If the player is holding something we
 		// did not paint, its effects are where its own author put them and
@@ -110,10 +170,12 @@ class MS_EffectRelocator : StaticEventHandler
 		// keeps the feature honest: we compensate for our own displacement
 		// and nothing else.
 		let h = RS_ForeignModelHandler.Get();
-		if (!h || h.mLastMain == null) return;
+		if (!h) { Gate("no model handler"); return; }
+		if (h.mLastMain == null) { Gate("no weapon is wearing one of our models"); return; }
 
 		Weapon w = pi.ReadyWeapon;
-		if (!w || w != h.mLastMain) return;
+		if (!w) { Gate("no ready weapon"); return; }
+		if (w != h.mLastMain) { Gate("ready weapon is not the one we painted"); return; }
 
 		// The eye: exactly the origin a mod builds its offsets from.
 		mEye = (pmo.pos.x, pmo.pos.y, pi.viewz);
@@ -137,6 +199,7 @@ class MS_EffectRelocator : StaticEventHandler
 
 		mShift     = muzzle - mEye;
 		mHaveFrame = true;
+		Armed();
 	}
 
 	// -----------------------------------------------------------------
@@ -166,17 +229,19 @@ class MS_EffectRelocator : StaticEventHandler
 		//   corpses and gibs    -- bIsMonster covers the actor, and gore
 		//                          spawned by a kill next to you is not
 		//                          ours even inside the window
-		if (a.player)      return;
-		if (a.bIsMonster)  return;
-		if (a.bShootable)  return;
-		if (a.bMissile)    return;
-		if (a is 'Inventory') return;
+		if (a.player)     return;
+		if (a.bIsMonster) return;
 
-		// Was it built from the eye? Everything a mod offsets off the view
-		// origin lands within arm's reach of it. Compare in 3D: a casing
-		// is above and in front, and the vertical part is most of what
-		// separates it from something standing on the floor beside you.
+		// Distance first for anything we might REPORT, so the log is not
+		// flooded by every gib in the level -- only things that were
+		// plausibly built from the view origin are worth naming.
 		if ((a.Pos - mEye).Length() > EYE_RADIUS) return;
+
+		if (a.bShootable)     { Report(a, "shoot");  return; }
+		if (a.bMissile)       { Report(a, "missile"); return; }
+		if (a is 'Inventory') { Report(a, "invent"); return; }
+
+		Report(a, "MOVED");
 
 		// Translate. Not reposition -- the mod's own offsets and its
 		// velocity are already correct RELATIVE to where it thought the
