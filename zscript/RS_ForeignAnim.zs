@@ -49,7 +49,12 @@ class RS_ForeignClip
 			"MS_AE_Pistol|fire|1@2,2@2,3@2,4@2,5@2|0|-1|-1",
 			"MS_AE_Pistol|reload|6-19@2|-1|0|10",
 			"MS_AE_Shotgun|ready|0@1|-1|-1|-1",
-			"MS_AE_Shotgun|fire|0@1,1@1,1@2,2@2,0@1,3@1,3@1,4@1,4@1,5@1,5@1,4@1,4@1,3@1,3@1,0@2|1|-1|-1",
+			// FROM THE SOURCE'S OWN SECTIONS (modeldef.shotgun.txt): Ready 0,
+			// Fire 1-3, Pump 4-13, Reloading 14-28. The old fire clip was a
+			// hand-made bounce over 0-5 and never reached most of the pump --
+			// the pump surface travels 17 units across 6-12 and nothing played
+			// it. Fire is the shot then the whole pump, as authored.
+			"MS_AE_Shotgun|fire|1@1,2@1,3@1,4-13@1|0|-1|-1",
 			"MS_AE_Shotgun|reload|14-28@2|-1|0|12",
 			// FROM THE SOURCE'S OWN SECTION COMMENTS (Aliens Eradication,
 			// modeldef.flamethrower.txt): Ready 0, Fire 1-3, "Reloading -
@@ -93,7 +98,12 @@ class RS_ForeignClip
 			"MS_Rifle2|reload|11-13@2,14-25@1,26-34@2,35-37@1,38-40@2,0@1|-1|-1|-1",
 			"MS_Shotgun2|fire|1-4@1,5@1,6@1,7@1,8-12@1,13@1,14-19@1,0@1|0|-1|-1",
 			"MS_Shotgun2|ready|0@1|-1|-1|-1",
-			"MS_Shotgun2|reload|5@2,6@2,19@1,18@1,17@1,16@1,15@1,14@1,13@1,12@1,11@1,10@1,9@1,8@1,7@1,6@1,5@1|0|-1|-1",
+			// FRAMES 20-31 ARE THE SHELL GOING IN. Never referenced by the
+			// source (VanAlek maps SHTG A-Z to 0-25 and no state uses U-Z),
+			// found by measuring which surface moves: the shell surface
+			// travels 60 units across them while the receiver moves 0.35.
+			// Reload is now insert-then-pump instead of pump alone.
+			"MS_Shotgun2|reload|20-31@1,5@2,6@2,19@1,18@1,17@1,16@1,15@1,14@1,13@1,12@1,11@1,10@1,9@1,8@1,7@1,6@1,5@1|0|-1|-1",
 			"MS_SuperShotgun2|fire|0@2,1-7@2|0|-1|-1",
 			"MS_SuperShotgun2|ready|0@1|-1|-1|-1",
 			"MS_SuperShotgun2|reload|8@2,9-17@3,18@2,19-21@3,23@2,24@2,24@1|0|-1|-1",
@@ -202,6 +212,10 @@ class RS_ForeignClip
 			"MS_MG_Bolter|fire|3@1,1@1,1@1,2@1|0|-1|-1",
 			"MS_MG_Tec9|fire|4@1,1@1,2@1,0@1|0|-1|-1",
 			"MS_Pistol|ready|0@1|-1|-1|-1",
+			// FRAMES 26-31 ARE THE DRAW. The source labels them "//draw, cowboy"
+			// (Modeldef.Weapons1, PISD A-F) and no state of ours ever reached
+			// them. Frame 25 is PISG Z, referenced by nothing, left alone.
+			"MS_Pistol|select|26-31@1|-1|-1|-1",
 			"MS_MG_Bolter|ready|0@1|-1|-1|-1",
 			"MS_MG_Tec9|ready|0@1|-1|-1|-1",
 			"MS_MG_Bolter|fire|3@1,1@1,1@1,2@1|0|-1|-1",
@@ -209,6 +223,10 @@ class RS_ForeignClip
 			"MS_Pistol|reload|5-17@1,18-22@1,23-24@1|0|-1|-1",
 			"MS_Pistol2|fire|1@2,2@2,0@1|0|-1|-1",
 			"MS_Pistol2|ready|0@1|-1|-1|-1",
+			// FRAMES 26-31 ARE THE DRAW. The source labels them "//draw, cowboy"
+			// (Modeldef.Weapons1, PISD A-F) and no state of ours ever reached
+			// them. Frame 25 is PISG Z, referenced by nothing, left alone.
+			"MS_Pistol2|select|26-31@1|-1|-1|-1",
 			"MS_Pistol2|reload|5-17@1,18-22@1,23-24@1|0|-1|-1",
 			"MS_PlasmaRifle|fire|4@1,5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1,16@1,17@1|0|-1|-1",
 			"MS_PlasmaRifle|ready|4@1|-1|-1|-1",
@@ -229,7 +247,12 @@ class RS_ForeignClip
 			"MS_RocketLauncher|reload|11-38@1|-1|0|14",
 			"MS_Shotgun|fire|1-4@1,5@1,6@1,7@1,8-12@1,13@1,14-19@1,0@1|0|-1|-1",
 			"MS_Shotgun|ready|0@1|-1|-1|-1",
-			"MS_Shotgun|reload|5@2,6@2,19@1,18@1,17@1,16@1,15@1,14@1,13@1,12@1,11@1,10@1,9@1,8@1,7@1,6@1,5@1|0|-1|-1",
+			// FRAMES 20-31 ARE THE SHELL GOING IN. Never referenced by the
+			// source (VanAlek maps SHTG A-Z to 0-25 and no state uses U-Z),
+			// found by measuring which surface moves: the shell surface
+			// travels 60 units across them while the receiver moves 0.35.
+			// Reload is now insert-then-pump instead of pump alone.
+			"MS_Shotgun|reload|20-31@1,5@2,6@2,19@1,18@1,17@1,16@1,15@1,14@1,13@1,12@1,11@1,10@1,9@1,8@1,7@1,6@1,5@1|0|-1|-1",
 			"MS_SuperShotgun|fire|0@2,1-7@2|0|-1|-1",
 			"MS_SuperShotgun|ready|0@1|-1|-1|-1",
 			"MS_SuperShotgun|reload|8@2,9-17@3,18@2,19-21@3,23@2,24@2,24@1|0|-1|-1",

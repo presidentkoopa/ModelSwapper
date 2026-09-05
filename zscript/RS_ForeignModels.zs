@@ -2158,11 +2158,11 @@ class RS_ForeignModelHandler : StaticEventHandler
 				// smoke from player.viewz rotated by head angle and pitch
 				// (PB_SpawnCasing, BaseWeapon_Functions.zsc), which is why they
 				// come out of your face in a headset. Nothing here reaches that.
-				if (lbl.MakeLower().IndexOf("muzzle") >= 0)
+				if (RS_ForeignRemap.IsModsOwnFlash(lbl.MakeLower()))
 				{
 					mBlankSkip.Push(key);
 					if (RS_ForeignRemap.DebugOn())
-						Console.Printf("[RSRM] leaving layer %d of %s alone -- '%s' is the mod's own muzzle flash",
+						Console.Printf("[RSRM] leaving layer %d of %s alone -- '%s' is the mod's own flash/glow/beam",
 							id, c.GetClassName(), lbl);
 					continue;
 				}

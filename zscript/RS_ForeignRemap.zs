@@ -296,6 +296,34 @@ class RS_ForeignRemap play
 		    || lname.IndexOf("fireoffset")  >= 0;
 	}
 
+	// THE MOD'S OWN FLASH, as opposed to the standard flash layer.
+	//
+	// BlankWeaponFlashes hides the extra psprite layers a weapon draws so
+	// its flat gun art does not show through our mesh. The standard flash
+	// layer -- label exactly "Flash" -- is the one that MUST go: it is
+	// vanilla's flat muzzle sprite hanging in front of the model. But a
+	// mod's energy weapons draw their glows, beams and named flashes on
+	// overlay layers of their own, and those are effects the author placed,
+	// not gun art. Erasing them is taking something away.
+	//
+	// Measured on Project Brutality's energy weapons, which name theirs
+	// CausticFlash, InfernoFlash, BigTubeGlow, SmallTubeGlow, MuzzleGlow,
+	// Glow0-8, FireBeam, HoldBeam, BeamMuzzleFlash. The tokens below are
+	// generic -- glow, beam, muzzle, and flash-with-a-qualifier -- and the
+	// one exclusion is deliberate: a label that is JUST "flash" is the
+	// standard layer. Kick and punch flashes are excluded too: PB runs its
+	// kicks on the flash layer under those names, and with the first-person
+	// legs already hidden the boot has no business drawing either.
+	static bool IsModsOwnFlash(string lname)
+	{
+		if (lname == "flash") return false;
+		if (lname.IndexOf("kick") >= 0 || lname.IndexOf("punch") >= 0) return false;
+		return lname.IndexOf("muzzle") >= 0
+		    || lname.IndexOf("glow")   >= 0
+		    || lname.IndexOf("beam")   >= 0
+		    || lname.IndexOf("flash")  >= 0;
+	}
+
 	// Labels that mean "whatever follows is NOT part of a psprite
 	// sequence" -- world-actor and inventory labels. A custom label that
 	// follows one of these in source order belongs to it, not to us.

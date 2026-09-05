@@ -165,6 +165,10 @@ for donor in sorted(MESH):
           "centroid `{:+.1f},{:+.1f},{:+.1f}` &middot; extent `{:.0f}`".format(
               sc, of, zo, cx, cy, cz, ext))
     print()
+    # The render next door, if it exists: model_renders/per_model/<mesh>_<folder>_after.png
+    tag = os.path.splitext(mfile)[0] + "_" + os.path.basename(os.path.dirname(path))
+    print("[before](model_renders/per_model/{0}_before.png) &middot; [after](model_renders/per_model/{0}_after.png)".format(tag))
+    print()
     print("| pose | frames | pitch | plays |")
     print("| --- | --- | --- | --- |")
     for g in groups:
