@@ -235,10 +235,24 @@ class RS_ForeignClip
 			"MS_PlasmaRifle|sprint|3@1|-1|-1|-1",
 			"MS_Revolver|fire|1-3@1,4-5@2,6-15@1|0|-1|-1",
 			"MS_Revolver|ready|0@1|-1|-1|-1",
-			"MS_Revolver|reload|16-25@2,26@1,27-33@2,34-37@1,0@1|0|-1|-1",
+			// RELOAD IS 16-39, MEASURED. The cylinder (python.014, 257 verts) swings
+			// out at 20, holds open through 29, and closes across 30-39 while
+			// the pitch dips then snaps +22 at 31 -- a wrist flick shutting it.
+			// The source's "//draw, cowboy" comment at 26 marks where its REVO
+			// sprite set begins, not where the animation changes; a first pass
+			// here read it as a select clip and cut the reload off with the
+			// cylinder still open. There is no separate draw animation.
+			"MS_Revolver|reload|16-25@2,26-39@1,0@1|0|-1|-1",
 			"MS_Revolver2|fire|1-3@1,4-5@2,6-15@1|0|-1|-1",
 			"MS_Revolver2|ready|0@1|-1|-1|-1",
-			"MS_Revolver2|reload|16-25@2,26@1,27-33@2,34-37@1,0@1|0|-1|-1",
+			// RELOAD IS 16-39, MEASURED. The cylinder (python.014, 257 verts) swings
+			// out at 20, holds open through 29, and closes across 30-39 while
+			// the pitch dips then snaps +22 at 31 -- a wrist flick shutting it.
+			// The source's "//draw, cowboy" comment at 26 marks where its REVO
+			// sprite set begins, not where the animation changes; a first pass
+			// here read it as a select clip and cut the reload off with the
+			// cylinder still open. There is no separate draw animation.
+			"MS_Revolver2|reload|16-25@2,26-39@1,0@1|0|-1|-1",
 			"MS_Rifle|fire|1-10@1|0|-1|-1",
 			"MS_Rifle|ready|0@1|-1|-1|-1",
 			"MS_Rifle|reload|11-13@2,14-25@1,26-34@2,35-37@1,38-40@2,0@1|-1|-1|-1",
