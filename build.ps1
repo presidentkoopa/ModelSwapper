@@ -32,6 +32,19 @@ $include = @('zscript.txt', 'modeldef', 'MENUDEF', 'CVARINFO', 'MAPINFO', 'KEYCO
 # Donors anchor on stock Doom sprite names, and the ballistic round now uses
 # stock PUFF, so this pk3 ships no sprite lumps at all.
 $dirs    = @('zscript', 'models')
+# SYNTAX CHECK BEFORE PACKING.
+#
+# build.ps1 only zips -- it never read the ZScript, and compile-testing
+# meant launching the engine, which is no longer done. That gap shipped a
+# trailing comma in an array initialiser and the first thing to notice was
+# the game refusing to start. This closes it: cheap, no engine, and it
+# fails the build rather than the user's next launch.
+$lint = Join-Path $root 'tools_zs_lint.py'
+if (Test-Path $lint) {
+    & python $lint | Write-Host
+    if ($LASTEXITCODE -ne 0) { throw "tools_zs_lint.py found problems -- not packing" }
+}
+
 $files = @()
 foreach ($f in $include) {
     $p = Join-Path $root $f

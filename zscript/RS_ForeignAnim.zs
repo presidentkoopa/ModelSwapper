@@ -302,7 +302,7 @@ class RS_ForeignClip
 			// left out: 3 sits 22 degrees off the rest pose.
 			"MS_VR_BFG9000|fire|12@1,13@1,14@1,15@1|0|-1|-1",
 			"MS_VR_BFG9000|ready|6@1|-1|-1|-1",
-			"MS_VR_BFG9000|select|4@1,5@1,6@1|-1|-1|-1",
+			"MS_VR_BFG9000|select|4@1,5@1,6@1|-1|-1|-1"
 		};
 		mRows.Clear();
 		for (int i = 0; i < CLIP.Size(); ++i) mRows.Push(CLIP[i]);
