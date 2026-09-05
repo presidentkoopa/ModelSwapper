@@ -82,7 +82,19 @@ class RS_ForeignClip
 			"MS_Cola_Revolver|fire|1-5@1|0|-1|-1",
 			"MS_Cola_Revolver|reload|31-54@1|-1|0|20",
 			"MS_RC_Chainsaw|ready|0-10@1|-1|-1|-1",
-			"MS_RC_Chainsaw|fire|11-24@1|0|-1|-1",
+			// FROM THE SOURCE (Robocop-Retribution, modeldefs/weapons/grinder.txt):
+			// //Fire is 37-40, //Hold is 41-44. Measured: the whole saw swings 45
+			// units forward across 37-40 and holds there through 44. Our old fire
+			// row, 11-24, was a guess. 11-36 sits under the source's Ready block
+			// on a second sprite set with no comment; measured, only the blade
+			// moves there (a smooth 13-16-0 cycle), hand static, pitch flat --
+			// the chain running. That is the rev, so it is altfire: the second
+			// trigger on a saw in every mod that has one, and nothing plays it
+			// in a mod that does not. Ready stays 0-10, chain still.
+			// (chainsaw_hand is a baked-in hand surface that swings with the
+			// saw; removing it is mesh surgery, not a clip change.)
+			"MS_RC_Chainsaw|fire|37-44@1|0|-1|-1",
+			"MS_RC_Chainsaw|altfire|11-36@1|0|-1|-1",
 			// A RECIPROCATING STROKE, and the duplicate analysis shows it
 			// plainly: frames 6/19, 7/18, 8/17 and 9/16 are IDENTICAL pairs
 			// and 10-15 are one held pose. The animation drives out to the
