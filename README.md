@@ -8,6 +8,8 @@ The usual way to get one is for someone to hand-author a model set for a specifi
 
 ModelSwapper doesn't wait for that. It carries one shelf of models and fits it to whatever you load.
 
+Future plans - custom weapon skins per-popular mod. Colored weapons to match theme and palette of mod you are playing. More consistent and easy-to-understand model names. 
+
 ## How it works
 
 ModelSwapper reads every weapon the loaded mods define and sorts each one into a family, such as pistol, shotgun, rifle or launcher. It goes by the weapon's name, its ammo and its parent class, and finally by the weapon slot it sits in, so nothing is left without a model. Each weapon then wears a model from its family.
