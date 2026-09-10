@@ -18,8 +18,6 @@ Nothing in it is written for a particular mod, so a pack released tomorrow works
 
 38 models across 20 weapon families, built from 33 meshes (the rest are alternate finishes), about 29 MB in all. 
 
-The meshes come from different authors and different mods, and none of them were made to sit in a tracked hand. Each was measured with the scripts in this repo and corrected where the measurements showed a problem.
-
 These are the renders the tools produced along the way. Each one shows top, side and front views. The green ring is the model's origin and the red box is the bounds stored in the file.
 
 The Bolter, before and after:
