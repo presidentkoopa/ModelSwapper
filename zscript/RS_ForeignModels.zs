@@ -139,6 +139,7 @@ class RS_ForeignShelf
 			"flamethrower|MS_AE_Flamer|PLSG|0|0|20",
 			"unmaker|MS_BD_Unmaker|BFGG|0|4|16",
 			"axe|MS_BD_BrutalAxe|PUNG|0|5|15",
+			"sword|MS_BD_DSweap|PUNG|0|0|10",
 			"kick|MS_BD_Boot|PUNG|0|0|58"
 		};
 		mRows.Clear();
@@ -169,6 +170,7 @@ class RS_ForeignShelf
 	{
 		if (a == "saw")          return "melee";
 		if (a == "axe")          return "melee";
+		if (a == "sword")        return "axe";
 		if (a == "grenade")      return "rocket";
 		if (a == "sniper")       return "rifle";
 		if (a == "machinegun")  return "chaingun";
@@ -521,6 +523,13 @@ class RS_ForeignScanner
 		 || hay.IndexOf("jackhammer") >= 0 || hay.IndexOf("jack hammer") >= 0
 		 || hay.IndexOf("drill")    >= 0 || hay.IndexOf("auger") >= 0
 		 || hay.IndexOf("ripper")   >= 0) return "saw";
+		// SWORD before AXE/BLADE. A long two-handed blade -- Brutal Doom's and
+		// DoomRL Arsenal's Dragonslayer, a katana, a claymore -- has a model of
+		// its own, and "blade" on the line below would otherwise file it with
+		// the hatchets. Its shelf falls back to axe when no sword is loaded.
+		if (hay.IndexOf("sword") >= 0 || hay.IndexOf("katana") >= 0
+		 || hay.IndexOf("claymore") >= 0 || hay.IndexOf("zweihander") >= 0
+		 || hay.IndexOf("dragonslayer") >= 0) return "sword";
 		// AXE/BLADE before bare-hand melee. A hatchet, machete or combat knife
 		// is a held edge with reach and a swing arc -- nothing like a fist,
 		// and it was defaulting to one.
@@ -2356,7 +2365,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			"pistol", "revolver", "smg", "rifle", "shotgun", "supershotgun",
 			"chaingun", "rocket", "plasma", "railgun", "flamethrower",
 			"bfg", "melee", "saw", "grenade", "sniper",
-			"machinegun", "launcher", "unmaker", "axe", "kick",
+			"machinegun", "launcher", "unmaker", "axe", "sword", "kick",
 			// Last, so cycling forward through the sensible families reaches
 			// it only after they are exhausted -- but it is one step BACK
 			// from "pistol", which is where most weapons start.

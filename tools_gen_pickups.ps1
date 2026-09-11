@@ -132,6 +132,9 @@ $TARGET = @{
   'melee'        = 26.0
   'kick'         = 30.0
   'axe'          = 40.0
+  # A greatsword is longer than any gun it lies beside, but it has to fit the
+  # same holster space; this reads as "very big" without towering over a BFG.
+  'sword'        = 52.0
   'saw'          = 38.0
 }
 $TARGET_DEFAULT = 40.0

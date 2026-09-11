@@ -275,6 +275,19 @@ Model MS_BD_BrutalAxe
 	FrameIndex PUNG B 0 9999
 }
 
+Model MS_BD_DSweap
+{
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
+	Path "models/hud/DSweap"
+	Model 0 "DSweap.md3"
+	Skin 0 "DSweap.png"
+	Scale -1.0 1.0 1.0
+	Offset 2.203 -32.625 -4.141
+	NoInterpolation
+	FrameIndex PUNG A 0 0
+	FrameIndex PUNG B 0 9999
+}
+
 Model MS_BD_Boot
 {
 	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
@@ -775,6 +788,19 @@ Model MS_PU_BD_BrutalAxe
 	PitchOffset -42.15
 	RollOffset 0.07
 	FrameIndex SHOT A 0 5
+}
+
+Model MS_PU_BD_DSweap
+{
+	Path "models/hud/DSweap"
+	Model 0 "DSweap.md3"
+	Skin 0 "DSweap.png"
+	Scale 0.2893 0.2893 0.2893
+	Offset -16.04 -0.535 4.492
+	AngleOffset 9.51
+	PitchOffset -65.77
+	RollOffset 8.68
+	FrameIndex SHOT A 0 0
 }
 
 Model MS_PU_BD_Boot

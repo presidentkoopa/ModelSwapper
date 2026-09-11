@@ -41,7 +41,7 @@ Nothing in it is written for a particular mod, so a pack released tomorrow works
 
 Each one's weapon code was checked against the model menu, so the menu lists the guns you can actually hold and leaves out the vehicles, meat shields, ledge grabs and other helpers a mod builds out of weapon code.
 
-38 models across 20 weapon families, built from 33 meshes (the rest are alternate finishes), about 29 MB in all. 
+39 models across 21 weapon families, built from 34 meshes (the rest are alternate finishes), about 30 MB in all. 
 
 These are the renders the tools produced along the way. Each one shows top, side and front views. The green ring is the model's origin and the red box is the bounds stored in the file.
 
@@ -55,7 +55,7 @@ The BFG, before and after:
 ![BFG before centring](renders/BFG_BFG9000_before.png)
 ![BFG after centring](renders/BFG_BFG9000_after.png)
 
-All 33 are in renders/, and renders/sheets/ lays the before and after views side by side.
+All 34 are in renders/, and renders/sheets/ lays the before and after views side by side.
 
 ## Tools
 

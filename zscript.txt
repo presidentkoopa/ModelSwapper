@@ -12,6 +12,7 @@ class MS_AE_Pistol : Actor {}
 class MS_AE_Shotgun : Actor {}
 class MS_BD_Boot : Actor {}
 class MS_BD_BrutalAxe : Actor {}
+class MS_BD_DSweap : Actor {}
 class MS_BD_BrutalPistol : Actor {}
 class MS_BD_BrutalSMG : Actor {}
 class MS_BD_Flamethrower2 : Actor {}
@@ -53,6 +54,7 @@ class MS_PU_AE_Pistol : MS_PickupModel {}
 class MS_PU_AE_Shotgun : MS_PickupModel {}
 class MS_PU_BD_Boot : MS_PickupModel {}
 class MS_PU_BD_BrutalAxe : MS_PickupModel {}
+class MS_PU_BD_DSweap : MS_PickupModel {}
 class MS_PU_BD_BrutalPistol : MS_PickupModel {}
 class MS_PU_BD_BrutalSMG : MS_PickupModel {}
 class MS_PU_BD_Flamethrower2 : MS_PickupModel {}

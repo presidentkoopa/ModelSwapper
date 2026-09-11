@@ -148,6 +148,16 @@ class RS_ForeignClip
 			"MS_BD_BrutalAxe|ready|5@1|-1|-1|-1",
 			"MS_BD_BrutalAxe|select|5@1|-1|-1|-1",
 			"MS_BD_BrutalAxe|sprint|5@1|-1|-1|-1",
+			// Dragonslayer, read off Brutal Doom's own DSweap states and its
+			// model's FrameIndex table (DSLA A-E = 0-4, DSLC A-D = 5-8). Ready
+			// and Select both hold DSLA A, so frame 0 is the rest and the draw
+			// snaps. Fire: DSLC A-D wind-up, DSLA B strike, DSLA C held through
+			// the follow-through and the hidden recovery, DSLC D-A back out.
+			// Frames 3 and 9 are never shown by BD.
+			"MS_BD_DSweap|fire|5-8@1,1@1,2@26,8@3,7@1,6@1,5@1|5|-1|-1",
+			"MS_BD_DSweap|ready|0@1|-1|-1|-1",
+			"MS_BD_DSweap|select|0@1|-1|-1|-1",
+			"MS_BD_DSweap|sprint|0@1|-1|-1|-1",
 			"MS_BD_BrutalPistol|fire|2@1,3@1,4@1,5@1,6@1,7@1|0|-1|-1",
 			"MS_BD_BrutalPistol|ready|3@1|-1|-1|-1",
 			"MS_BD_BrutalPistol|reload|8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1,16@1,17@1,18@1,19@1,20@1,21@1,22@1,23@1,24@1,25@1|-1|-1|-1",
