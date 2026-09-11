@@ -105,6 +105,26 @@ Both filters live in the menu on purpose. Filtering inside the scan means a brok
 filter takes your models down with it. The scan report also names the archive each
 listed weapon came from.
 
+### Classes nobody holds
+
+Mods also declare Weapon subclasses that are not weapons. Brutal Doom v22 has vehicle
+guns, seven meat shields, executions, a ledge grab and a repair tool, one tagged "Pistol"
+and one "Chainsaw", so each was a junk row with a believable name. The menu drops a class
+when either of two tests says nobody holds it (`EntryNeverHeld`):
+
+- **No Ready state.** A weapon is raised into Ready, so a class without one cannot be
+  held. This catches abstract bases, and MetaDoom's rocket, a projectile declared
+  `: Weapon`.
+- **No slot, and flagged `+WEAPON.CHEATNOTWEAPON`.** The mod itself says "not a weapon"
+  and no number key reaches it. Nearly every mod flags real guns too, but those sit in
+  slots. Upgraded forms (`+WEAPON.POWERED_UP`) are exempt. So is any archive that brings
+  its own player class while you are playing a different one: its slot table is not in
+  play, so "no slot" means nothing there.
+
+Checked against the source of about twenty mods before shipping. The only rows it
+removes are abstract bases, helpers and that rocket. List Unbound Weapons shows them all
+again.
+
 ---
 
 ## Compatibility targets

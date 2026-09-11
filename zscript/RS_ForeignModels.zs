@@ -52,6 +52,11 @@ class RS_ForeignEntry
 	                      // DECORATE/ZSCRIPT text (see HarvestModClasses) --
 	                      // false for everything the engine compiles in
 	string srcContainer;  // archive that defined it, when modDefined
+	bool   noReady;       // no Ready state, own or inherited: nothing can raise it
+	bool   cheatNotWeapon;// the mod's own "not a weapon" flag, +WEAPON.CHEATNOTWEAPON
+	bool   poweredUp;     // +WEAPON.POWERED_UP: an upgraded form of a real weapon
+	bool   slotsLive;     // the defining archive's slot table is the one in play.
+	                      // These four feed EntryNeverHeld; see there and Scan.
 	int    modelPick1;    // MAINHAND  model: index into the archetype's shelf
 	int    modelPick2;    // OFFHAND   model: independent pick, same shelf
 	bool   pinned;        // player chose this; don't re-guess
@@ -795,6 +800,49 @@ class RS_ForeignScanner
 		HarvestModClasses(harvestNames, harvestFrom, hRoots, hLumps);
 		hNames = harvestNames.Size();
 
+		// WHOSE SLOT TABLE IS IN PLAY. EntryNeverHeld hides an unslotted class
+		// the mod flags as not-a-weapon, which is only sound while `located`
+		// can be trusted for that mod. A mod that assigns slots through
+		// Player.WeaponSlot on its OWN player class (Golden Souls, Project
+		// Brutality) has no slot table at all while a different player class
+		// is being played -- RS_Main's MAPINFO clears the class list, for one
+		// -- and its real guns come back unslotted. Project Brutality only
+		// half-fails: its weapons with a Weapon.SlotNumber still bind, while
+		// its fists, SMG and Chex rifle (flagged, player-class slots only) do
+		// not. A per-archive "anything located?" test would pass there and
+		// hide real guns, so the question has to be about the player class.
+		//
+		// Record which archives declare a player class, and which archive the
+		// class being played came from. An archive that brings player classes
+		// and is not the one in play gets no hiding at all.
+		Array<string> playerSrc;
+		string liveSrc = "";
+		{
+			string liveCls = "";
+			PlayerInfo lp = players[consolePlayer];
+			if (lp && lp.mo) { liveCls = lp.mo.GetClassName(); liveCls = liveCls.MakeLower(); }
+
+			int na = AllActorClasses.Size();
+			for (int ci = 0; ci < na; ++ci)
+			{
+				let pc = (class<PlayerPawn>)(AllActorClasses[ci]);
+				if (pc == null) continue;
+				string pn = pc.GetClassName();
+				pn = pn.MakeLower();
+				for (int hj = 0; hj < harvestNames.Size(); ++hj)
+				{
+					if (harvestNames[hj] != pn) continue;
+					string src = harvestFrom[hj];
+					bool seen = false;
+					for (int k = 0; k < playerSrc.Size(); ++k)
+						if (playerSrc[k] == src) { seen = true; break; }
+					if (!seen) playerSrc.Push(src);
+					if (pn == liveCls) liveSrc = src;
+					break;
+				}
+			}
+		}
+
 		int n = AllActorClasses.Size();
 		for (int i = 0; i < n; ++i)
 		{
@@ -944,6 +992,16 @@ class RS_ForeignScanner
 					break;
 				}
 			}
+
+			// The facts EntryNeverHeld reads. Information here, a filter only
+			// in the menu -- same rule as located and modDefined above.
+			e.noReady        = (def.FindState('Ready') == null);
+			e.cheatNotWeapon = def.bCheatNotWeapon;
+			e.poweredUp      = def.bPowered_Up;
+			bool ownsPlayers = false;
+			for (int k = 0; k < playerSrc.Size(); ++k)
+				if (playerSrc[k] == e.srcContainer) { ownsPlayers = true; break; }
+			e.slotsLive = !ownsPlayers || e.srcContainer == liveSrc;
 
 			string ammo1 = "", ammo2 = "";
 			if (def.AmmoType1 != null) ammo1 = "" .. def.AmmoType1.GetClassName();
@@ -1235,7 +1293,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		for (int i = 0; i < mEntries.Size(); ++i)
 		{
-			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+			if (!EntryListed(i)) continue;
 			visible++;
 			string src = mEntries[i].srcContainer;
 			if (src.Length() == 0) { unknown++; continue; }
@@ -1271,7 +1329,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int unsure = 0;
 		for (int i = 0; i < mEntries.Size(); ++i)
 		{
-			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+			if (!EntryListed(i)) continue;
 			if (mEntries[i].guessedBySlot) unsure++;
 
 			string a = mEntries[i].archetype;
@@ -1537,6 +1595,50 @@ class RS_ForeignModelHandler : StaticEventHandler
 		for (int j = 0; j < mEntries.Size(); ++j)
 			if (GroupKey(j) == k) n++;
 		return n;
+	}
+
+	// A CLASS NOBODY HOLDS BY CHOICE. The menu hides these rows by default;
+	// "List Unbound Weapons" shows them again.
+	//
+	// Mods declare plenty of Weapon subclasses that are not weapons. Brutal
+	// Doom v22 alone has vehicle guns, seven meat shields, executions, a ledge
+	// grab and a repair tool -- one tagged "Pistol", another "Chainsaw" -- and
+	// each was a junk row with a believable name. Two tests, both asked of the
+	// class itself, no names:
+	//
+	//   NO READY STATE. A weapon is raised into Ready, so a class without one
+	//   cannot be held. Catches abstract bases (BrutalWeapon, RLBaseWeapon,
+	//   MetaDoomWeapon) and MetaDoom's rocket, a projectile declared : Weapon.
+	//
+	//   UNSLOTTED AND FLAGGED CHEATNOTWEAPON. The mod itself says "not a
+	//   weapon", and no number key reaches it. Nearly every mod also flags real
+	//   guns -- BD22's Purist and Dual sets, Ashes' tiers, DoomRL Arsenal's 226
+	//   -- but those sit in slots, so `located` keeps them. Two exemptions:
+	//     - POWERED_UP is an upgraded form of a real gun, reached by switching
+	//       from it rather than by a number key (PB's Dark Matter Rifle).
+	//     - !slotsLive: the mod's own player class is not the one being played,
+	//       so its slot table is not in play and "unslotted" means nothing.
+	//       Nothing from that archive is hidden. See Scan.
+	//
+	// Checked against the source of about twenty mods on 2026-09-11. The only
+	// rows it removes are abstract bases, helpers and that rocket.
+	bool EntryNeverHeld(int i) const
+	{
+		if (i < 0 || i >= mEntries.Size()) return false;
+		if (mEntries[i].noReady) return true;
+		return !mEntries[i].located && mEntries[i].cheatNotWeapon
+		    && !mEntries[i].poweredUp && mEntries[i].slotsLive;
+	}
+
+	// THE DEFAULT LIST'S TEST, in one place. The picker, the scan report, the
+	// log summary, Randomize and Assign All all ask this, so they cannot drift
+	// apart. A row is earned by a slot binding or by the mod's own text
+	// declaring the class, and lost by EntryNeverHeld.
+	bool EntryListed(int i) const
+	{
+		if (i < 0 || i >= mEntries.Size()) return false;
+		if (!mEntries[i].located && !mEntries[i].modDefined) return false;
+		return !EntryNeverHeld(i);
 	}
 
 	// A "WEAPON" THAT CANNOT FIRE IS NOT A WEAPON.
@@ -2545,7 +2647,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 			// randomizing those poisoned the picks archive with junk rows
 			// forever, and the per-row save across ~500 entries was the
 			// quadratic stall that took a whole VR session down.
-			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+			if (!EntryListed(i)) continue;
 
 			string arch;
 			switch (random[MSRandomize](0, 2))
@@ -2601,7 +2703,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int assigned = 0, missing = 0;
 		for (int i = 0; i < mEntries.Size(); ++i)
 		{
-			if (!mEntries[i].located && !mEntries[i].modDefined) continue;
+			if (!EntryListed(i)) continue;
 
 			string arch = mEntries[i].archetype;
 			int have = mShelf.Count(arch);

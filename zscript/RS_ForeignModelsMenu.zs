@@ -100,7 +100,9 @@ class RS_Menu_ForeignModels : OptionMenu
 				// DECORATE/ZSCRIPT text -- which rescues Golden Souls-style
 				// mods whose slots live on a player class that never spawns,
 				// the case that makes located alone return an empty menu.
-				if (!showAll && !h.EntryLocated(i) && !h.EntryModDefined(i)) continue;
+				// EntryListed then drops classes nobody holds -- vehicle guns,
+				// meat shields, abstract bases. See EntryNeverHeld.
+				if (!showAll && !h.EntryListed(i)) continue;
 
 				// Carrying it is the strongest signal there is that this weapon
 				// is one you will actually hold -- it survives any naming scheme.
@@ -302,7 +304,7 @@ class RS_Menu_ForeignReport : OptionMenu
 		int listed = 0, unsure = 0, pinned = 0;
 		for (int i = 0; i < n; ++i)
 		{
-			if (!showAll && !h.EntryLocated(i) && !h.EntryModDefined(i)) continue;
+			if (!showAll && !h.EntryListed(i)) continue;
 			listed++;
 			if (h.EntryUnsure(i)) unsure++;
 			if (h.EntryPinned(i)) pinned++;
@@ -321,7 +323,7 @@ class RS_Menu_ForeignReport : OptionMenu
 
 		for (int i = 0; i < n; ++i)
 		{
-			if (!showAll && !h.EntryLocated(i) && !h.EntryModDefined(i)) continue;
+			if (!showAll && !h.EntryListed(i)) continue;
 
 			string src;
 			if (h.EntryPinned(i))       src = "\c[Green]yours\c-";
@@ -337,6 +339,10 @@ class RS_Menu_ForeignReport : OptionMenu
 			// this weapon in my list".
 			string origin = h.EntryContainer(i);
 			if (origin.Length() > 0) slot = slot .. ", " .. origin;
+
+			// Only reachable with 'List Unbound Weapons' on, which is exactly
+			// when you need to know why a row is normally absent.
+			if (h.EntryNeverHeld(i)) slot = slot .. ", never held";
 
 			desc.mItems.Push(new("OptionMenuItemStaticText").InitDirect(
 				String.Format("%s  \c[DarkGray](%s)\c-", h.EntryName(i), slot), Font.CR_WHITE));

@@ -16,7 +16,30 @@ ModelSwapper reads every weapon the loaded mods define and sorts each one into a
 
 The animation is driven by the weapon's own code. Every Doom weapon already reports what it is doing each tic through its states: ready, fire, reload, raise, lower. When a model is attached, ModelSwapper maps those states onto the model's frames, and from then on the model plays whatever the weapon is doing. A reload lasts exactly as long on the model as it does in the mod, a partial reload plays short, and the very first shot is already in time, with nothing to learn or calibrate.
 
-Nothing in it is written for a particular mod, so a pack released tomorrow works the same way as one from 2016. It has been tested with vanilla Doom, Brutal Doom v21 and v22, Project Brutality 0.4.1, Ashes (all episodes), Golden Souls 1 and 2, DoomRL Arsenal, Trailblazer, Dakka, Combined Arms, Final Doomer, LegenDoom, Doomablo, BorderDoom, Complex Doom, Guncaster and MetaDoom, among others.
+Nothing in it is written for a particular mod, so a pack released tomorrow works the same way as one from 2016. It has been calibrated against the following mods:
+
+- vanilla Doom
+- Brutal Doom v21 and v22
+- Brutal Doom 64, Doom 64 Unseen Evil and Doom 64 Retribution
+- Project Brutality 0.4.1
+- Golden Souls 1 and 2
+- Ashes 2063 and Ashes Afterglow
+- DoomRL Arsenal
+- Guncaster
+- MetaDoom
+- Trailblazer
+- Combined Arms
+- Final Doomer
+- LegenDoom Lite
+- Complex Doom
+- Lithium
+- Dakka
+- Pandemonia
+- MeatGrinder
+- VanillaVR Plus
+- the DOOM Infinite demo
+
+Each one's weapon code was checked against the model menu, so the menu lists the guns you can actually hold and leaves out the vehicles, meat shields, ledge grabs and other helpers a mod builds out of weapon code.
 
 38 models across 20 weapon families, built from 33 meshes (the rest are alternate finishes), about 29 MB in all. 
 
