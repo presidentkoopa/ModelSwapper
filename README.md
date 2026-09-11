@@ -8,7 +8,7 @@ The usual way to get one is for someone to hand-author a model set for a specifi
 
 ModelSwapper doesn't wait for that. It carries one shelf of models and fits it to whatever you load.
 
-Future plans - custom weapon skins per-popular mod. Colored weapons to match theme and palette of mod you are playing. More consistent and easy-to-understand model names. 
+Coming in 2.0: renamed models, so every one says clearly what it is, and selectable skins, including weapons coloured to match the theme and palette of popular mods.
 
 ## How it works
 
