@@ -6,10 +6,9 @@
 // shape to expect, a weapon wheel wants to group. None of them can NAME this
 // package -- EventHandler.Find and Service.Find(class) both resolve their
 // argument at compile time, and a miss is fatal and global (thingdef.cpp:
-// 420-424 refuses every pk3 later in the load order). The wheel already
-// reaches the bridge fields through level.GetField* on a handler found by
-// Object.FindClass, which works but only answers for a weapon that is in a
-// hand right now.
+// 420-424 refuses every pk3 later in the load order). Reading the handler's
+// fields by name through level.GetField* also works, but only answers for a
+// weapon that is in a hand right now.
 //
 // A Service is the one path with no compile-time link in either direction.
 // InitServices() instantiates every Service subclass by itself, so this
@@ -26,7 +25,7 @@
 //                                            h (0 main, 1 off), "" if none
 //   GetString("weapon.donor", "", h)         donor model class currently worn
 //                                            by the weapon in hand h, "" when
-//                                            that weapon has no bridged model
+//                                            that weapon wears none of ours
 //
 // The archetype comes from the scan table when the weapon was scanned, and
 // from a fresh Classify when it was not -- so the answer is the same vocabulary

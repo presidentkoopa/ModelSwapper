@@ -1159,35 +1159,20 @@ class RS_ForeignModelHandler : StaticEventHandler
 	RS_ForeignHand  mHandMain;
 	RS_ForeignHand  mHandOff;
 
-	// THE WHEEL BRIDGE. Plain fields, republished once per tic in
-	// RefreshBridge -- the only cross-mod surface this file exposes. A
-	// reflection-based reader (RS_WeaponWheel's model-picker page, or
-	// anything else) finds this handler with the engine's own
-	// StaticEventHandler.Find("RS_ForeignModelHandler") and reads these by
-	// NAME, which needs no compile-time reference to this class at all --
-	// the same mechanism RS_WeaponWheel already uses to read every OTHER
-	// mod, just pointed back at us.
+	// WHAT IS IN EACH HAND, republished once per tic by PublishHandFacts:
+	// whether the hand holds a scanned weapon, its family, and the model it
+	// is wearing. RS_WeaponArchetypeService answers "weapon.archetype.hand"
+	// and "weapon.donor" from these, which is how RS_WorldHands' two-hand
+	// stabilize learns what shape of gun it is holding.
 	//
-	// mEntries is an Array<RS_ForeignEntry> -- a dynamic array -- and field
-	// reflection can only index a FIXED array (int[N]), never a dynamic
-	// one, so nothing about it is reachable from outside no matter what is
-	// exposed here. These fields exist because of that limit, not despite
-	// it: they are the answer already computed, republished as the flat
-	// scalars reflection actually can read.
+	// These used to be half of a bridge that let the weapon wheel show and
+	// cycle our models. The wheel no longer carries models, so the half that
+	// did that -- a command cvar per hand, the pick, the shelf count and the
+	// shelf list -- is gone. The wheel's reader finds no count and hides its
+	// page on its own.
 	bool   mBridgeHasMain,   mBridgeHasOff;
 	string mBridgeArcheMain, mBridgeArcheOff;
-	int    mBridgeCountMain, mBridgeCountOff;
-	int    mBridgePickMain,  mBridgePickOff;
 	string mBridgeDonorMain, mBridgeDonorOff;
-
-	// THE WHOLE SHELF, as one "|"-joined string per hand.
-	//
-	// A list, through a field, because field reflection is all a reader has:
-	// it cannot call NameAt() per row, and an Array<string> is a PDynArray
-	// that reflection cannot index either. One string it CAN read, and
-	// splitting it is the reader's problem rather than a reason to expose
-	// twelve fields.
-	string mBridgeNamesMain, mBridgeNamesOff;
 
 	static bool Enabled()
 	{
@@ -2035,9 +2020,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		int mi = pi.ReadyWeapon   ? FindEntry("" .. pi.ReadyWeapon.GetClassName())   : -1;
 		int oi = pi.OffhandWeapon ? FindEntry("" .. pi.OffhandWeapon.GetClassName()) : -1;
 
-		// BEFORE painting, so a command consumed this tic is reflected in
-		// the SAME tic's paint rather than showing stale for one frame.
-		RefreshBridge(pi, mi, oi);
+		PublishHandFacts(mi, oi);
 
 		mLastMain = ApplyHand(pi, pi.ReadyWeapon, PSP_WEAPON,
 			mi >= 0 ? mEntries[mi].modelPick1 : 0, mLastMain, mHandMain);
@@ -2604,86 +2587,21 @@ class RS_ForeignModelHandler : StaticEventHandler
 		mLastMain = null; mLastOff = null; mOvlBound.Clear();      // force a re-bind on both hands
 	}
 
-	// THE WHEEL BRIDGE. Consumes one pending command per hand (a reader sets
-	// rs_fm_bridge_cmd_main/off to +1/-1 and we read-and-clear it, so a held
-	// value can never re-fire), then republishes fresh state for that same
-	// hand. CyclePick already does the group-propagate, persist and re-bind
-	// -- this only decides WHEN to call it and WHAT to publish afterward.
-	private string ShelfList(string arche, int count)
+	// See the mBridge* fields: the family and worn model of each hand, for
+	// RS_WeaponArchetypeService.
+	private void PublishHandFacts(int mi, int oi)
 	{
-		if (!mShelf || count <= 0) return "";
-		string joined = "";
-		for (int i = 0; i < count; ++i)
-		{
-			string n = mShelf.NameAt(arche, i);
-			joined = (i == 0) ? n : (joined .. "|" .. n);
-		}
-		return joined;
-	}
+		string dcls, anc; int hf, rf, fc;
 
-	private void RefreshBridge(PlayerInfo pi, int mi, int oi)
-	{
-		let cm = CVar.FindCVar("rs_fm_bridge_cmd_main");
-		if (cm)
-		{
-			int d = cm.GetInt();
-			if (d != 0)
-			{
-				if (mi >= 0) CyclePick(mi, d);
-				cm.SetInt(0);
-			}
-		}
+		mBridgeHasMain   = (mi >= 0);
+		mBridgeArcheMain = mBridgeHasMain ? mEntries[mi].archetype : "";
+		mBridgeDonorMain = (mBridgeHasMain && mShelf && mShelf.Get(mBridgeArcheMain,
+		                    mEntries[mi].modelPick1, dcls, anc, hf, rf, fc)) ? dcls : "";
 
-		let co = CVar.FindCVar("rs_fm_bridge_cmd_off");
-
-		if (co)
-		{
-			int d = co.GetInt();
-			if (d != 0)
-			{
-				if (oi >= 0) CyclePick(oi, d);
-				co.SetInt(0);
-			}
-		}
-
-		// CyclePick can rewrite mi/oi's OWN entry (mirrored pick, same
-		// index) but never adds or removes rows, so the indices themselves
-		// stay valid to re-read here even after a cycle just ran.
-		mBridgeHasMain = (mi >= 0);
-		if (mBridgeHasMain)
-		{
-			mBridgeArcheMain = mEntries[mi].archetype;
-			mBridgePickMain  = mEntries[mi].modelPick1;
-			mBridgeCountMain = mShelf ? mShelf.Count(mBridgeArcheMain) : 0;
-
-			string dcls, anc; int hf, rf, fc;
-			mBridgeDonorMain = (mShelf && mShelf.Get(mBridgeArcheMain, mBridgePickMain,
-			                    dcls, anc, hf, rf, fc)) ? dcls : "";
-			mBridgeNamesMain = ShelfList(mBridgeArcheMain, mBridgeCountMain);
-		}
-		else
-		{
-			mBridgeArcheMain = ""; mBridgePickMain = 0; mBridgeCountMain = 0;
-			mBridgeDonorMain = ""; mBridgeNamesMain = "";
-		}
-
-		mBridgeHasOff = (oi >= 0);
-		if (mBridgeHasOff)
-		{
-			mBridgeArcheOff = mEntries[oi].archetype;
-			mBridgePickOff  = mEntries[oi].modelPick2;
-			mBridgeCountOff = mShelf ? mShelf.Count(mBridgeArcheOff) : 0;
-
-			string dcls2, anc2; int hf2, rf2, fc2;
-			mBridgeDonorOff = (mShelf && mShelf.Get(mBridgeArcheOff, mBridgePickOff,
-			                   dcls2, anc2, hf2, rf2, fc2)) ? dcls2 : "";
-			mBridgeNamesOff = ShelfList(mBridgeArcheOff, mBridgeCountOff);
-		}
-		else
-		{
-			mBridgeArcheOff = ""; mBridgePickOff = 0; mBridgeCountOff = 0;
-			mBridgeDonorOff = ""; mBridgeNamesOff = "";
-		}
+		mBridgeHasOff    = (oi >= 0);
+		mBridgeArcheOff  = mBridgeHasOff ? mEntries[oi].archetype : "";
+		mBridgeDonorOff  = (mBridgeHasOff && mShelf && mShelf.Get(mBridgeArcheOff,
+		                    mEntries[oi].modelPick2, dcls, anc, hf, rf, fc)) ? dcls : "";
 	}
 
 	// One-button "give everything a one-handed model" -- pistol, revolver or
