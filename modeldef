@@ -36,19 +36,6 @@ Model MS_Pistol2
 	FrameIndex PISG B 0 9999
 }
 
-Model MS_BD_BrutalPistol
-{
-	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
-	Path "models/hud/PistolBD"
-	Model 0 "BrutalPistol.md3"
-	Skin 0 "BrutalPistol.png"
-	Scale -1.0 1.0 1.0
-	Offset -0.000 -32.656 -8.516
-	NoInterpolation
-	FrameIndex PISG A 0 3
-	FrameIndex PISG B 0 9999
-}
-
 Model MS_Revolver
 {
 	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
@@ -78,7 +65,7 @@ Model MS_Rifle
 	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Rifle"
 	Model 0 "m16.md3"
-	Skin 0 "WPN-M16.png"
+	Skin 0 "WPN-M16-k1.png"
 	Scale 1.35 1.35 1.35
 	Offset 0.169 -45.878 -2.784
 	FrameIndex CHGG A 0 0
@@ -90,7 +77,7 @@ Model MS_Shotgun
 	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/Shotgun"
 	Model 0 "shotgun.md3"
-	Skin 0 "WPN-GUNS.png"
+	Skin 0 "WPN-GUNS-k1.png"
 	Scale 1.35 1.35 1.35
 	Offset 0.042 -41.745 -4.028
 	FrameIndex SHTG A 0 0
@@ -102,7 +89,7 @@ Model MS_SuperShotgun
 	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
 	Path "models/hud/SuperShotgun"
 	Model 0 "ssg.md3"
-	Skin 0 "WPN-GUNS.png"
+	Skin 0 "WPN-GUNS-k1.png"
 	Scale 1.35 1.35 1.35
 	Offset 0.485 -30.438 -2.805
 	FrameIndex SHT2 A 0 0
@@ -300,6 +287,7 @@ Model MS_BD_Boot
 	FrameIndex PUNG A 0 0
 	FrameIndex PUNG B 0 9999
 }
+
 Model MS_MG_Tec9
 {
 	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
@@ -433,41 +421,6 @@ Model MS_RC_M32
 	FrameIndex MISG B 0 9999
 }
 
-Model MS_Rifle2
-{
-	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
-	Path "models/hud/Rifle"
-	Model 0 "m16.md3"
-	Skin 0 "WPN-M16-k1.png"
-	Scale 1.35 1.35 1.35
-	Offset 0.169 -45.878 -2.784
-	FrameIndex CHGG A 0 0
-	FrameIndex CHGG B 0 9999
-}
-
-Model MS_Shotgun2
-{
-	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
-	Path "models/hud/Shotgun"
-	Model 0 "shotgun.md3"
-	Skin 0 "WPN-GUNS-k1.png"
-	Scale 1.35 1.35 1.35
-	Offset 0.042 -41.745 -4.028
-	FrameIndex SHTG A 0 0
-	FrameIndex SHTG B 0 9999
-}
-
-Model MS_SuperShotgun2
-{
-	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
-	Path "models/hud/SuperShotgun"
-	Model 0 "ssg.md3"
-	Skin 0 "WPN-GUNS-k1.png"
-	Scale 1.35 1.35 1.35
-	Offset 0.485 -30.438 -2.805
-	FrameIndex SHT2 A 0 0
-	FrameIndex SHT2 B 0 9999
-}
 Model MS_Beretta
 {
 	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
@@ -543,19 +496,6 @@ Model MS_PU_Pistol2
 	FrameIndex SHOT A 0 0
 }
 
-Model MS_PU_BD_BrutalPistol
-{
-	Path "models/hud/PistolBD"
-	Model 0 "BrutalPistol.md3"
-	Skin 0 "BrutalPistol.png"
-	Scale 0.8447 0.8447 0.8447
-	Offset -25.761 0.134 11.948
-	AngleOffset -0.23
-	PitchOffset -11.88
-	RollOffset -0.05
-	FrameIndex SHOT A 0 3
-}
-
 Model MS_PU_Revolver
 {
 	Path "models/hud/Revolver"
@@ -586,7 +526,7 @@ Model MS_PU_Rifle
 {
 	Path "models/hud/Rifle"
 	Model 0 "m16.md3"
-	Skin 0 "WPN-M16.png"
+	Skin 0 "WPN-M16-k1.png"
 	Scale 0.7402 0.7402 0.7402
 	Offset -22.844 -0.672 8.582
 	AngleOffset 0.03
@@ -599,7 +539,7 @@ Model MS_PU_Shotgun
 {
 	Path "models/hud/Shotgun"
 	Model 0 "shotgun.md3"
-	Skin 0 "WPN-GUNS.png"
+	Skin 0 "WPN-GUNS-k1.png"
 	Scale 0.8081 0.8081 0.8081
 	Offset -24.603 0.002 6.039
 	AngleOffset 0
@@ -612,7 +552,7 @@ Model MS_PU_SuperShotgun
 {
 	Path "models/hud/SuperShotgun"
 	Model 0 "ssg.md3"
-	Skin 0 "WPN-GUNS.png"
+	Skin 0 "WPN-GUNS-k1.png"
 	Scale 0.9371 0.9371 0.9371
 	Offset -24.208 -0.008 7.092
 	AngleOffset -0.04
@@ -943,45 +883,6 @@ Model MS_PU_RC_M32
 	AngleOffset 0.25
 	PitchOffset -2.78
 	RollOffset 0.01
-	FrameIndex SHOT A 0 0
-}
-
-Model MS_PU_Rifle2
-{
-	Path "models/hud/Rifle"
-	Model 0 "m16.md3"
-	Skin 0 "WPN-M16-k1.png"
-	Scale 0.7402 0.7402 0.7402
-	Offset -22.844 -0.672 8.582
-	AngleOffset 0.03
-	PitchOffset -2.44
-	RollOffset 0
-	FrameIndex SHOT A 0 0
-}
-
-Model MS_PU_Shotgun2
-{
-	Path "models/hud/Shotgun"
-	Model 0 "shotgun.md3"
-	Skin 0 "WPN-GUNS-k1.png"
-	Scale 0.8081 0.8081 0.8081
-	Offset -24.603 0.002 6.039
-	AngleOffset 0
-	PitchOffset -4.31
-	RollOffset 0
-	FrameIndex SHOT A 0 0
-}
-
-Model MS_PU_SuperShotgun2
-{
-	Path "models/hud/SuperShotgun"
-	Model 0 "ssg.md3"
-	Skin 0 "WPN-GUNS-k1.png"
-	Scale 0.9371 0.9371 0.9371
-	Offset -24.208 -0.008 7.092
-	AngleOffset -0.04
-	PitchOffset -5.03
-	RollOffset 0
 	FrameIndex SHOT A 0 0
 }
 

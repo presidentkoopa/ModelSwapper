@@ -48,7 +48,7 @@ Brutal Doom, before and after that check. The rows that went are things you neve
 ![Brutal Doom's model list before](media/bd-before.png)
 ![Brutal Doom's model list after](media/bd-after.png)
 
-39 models across 21 weapon families, built from 34 meshes (the rest are alternate finishes), about 30 MB in all. 
+35 models across 21 weapon families, built from 33 meshes (the rest are alternate finishes), about 30 MB in all. 
 
 These are the renders the tools produced along the way. Each one shows top, side and front views. The green ring is the model's origin and the red box is the bounds stored in the file.
 

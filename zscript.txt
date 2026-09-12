@@ -13,7 +13,6 @@ class MS_AE_Shotgun : Actor {}
 class MS_BD_Boot : Actor {}
 class MS_BD_BrutalAxe : Actor {}
 class MS_BD_DSweap : Actor {}
-class MS_BD_BrutalPistol : Actor {}
 class MS_BD_BrutalSMG : Actor {}
 class MS_BD_Flamethrower2 : Actor {}
 class MS_BD_M79 : Actor {}
@@ -39,12 +38,9 @@ class MS_RC_M32 : Actor {}
 class MS_Revolver : Actor {}
 class MS_Revolver2 : Actor {}
 class MS_Rifle : Actor {}
-class MS_Rifle2 : Actor {}
 class MS_RocketLauncher : Actor {}
 class MS_Shotgun : Actor {}
-class MS_Shotgun2 : Actor {}
 class MS_SuperShotgun : Actor {}
-class MS_SuperShotgun2 : Actor {}
 class MS_VR_BFG9000 : Actor {}
 
 // World-anchored display classes. Named by RS_Holsters via string
@@ -55,7 +51,6 @@ class MS_PU_AE_Shotgun : MS_PickupModel {}
 class MS_PU_BD_Boot : MS_PickupModel {}
 class MS_PU_BD_BrutalAxe : MS_PickupModel {}
 class MS_PU_BD_DSweap : MS_PickupModel {}
-class MS_PU_BD_BrutalPistol : MS_PickupModel {}
 class MS_PU_BD_BrutalSMG : MS_PickupModel {}
 class MS_PU_BD_Flamethrower2 : MS_PickupModel {}
 class MS_PU_BD_M79 : MS_PickupModel {}
@@ -79,12 +74,9 @@ class MS_PU_RC_M32 : MS_PickupModel {}
 class MS_PU_Revolver : MS_PickupModel {}
 class MS_PU_Revolver2 : MS_PickupModel {}
 class MS_PU_Rifle : MS_PickupModel {}
-class MS_PU_Rifle2 : MS_PickupModel {}
 class MS_PU_RocketLauncher : MS_PickupModel {}
 class MS_PU_Shotgun : MS_PickupModel {}
-class MS_PU_Shotgun2 : MS_PickupModel {}
 class MS_PU_SuperShotgun : MS_PickupModel {}
-class MS_PU_SuperShotgun2 : MS_PickupModel {}
 class MS_PU_VR_BFG9000 : MS_PickupModel {}
 
 #include "zscript/RS_ForeignFork.zs"

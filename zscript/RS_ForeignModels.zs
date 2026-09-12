@@ -100,7 +100,6 @@ class RS_ForeignShelf
 		static const string SHELF[] = {
 			"pistol|MS_Pistol|PISG|0|0|32",
 			"pistol|MS_Pistol2|PISG|0|0|32",
-			"pistol|MS_BD_BrutalPistol|PISG|0|3|38",
 			"pistol|MS_MG_Tec9|CHGG|0|0|6",
 			"pistol|MS_MG_Bolter|PLSG|0|0|5",
 			"pistol|MS_AE_Pistol|PISG|0|0|20",
@@ -110,17 +109,13 @@ class RS_ForeignShelf
 			"revolver|MS_Revolver2|PISG|0|0|41",
 			"revolver|MS_Cola_Revolver|PISG|0|0|55",
 			"rifle|MS_Rifle|CHGG|0|0|41",
-			"rifle|MS_Rifle2|CHGG|0|0|41",
 			"rifle|MS_BD_Rifle|CHGG|0|3|32",
 			"sniper|MS_Rifle|CHGG|0|0|41",
-			"sniper|MS_Rifle2|CHGG|0|0|41",
 			"sniper|MS_BD_Rifle|CHGG|0|3|32",
 			"shotgun|MS_Shotgun|SHTG|0|0|32",
-			"shotgun|MS_Shotgun2|SHTG|0|0|32",
 			"shotgun|MS_AE_Shotgun|SHTG|0|0|29",
 			"shotgun|MS_BD_AssaultShotgun|SHTG|0|4|32",
 			"supershotgun|MS_SuperShotgun|SHT2|0|0|26",
-			"supershotgun|MS_SuperShotgun2|SHT2|0|0|26",
 			"saw|MS_Chainsaw|SAWG|0|13|16",
 			"saw|MS_RC_Chainsaw|SAWG|0|0|45",
 			"saw|MS_Jackhammer|SAWG|0|0|20",
@@ -221,6 +216,60 @@ class RS_ForeignShelf
 		for (int i = 0; i < mRows.Size(); ++i)
 			if (mRows[i].IndexOf(pfx) == 0) n++;
 		return n;
+	}
+
+	// WHAT A PLAYER CALLS EACH MODEL. The class names are ours -- MS_ keeps
+	// this pk3 loadable beside RS_Main, BD_/AE_/RC_/MG_ say which mod a mesh
+	// came from -- and none of that means anything in a menu. Names here
+	// say what the gun IS. Two skins of one mesh are named by their look
+	// (Black and Blue Pistol, Moonlight and Sunset).
+	//
+	// Every shelf donor must have a row. A donor without one falls back to
+	// its class name minus MS_, which is readable enough to notice and fix.
+	// clearscope: the picker reads this from UI scope.
+	static clearscope string DisplayName(string cls)
+	{
+		static const string NAMES[] = {
+			"MS_Pistol|Black Pistol",
+			"MS_Pistol2|Blue Pistol",
+			"MS_Beretta|Beretta",
+			"MS_MG_Tec9|Tec-9",
+			"MS_MG_Bolter|Boltgun",
+			"MS_AE_Pistol|M4A3",
+			"MS_RC_Auto9|Auto-9",
+			"MS_Cola_Revolver|Vanilla",
+			"MS_Revolver|Moonlight",
+			"MS_Revolver2|Sunset",
+			"MS_Rifle|M16",
+			"MS_BD_Rifle|Assault Rifle",
+			"MS_Shotgun|Shotgun",
+			"MS_AE_Shotgun|Steel Shotgun",
+			"MS_BD_AssaultShotgun|Assault Shotgun",
+			"MS_SuperShotgun|Super Shotgun",
+			"MS_Chainsaw|Chainsaw",
+			"MS_RC_Chainsaw|RoboSaw",
+			"MS_Jackhammer|Jackhammer",
+			"MS_Chaingun|Chaingun",
+			"MS_PlasmaRifle|Plasma Rifle",
+			"MS_RocketLauncher|Rocket Launcher",
+			"MS_VR_BFG9000|BFG 9000",
+			"MS_BD_BrutalSMG|SMG",
+			"MS_BD_Machinegun|Machinegun",
+			"MS_BD_M79|Grenade Launcher",
+			"MS_RC_M32|Auto Launcher",
+			"MS_BD_nade|Grenade",
+			"MS_BD_RailGun|Railgun",
+			"MS_BD_Flamethrower2|Flamethrower",
+			"MS_AE_Flamer|Napalm Cannon",
+			"MS_BD_Unmaker|Unmaker",
+			"MS_BD_BrutalAxe|Axe",
+			"MS_BD_DSweap|Sword",
+			"MS_BD_Boot|Boot"
+		};
+		string key = cls .. "|";
+		for (int i = 0; i < NAMES.Size(); ++i)
+			if (NAMES[i].IndexOf(key) == 0) return NAMES[i].Mid(key.Length());
+		return (cls.IndexOf("MS_") == 0) ? cls.Mid(3) : cls;
 	}
 
 	// THE DONOR CLASS NAME AT INDEX N, for anything that wants to show a
@@ -2683,9 +2732,8 @@ class RS_ForeignModelHandler : StaticEventHandler
 		mLastMain = null; mLastOff = null; mOvlBound.Clear();
 	}
 
-	// Which SET a donor class belongs to -- same prefix logic the picker's
-	// Pretty() uses for display, minus the formatting. 0 VanAlek, 1 Bv21,
-	// 2 MeatG, 3 BWolf.
+	// Which SET a donor class belongs to. 0 VanAlek, 1 Bv21, 2 MeatG,
+	// 3 BWolf.
 	static int SetOfDonor(string cls)
 	{
 		// ONE SET. Everything shipped is set1_vanalek, so every donor answers

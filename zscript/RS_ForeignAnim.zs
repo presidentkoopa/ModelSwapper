@@ -112,21 +112,6 @@ class RS_ForeignClip
 			"MS_RC_M32|ready|0@1|-1|-1|-1",
 			"MS_RC_M32|fire|1@3,2@3,3@3,4@3,5@3,6@3|0|-1|-1",
 			"MS_RC_M32|reload|7-36@2|-1|0|24",
-			"MS_Rifle2|fire|1-10@1|0|-1|-1",
-			"MS_Rifle2|ready|0@1|-1|-1|-1",
-			"MS_Rifle2|reload|11-13@2,14-25@1,26-34@2,35-37@1,38-40@2,0@1|-1|-1|-1",
-			"MS_Shotgun2|fire|1-4@1,5@1,6@1,7@1,8-12@1,13@1,14-19@1,0@1|0|-1|-1",
-			"MS_Shotgun2|ready|0@1|-1|-1|-1",
-			// FRAMES 20-31 ARE THE SHELL GOING IN. Never referenced by the
-			// source (VanAlek maps SHTG A-Z to 0-25 and no state uses U-Z),
-			// found by measuring which surface moves: the shell surface
-			// travels 60 units across them while the receiver moves 0.35.
-			// Reload is now insert-then-pump instead of pump alone.
-			"MS_Shotgun2|reload|20-31@1,5@2,6@2,19@1,18@1,17@1,16@1,15@1,14@1,13@1,12@1,11@1,10@1,9@1,8@1,7@1,6@1,5@1|0|-1|-1",
-			"MS_SuperShotgun2|fire|0@2,1-7@2|0|-1|-1",
-			"MS_SuperShotgun2|ready|0@1|-1|-1|-1",
-			"MS_SuperShotgun2|reload|8@2,9-17@3,18@2,19-21@3,23@2,24@2,24@1|0|-1|-1",
-
 			"MS_Beretta|fire|1@1,2@1,3@1,4@1,5@1,6@1,7@1|0|-1|-1",
 			"MS_Beretta|ready|0@1|-1|-1|-1",
 			"MS_Beretta|reload|22@1|-1|-1|-1",
@@ -158,10 +143,6 @@ class RS_ForeignClip
 			"MS_BD_DSweap|ready|0@1|-1|-1|-1",
 			"MS_BD_DSweap|select|0@1|-1|-1|-1",
 			"MS_BD_DSweap|sprint|0@1|-1|-1|-1",
-			"MS_BD_BrutalPistol|fire|2@1,3@1,4@1,5@1,6@1,7@1|0|-1|-1",
-			"MS_BD_BrutalPistol|ready|3@1|-1|-1|-1",
-			"MS_BD_BrutalPistol|reload|8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1,16@1,17@1,18@1,19@1,20@1,21@1,22@1,23@1,24@1,25@1|-1|-1|-1",
-			"MS_BD_BrutalPistol|sprint|27@1,28@1,29@1,30@1,31@1,32@1,33@1,34@1,35@1,36@1,37@1|-1|-1|-1",
 			"MS_BD_BrutalSMG|ads|2@1,3@1,4@1,5@1,6@1|-1|-1|-1",
 			"MS_BD_BrutalSMG|fire|3@1,4@1,5@1,6@1|0|-1|-1",
 			"MS_BD_BrutalSMG|ready|3@1|-1|-1|-1",
