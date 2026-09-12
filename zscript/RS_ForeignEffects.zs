@@ -224,11 +224,19 @@ class MS_EffectRelocator : StaticEventHandler
 		// The muzzle: the controller's own transform, walked forward to
 		// roughly where the barrel ends -- the engine has no notion of a
 		// muzzle, and the archetype is the best estimate there is.
-		double ang = pmo.angle;
-		double pit = pmo.pitch;
-		Vector3 d  = pmo.AttackDir(pmo, ang, pit);
-		ang = d.x;
-		pit = d.y;
+		//
+		// READ THE AIM FROM THE FIELDS; NEVER CALL pmo.AttackDir. AttackDir
+		// is a raw C++ function pointer on the actor with no default. Only
+		// the renderer's VRMode::SetUp() assigns it, while the playsim turns
+		// OverrideAttackPosDir on for a fresh pawn (p_user.cpp) before any
+		// frame has rendered -- so at map start there are tics where the
+		// gate above passes and the pointer is still null. Calling it there
+		// jumps to address 0: v1.9.3 crashed on the first tic after binding
+		// Project Brutality's DMR. The engine's own AttackDir wrapper answers
+		// its multiplayer branch from these same fields, with exactly this
+		// conversion.
+		double ang = pmo.AttackAngle + 90;
+		double pit = -pmo.AttackPitch;
 
 		double reach = FamilyMuzzle(
 			h.ArchetypeForClass("" .. w.GetClassName())) + MuzzleTrim();
