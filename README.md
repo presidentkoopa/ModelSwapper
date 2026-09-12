@@ -8,6 +8,10 @@ The usual way to get one is for someone to hand-author a model set for a specifi
 
 ModelSwapper doesn't wait for that. It carries one shelf of models and fits it to whatever you load.
 
+![The model picker, with Project Brutality loaded](media/pb-choose-models.png)
+
+Every weapon the loaded mod gives you, the family it was sorted into, and the model it is wearing. Any model can go on any weapon.
+
 Coming in 2.0: renamed models, so every one says clearly what it is, and selectable skins, including weapons coloured to match the theme and palette of popular mods.
 
 ## How it works
@@ -40,6 +44,11 @@ Nothing in it is written for a particular mod, so a pack released tomorrow works
 - the DOOM Infinite demo
 
 Each one's weapon code was checked against the model menu, so the menu lists the guns you can actually hold and leaves out the vehicles, meat shields, ledge grabs and other helpers a mod builds out of weapon code.
+
+Brutal Doom, before and after that check. The rows that went are things you never hold: vehicle guns, meat shields, a ledge grab, and the base classes a mod's whole arsenal is built on.
+
+![Brutal Doom's model list before](media/bd-before.png)
+![Brutal Doom's model list after](media/bd-after.png)
 
 39 models across 21 weapon families, built from 34 meshes (the rest are alternate finishes), about 30 MB in all. 
 
