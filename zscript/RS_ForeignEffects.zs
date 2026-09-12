@@ -127,8 +127,7 @@ class MS_EffectRelocator : StaticEventHandler
 	}
 
 	// -----------------------------------------------------------------
-	// HOW FAR PAST THE HAND THE MUZZLE IS. Moved here when the hitscan
-	// converter was removed; this is the only caller left.
+	// HOW FAR PAST THE HAND THE MUZZLE IS.
 	//
 	// The engine has no muzzle: a weapon acts from the controller's own
 	// transform, which is the grip. MD3 geometry is not reachable from
