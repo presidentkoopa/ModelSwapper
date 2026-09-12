@@ -2,8 +2,6 @@
 
 3D weapons for any Doom mod, made for playing in VR.
 
-Nothing else about the mod changes: its damage, sounds, timing and reloads all stay its own. The mod you loaded still does all the shooting. ModelSwapper only changes what you're holding.
-
 The usual way to get one is for someone to hand-author a model set for a specific mod: every weapon modelled, fitted to the hand and animated to that mod's timing. That is a lot of work for a single mod, and the Doom VR community is small. Most weapon mods will never get a set of their own, including ones people love.
 
 ModelSwapper doesn't wait for that. It carries one shelf of models and fits it to whatever you load.
