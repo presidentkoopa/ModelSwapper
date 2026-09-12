@@ -85,7 +85,7 @@ OptionMenu "RSFM_Main"
     StaticText "arsenals are excluded outright and never appear either way.", "DarkGray"
     StaticText " "
 
-    Submenu "Ballistics", "RSFM_Ballistic"
+    Submenu "Weapon Effects", "RSFM_Effects"
     Submenu "Fit In Hand", "RSFM_Fit"
 }
 
@@ -147,34 +147,11 @@ OptionMenu "RSFM_Fit"
     StaticText "rotate a gun about its middle rather than a point off it.", "DarkGray"
 }
 
-// Kept on its own page and off the main one on purpose. Everything else
-// in this mod changes what you see; this changes what happens.
-OptionMenu "RSFM_Ballistic"
+// The one page for effects that are OURS to place: a mod's own brass and
+// smoke, which it spawns where the gun sits on a monitor -- your face.
+OptionMenu "RSFM_Effects"
 {
-    Title "Ballistics"
-    StaticText " "
-    StaticText "Turns the player's instant-hit weapons into rounds that", "DarkGray"
-    StaticText "actually fly, with a glowing tracer. Their damage, range and", "DarkGray"
-    StaticText "impact effects are unchanged -- the bullet just takes time to", "DarkGray"
-    StaticText "arrive, so it can be led and dodged. Melee is left alone.", "DarkGray"
-    StaticText " "
-    StaticText "This alters how the loaded mod plays, not just how it looks.", "Brick"
-    StaticText " "
-
-    Option "Bullets Travel", "rs_fm_ballistic", "OnOff"
-    Slider "Round Speed", "rs_fm_ballistic_speed", 10, 400, 10, 0
-    StaticText "Map units per tic. Lower is easier to see and easier to", "DarkGray"
-    StaticText "dodge; higher plays closer to the original hitscan.", "DarkGray"
-    StaticText "Keep at 300+ with GunBonsai loaded -- below that it files", "DarkGray"
-    StaticText "converted guns as projectile weapons and offers them the", "DarkGray"
-    StaticText "wrong upgrades.", "DarkGray"
-    StaticText " "
-
-    Option "Round Look", "rs_fm_ballistic_type", "RSFM_BallisticType"
-    StaticText "Cosmetic only -- every look flies, hits and damages the", "DarkGray"
-    StaticText "same. Ported from Hideous Farrago's ballistic FX.", "DarkGray"
-    StaticText "Type 5 spawns the most particles; drop to 2 if a", "DarkGray"
-    StaticText "heavy firefight starts to cost you frames.", "DarkGray"
+    Title "Weapon Effects"
     StaticText " "
 
     Option "Effects Follow The Gun", "rs_fm_effects", "OnOff"
@@ -186,32 +163,9 @@ OptionMenu "RSFM_Ballistic"
     StaticText " "
 
     Slider "Muzzle Trim", "rs_fm_muzzle", -20, 80, 1, 0
-    StaticText "The engine fires from your hand -- it has no idea where a", "DarkGray"
-    StaticText "barrel ends. Each weapon family already gets its own guess;", "DarkGray"
-    StaticText "nudge this if rounds still leave from the grip, or from out", "DarkGray"
-    StaticText "in front of the gun.", "DarkGray"
-    StaticText " "
-    StaticText "---------------------------------------------", "DarkGray"
-    StaticText " "
-
-    StaticText "Bullet Time X Compensation", "Gold"
-    Option "Enable", "rs_fm_bt", "OnOff"
-    Slider "Player Speed During Slowdown", "rs_fm_bt_scale", 0.0, 1.0, 0.05, 2
-    StaticText "Does nothing unless Bullet Time X is loaded alongside.", "DarkGray"
-    StaticText " "
-    StaticText "0.0 -- you are exactly as slow as the monsters.", "DarkGray"
-    StaticText "1.0 -- you move at normal speed while the world crawls.", "DarkGray"
-    StaticText " "
-    StaticText "1.0 is already the fastest Bullet Time X's own player-speed", "DarkGray"
-    StaticText "setting can express -- their own cvar has no faster option,", "DarkGray"
-    StaticText "so this is the true top of the range, not a compromise.", "DarkGray"
-    StaticText " "
-    StaticText "Defaults to 0.0 -- Bullet Time X's own out-of-the-box", "DarkGray"
-    StaticText "behavior. Enabling this changes nothing by itself; move", "DarkGray"
-    StaticText "the slider above 0.0 to actually give yourself an edge.", "DarkGray"
-    StaticText " "
-    StaticText "Turn this off before editing Bullet Time X's own player", "Brick"
-    StaticText "speed settings, or this will overwrite them.", "Brick"
+    StaticText "How far past your hand the muzzle sits. Each weapon family", "DarkGray"
+    StaticText "already gets its own guess; nudge this if brass still comes", "DarkGray"
+    StaticText "off the grip, or from out in front of the gun.", "DarkGray"
 }
 
 OptionMenu "RSFM_Picker"
@@ -224,21 +178,4 @@ OptionMenu "RSFM_Report"
 {
     class RS_Menu_ForeignReport
     Title "Scan Report"
-}
-
-// ---------------------------------------------------------------------
-// The five round looks. Behaviour is identical across all of them --
-// same travel time, same range cutoff, same damage, same impact puff
-// handed back to the mod. Only what you see in flight changes.
-//
-// All five draw on the stock PUFF sprite, so this pk3 still ships no
-// sprite lumps of its own.
-// ---------------------------------------------------------------------
-OptionValue "RSFM_BallisticType"
-{
-    1, "Plain -- a round, nothing behind it"
-    2, "ZDoom -- small clean dot, no trail"
-    3, "LPUF -- glowing streak that tapers"
-    4, "DPUF -- two-frame round, sparks on impact"
-    5, "Layered -- six-particle wake, densest"
 }

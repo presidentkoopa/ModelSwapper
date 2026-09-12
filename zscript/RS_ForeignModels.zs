@@ -1181,8 +1181,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 		if (have >= CFG_VERSION) return;
 
 		// Server cvars: in a netgame only the arbitrator may move them
-		// without the clients disagreeing about what is loaded. Same rule
-		// MS_BulletTimeHandler.Apply takes.
+		// without the clients disagreeing about what is loaded.
 		if (multiplayer && consoleplayer != Net_Arbitrator) return;
 
 		bool changed = false;
@@ -2375,10 +2374,10 @@ class RS_ForeignModelHandler : StaticEventHandler
 		for (int i = 0; i < ARCHE.Size(); ++i) a.Push(ARCHE[i]);
 	}
 
-	// Archetype for a live weapon class, by name. The ballistics muzzle
-	// offset needs it -- a pistol's barrel ends a lot closer to the grip
-	// than a rifle's -- and it is the only thing outside the binder that
-	// asks a question about a specific weapon rather than a row index.
+	// Archetype for a live weapon class, by name. The casing relocator
+	// needs it -- a pistol's barrel ends a lot closer to the grip than a
+	// rifle's -- and it is the only thing outside the binder that asks a
+	// question about a specific weapon rather than a row index.
 	string ArchetypeForClass(string cls)
 	{
 		int i = FindEntry(cls);

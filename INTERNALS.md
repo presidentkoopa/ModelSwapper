@@ -1,7 +1,7 @@
 # ModelSwapper internals
 
-How the mod actually works: the binding and animation mechanism, the classifier, the
-ballistics option, and the repo layout. None of this is needed to *use* ModelSwapper —
+How the mod actually works: the binding and animation mechanism, the classifier, and
+the repo layout. None of this is needed to *use* ModelSwapper —
 see [README.md](README.md) for that. The engine-side fork work has its own document,
 [ENGINE_CHANGES.md](ENGINE_CHANGES.md).
 
@@ -183,110 +183,6 @@ graceful degrade.
 
 **No offhand grip modelling.** The offhand binds and is pickable, but grip points and
 two-handed placement are not modelled — every donor MD3 here has zero tags.
-
-**Converted shots have no fire haptic.** `P_LineAttack`'s controller vibration
-(`vrmode->Vibrate`, `VR_HapticEvent`) runs *after* the `WorldHitscanPreFired` hook this
-mod cancels on, so a shot rebuilt as a projectile skips the rumble a normal hitscan gets.
-Fixing it means reordering two blocks in `p_map.cpp` — an engine change, not a pk3 one —
-so it's left as a known gap rather than worked around here.
-
----
-
-## Ballistics — the one feature that isn't cosmetic
-
-*Options → Weapon Model Swap Program → Ballistics.* Off by default.
-
-Turn it on and every hitscan the **player** fires becomes a real projectile: a glowing
-round that leaves the muzzle, streaks downrange, and arrives after the sound does. It can
-be led, it can be dodged, and at long range it can be outrun.
-
-Damage, damage type, range and impact are untouched. The shot carries the mod's own
-damage value, and on impact it spawns **the mod's own puff** — so their decals, sparks
-and ricochet sounds all still happen. Only the instantaneous part is gone.
-
-**What it deliberately leaves alone:**
-
-| | Why |
-|---|---|
-| Monster hitscans | Converting those would make every enemy in the game dodgeable. Players only. |
-| Melee | `LAF_ISMELEEATTACK`, plus a 96-unit range floor for the many mods that punch with a plain short-range `LineAttack` and no flag. |
-| Zero-damage traces | `P_LineAttack` is also how the engine and half of ZScript answer *"what am I pointing at"* — autoaim, target readouts, tracer setup. Cancelling one of those returns `nullptr` and the caller silently loses its answer. |
-
-In VR the round is spawned from `AttackPos`/`AttackDir` — the controller, not the eye —
-rather than from your face.
-
-**The muzzle.** The engine has no concept of one. `AttackPos` is the raw controller
-transform origin (`hw_vrmodes.cpp`, `GetWeaponTransform`) — the grip, in your fist.
-Every hitscan in the game has always started there; it just never showed,
-because an instant shot has no visible origin. Give the shot a travelling round and it is
-suddenly, obviously coming out of the handle.
-
-Nothing exposes the real barrel length — MD3 geometry isn't reachable from ZScript, and
-MODELDEF carries scale and offset but no extent. What *is* available is the classifier:
-every bound weapon already has an archetype, and barrel length tracks family closely
-enough that a per-family figure lands far better than one global number. **Muzzle Trim**
-adjusts whatever's left.
-
-The offset is walked forward along the *aim*, not along facing, so it stays right with the
-gun pointed up or down — and it's traced first, so standing against a wall or with a
-Pinky's face in the barrel clips it short instead of spawning the round on the far side of
-what you're shooting at.
-
-**The honest cost:** a mod's balance assumes its hitscan lands instantly and always.
-Travel time means shots miss movers that instant ones would have hit, and a weapon's feel
-changes at range. That is the point of the feature and also its risk, which is why it is
-opt-in and why the speed is a slider.
-
-A twenty-pellet shotgun blast converts all twenty pellets — half-travelling and half-instant would be worse than either.
-
-**No engine change is needed for this.** `WorldHitscanPreFired` is stock, it is
-cancellable, and `P_LineAttack` is the single funnel every hitscan in the game passes
-through.
-
-### Bullet Time X compensation
-
-On the same page, and inert unless [Bullet Time X](https://www.moddb.com/mods/bullet-time-x)
-is loaded alongside. Detection is by cvar, not by class — we never name one of its types.
-
-Every "multiplier" in that mod is a **divisor**: monsters get `vel /= bt_multiplier`, the
-player gets `speed /= bt_player_movement_multiplier`. A higher player multiplier means a
-*slower* player, and the player's advantage is however much smaller their divisor is than
-the world's. The slider runs edge to edge, no dead zone:
-
-| | |
-|---|---|
-| **0.0** | player divisor = world divisor — as slow as the monsters |
-| **1.0** | player divisor = `1` — normal movement while the world crawls |
-
-Linear in between, and both ends load-bearing. There used to be a third anchor at `1.0`
-for "the mod's own configured value, untouched," with the normal-speed anchor pushed out
-to `2.0` — dropped, because Bullet Time X ships with both divisors at `4`
-(`bt_multiplier` and `bt_player_movement_multiplier`), so on a stock config that middle
-anchor and the `0.0` anchor were the same number and the *entire bottom half of the
-slider did nothing.* This version only ever depends on the world's own divisor, read
-live, which never degenerates that way.
-
-**`1.0` is already the fastest their own cvar can express** — Bullet Time X clamps its
-player divisor to `1..20`, and `1` *is* normal speed, there's no faster setting to reach
-for a true double-speed player. This isn't a compromise; it's their own ceiling.
-
-**The slider defaults to `0.0`** — Bullet Time X's own out-of-the-box behavior, since
-their shipped defaults already put the player divisor equal to the world divisor. That
-means flipping **Enable** on by itself changes nothing; the slider has to actually move
-above `0.0` before this does anything different from what Bullet Time X would have done
-anyway.
-
-All four of its slowdown profiles move together — normal, dodge, berserk, berserk-dodge —
-since compensating only the first would leave a dodge feeling nothing like the bullet time
-it interrupts. A profile whose world divisor is `0` (total freeze) is skipped: there is no
-honest "as slow as the monsters" when the monsters are stopped dead.
-
-The originals are captured into a cvar before anything is written, so quitting with
-compensation on can't strand their settings overwritten. Turn it off before editing Bullet
-Time X's own player-speed options, or this will overwrite them.
-
----
-
 ## Layout
 
 ```
@@ -297,8 +193,6 @@ zscript/
   RS_ForeignAnim.zs          clip table, expansion, per-hand state
   RS_ForeignPersist.zs       the picks archive
   RS_ForeignModelsMenu.zs    picker + scan report
-  RS_ForeignBallistic.zs     hitscan -> projectile, and the round itself
-  RS_ForeignBulletTime.zs    Bullet Time X compensation (inert without it)
 modeldef                     32 donor blocks, one per model
 models/                      the meshes and skins
 tools_gen_bd21.ps1           generates the BD21 shelf from BD's own MODELDEFs
@@ -400,30 +294,6 @@ the whole feature for a Quest build where a static model beats a flat sprite reg
 `A_ChangeModel` is stock as of GZDoom 4.11, so the parts that already work anywhere are:
 the scanner, the archetype classifier, provenance filtering, the picker menu, pick
 persistence, Assign All / Randomize, and the per-instance model bind itself.
-
-### Building it
-
-Nothing is stripped by hand. Every fork-only engine call in this mod lives behind one
-class, `RS_Fork`, and the build script ships one of two implementations of it:
-
-```
-./build.ps1           # ModelSwapper.pk3        -- desktop RS_Fork, full animation
-./build.ps1 -Static   # ModelSwapper-QUEST.pk3  -- static RS_Fork, stock-safe
-```
-
-`zscript/static/RS_ForeignFork.zs` is the static one. Its `Supported()` returns false and
-its methods are no-ops, so the animation table is never built and the overlay painter
-returns immediately. **No other file differs between the two builds** — same scanner,
-same classifier, same picker, same models, same everything else. That matters: a bug
-fixed for PCVR is fixed for Quest in the same commit, and there is no second copy of the
-mod to drift.
-
-### What the Quest build keeps
-
-The scanner, the archetype classifier, provenance filtering, the picker menu, pick
-persistence, Assign All / Randomize, and the per-instance model bind itself. Ballistics
-and Bullet Time X compensation come along too — `WorldHitscanPreFired` is stock and
-cancellable, and the BT hook only reads and writes cvars.
 
 The psprite pin (`psp.Sprite`/`psp.Frame` set to the donor's anchor) is stock behaviour
 and stays: it's what makes `FindModelFrame` resolve. Each model then renders at its

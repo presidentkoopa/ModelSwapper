@@ -26,42 +26,6 @@ server bool rs_foreignmodels_showall = false;  // include weapons with no slot b
 // exist in the world at a time. Clear it with the menu.
 server string rs_fm_picks = "";
 
-// Hitscan -> projectile conversion. Off by default, and the only setting
-// here that changes how the loaded mod plays rather than how it looks.
-server bool rs_fm_ballistic       = false;  // player hitscans become travelling rounds
-// 300, not 90, for two reasons that happen to agree.
-//
-// GunBonsai infers whether a weapon is a hitscan or a projectile weapon from
-// the speed of what it fires, and counts anything at 300 map units per tic or
-// faster as a hitscan -- a threshold it added for mods that simulate bullets
-// with fast projectiles, which is exactly what this is. Below it, every
-// converted shotgun and rifle is filed as a projectile weapon and offered the
-// wrong upgrade tree. It also credits XP to the weapon held when the round
-// LANDS, so a shorter flight time is a smaller window to fire, swap, and have
-// the XP go to the wrong gun.
-//
-// It is also the fastest the trail can draw at full density: one bit per 12
-// units, 24 per tic, so 300 units of travel is 25 requested against 24 allowed.
-// Faster than this and the streak starts to gap.
-server int  rs_fm_ballistic_speed = 300;    // map units per tic, clamped 10-400
-
-// WHICH ROUND YOU SEE. Behaviour is identical across all five -- same
-// travel time, same range cutoff, same damage, same impact puff handed
-// back to the mod. Only the look differs.
-//
-//   1  plain    -- a round in flight, nothing behind it (default)
-//   2  zdoom    -- small clean dot, no trail
-//   3  lpuf     -- glowing streak, tapers as it fades
-//   4  dpuf     -- two-frame round, four bouncing sparks on impact
-//   5  layered  -- six-particle wake; the densest, and the only one that
-//                  stays continuous at 300 units/tic
-//
-// Types 2-5 are HF's VR_ZDoomBullet, VR_LPUFBullet, VR_DPUFBullet and
-// HF_LayeredBullet. Its sprites are not ours to ship (its own
-// ASSET_PROVENANCE.md files LPUF and DPUF as unresolved rips), so all
-// four draw on the stock PUFF instead.
-server int rs_fm_ballistic_type = 1;   // clamped 1-5
-
 // THEIR CASINGS COME OUT OF YOUR FACE. A weapon mod spawns brass, smoke
 // and ejection effects relative to the PLAYER, because on a monitor the
 // player and the gun are the same place. In a headset they are not: the
@@ -79,22 +43,9 @@ server int rs_fm_ballistic_type = 1;   // clamped 1-5
 // mod causes.
 server bool rs_fm_effects = true;
 
-// Bullet Time X compensation. Inert unless that mod is loaded alongside.
-// 0.0 = player as slow as the monsters, 1.0 = normal player movement speed
-// -- their own player-divisor cvar has no faster setting than that, so 1.0
-// is the true ceiling, not a compromise. Default 0.0 because Bullet Time X
-// itself ships with the player divisor equal to the world divisor -- 0.0 IS
-// their own out-of-the-box behavior, so enabling this changes nothing until
-// the slider actually moves.
-server bool   rs_fm_bt       = false;
-server float  rs_fm_bt_scale = 0.0;
-// Their player-movement divisors as they were before we touched them,
-// packed "normal:dodge:berserk:berserkdodge". Kept in a cvar so quitting
-// with compensation on cannot strand their settings overwritten.
-server string rs_fm_bt_base  = "";
-
 // Extra distance from the grip to the muzzle, on top of the per-family
-// figure. The engine has no muzzle concept -- shots start at the hand.
+// figure. The engine has no muzzle concept -- a weapon acts from the
+// hand -- so this is where the casing relocator aims its shift.
 server int rs_fm_muzzle = 0;   // map units, clamped -20..80
 
 // Collapse the picker to ONE ROW PER FAMILY -- one shotgun row, one smg row.

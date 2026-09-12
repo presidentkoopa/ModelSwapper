@@ -3,6 +3,11 @@
 // it is loaded next to.
 GameInfo
 {
-    AddEventHandlers = "RS_ForeignModelHandler", "MS_HitscanHandler", "MS_BulletTimeHandler"
+    // EVERY handler has to be named here. A StaticEventHandler that is
+    // not listed is never created, so it never sees a tic and never
+    // answers a netevent -- which is how MS_EffectRelocator (casings) and
+    // RS_ForeignDebug (msdebug, mstrace) sat inert from the day they
+    // landed: both were added without touching this line.
+    AddEventHandlers = "RS_ForeignModelHandler", "MS_EffectRelocator", "RS_ForeignDebug"
 }
 

@@ -29,8 +29,8 @@ $out  = Join-Path $root $(if ($Static) { 'ModelSwapper-QUEST.pk3' } else { 'Mode
 # Everything that belongs in the pk3. Anything else in the repo (README, this
 # script, .git) stays out.
 $include = @('zscript.txt', 'modeldef', 'MENUDEF', 'CVARINFO', 'MAPINFO', 'KEYCONF')
-# Donors anchor on stock Doom sprite names, and the ballistic round now uses
-# stock PUFF, so this pk3 ships no sprite lumps at all.
+# Donors anchor on stock Doom sprite names, so this pk3 ships no sprite lumps
+# at all.
 $dirs    = @('zscript', 'models')
 # SYNTAX CHECK BEFORE PACKING.
 #

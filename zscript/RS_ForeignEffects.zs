@@ -22,9 +22,8 @@
 // up and down, which reads as effects appearing at random heights.
 //
 // WHY THIS IS OURS TO FIX EVEN THOUGH IT IS NOT OUR CODE. The rest of
-// this mod replaces pixels and nothing else. This crosses that line, and
-// it is the second thing that does (the ballistic converter is the
-// first), so it is opt-out and it says so in the menu.
+// this mod replaces pixels and nothing else. This is the only thing that
+// crosses that line, so it is opt-out and it says so in the menu.
 //
 // The justification is that we are the reason the gun moved. A flat
 // sprite mod in VR draws the weapon at the eye too, so its effects line
@@ -127,6 +126,54 @@ class MS_EffectRelocator : StaticEventHandler
 			what, a.GetClassName(), (a.Pos - mEye).Length());
 	}
 
+	// -----------------------------------------------------------------
+	// HOW FAR PAST THE HAND THE MUZZLE IS. Moved here when the hitscan
+	// converter was removed; this is the only caller left.
+	//
+	// The engine has no muzzle: a weapon acts from the controller's own
+	// transform, which is the grip. MD3 geometry is not reachable from
+	// ZScript, and MODELDEF carries scale and offset but no extent, so
+	// nothing exposes a real barrel length. What we do have is the
+	// classifier -- barrel length tracks weapon family closely enough
+	// that a per-family figure beats one global number, and the slider
+	// trims what is left.
+	//
+	// switch() on a String won't compile -- ZScript's switch takes only
+	// an int or a Name -- so this is a plain if/else chain.
+	// -----------------------------------------------------------------
+	static double FamilyMuzzle(string arch)
+	{
+		if (arch == "pistol")       return 13;
+		if (arch == "revolver")     return 15;
+		if (arch == "smg")          return 17;
+		if (arch == "grenade")      return 20;
+		if (arch == "supershotgun") return 21;
+		if (arch == "flamethrower") return 22;
+		if (arch == "plasma")       return 23;
+		if (arch == "unmaker")      return 23;
+		if (arch == "bfg")          return 24;
+		if (arch == "shotgun")      return 25;
+		if (arch == "rocket")       return 26;
+		if (arch == "launcher")     return 26;
+		if (arch == "machinegun")   return 26;
+		if (arch == "chaingun")     return 27;
+		if (arch == "rifle")        return 28;
+		if (arch == "railgun")      return 30;
+		if (arch == "sniper")       return 31;
+		// melee, saw, axe, sword: a swing throws nothing, so the figure
+		// only has to be harmless.
+		return 20;
+	}
+
+	static double MuzzleTrim()
+	{
+		CVar c = CVar.FindCVar("rs_fm_muzzle");
+		double t = c ? double(c.GetInt()) : 0.0;
+		if (t < -20) t = -20;
+		if (t >  80) t =  80;
+		return t;
+	}
+
 	static bool Enabled()
 	{
 		CVar c = CVar.FindCVar("rs_fm_effects");
@@ -155,13 +202,8 @@ class MS_EffectRelocator : StaticEventHandler
 		if (!pmo) return;
 		if (multiplayer) { Gate("multiplayer"); return; }
 
-		// NOT A HARD GATE ANY MORE. The ballistic converter treats
-		// OverrideAttackPosDir as a BRANCH -- controller transform when it
-		// is set, computed eye position when it is not -- and making it a
-		// return here meant the whole feature vanished silently on any
-		// setup where the flag reads false. If there is no controller
-		// transform there is also no displacement to correct, so say so
-		// rather than disappearing.
+		// If there is no controller transform there is no displacement to
+		// correct either, so say so rather than disappearing silently.
 		if (!pmo.OverrideAttackPosDir) { Gate("no controller transform (OverrideAttackPosDir false)"); return; }
 
 		// ONLY FOR WEAPONS WE MOVED. If the player is holding something we
@@ -181,17 +223,16 @@ class MS_EffectRelocator : StaticEventHandler
 		mEye = (pmo.pos.x, pmo.pos.y, pi.viewz);
 
 		// The muzzle: the controller's own transform, walked forward to
-		// roughly where the barrel ends. Same figures the ballistic
-		// converter uses, for the same reason -- the engine has no notion
-		// of a muzzle and the archetype is the best estimate there is.
+		// roughly where the barrel ends -- the engine has no notion of a
+		// muzzle, and the archetype is the best estimate there is.
 		double ang = pmo.angle;
 		double pit = pmo.pitch;
 		Vector3 d  = pmo.AttackDir(pmo, ang, pit);
 		ang = d.x;
 		pit = d.y;
 
-		double reach = MS_HitscanHandler.FamilyMuzzle(
-			h.ArchetypeForClass("" .. w.GetClassName())) + MS_HitscanHandler.MuzzleTrim();
+		double reach = FamilyMuzzle(
+			h.ArchetypeForClass("" .. w.GetClassName())) + MuzzleTrim();
 
 		Vector3 muzzle = pmo.AttackPos;
 		if (reach > 0)
