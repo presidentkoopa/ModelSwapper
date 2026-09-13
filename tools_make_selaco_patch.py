@@ -25,6 +25,11 @@ And additions:
   - Selaco's own weapon pickup meshes as models (modeldef.selaco), each
     first in its families, pointed at where Selaco.ipk3 already has them
   - one never-spawned actor that makes our MODELDEF's sprite names known
+  - a MENUDEF that puts the swapper's menu on Selaco's Mod Options page
+    (Selaco's Options screen never shows the OptionsMenu we add to), with a
+    copy of RSFM_Main whose entries to script-built menus are MenuLinks:
+    Selaco copies a Submenu's items instead of opening it, and those menus
+    have no items until they open
   - our wireframe render of each Selaco gun (renders/, and renders/selaco/
     in the repo), for anyone who wants to look
 Only script files that needed a change are in the patch.
@@ -90,7 +95,8 @@ Load order: Selaco, then ModelSwapper-QUEST.pk3, then this patch.
 Selaco's engine calls the weapon base class WeaponBase instead of Weapon and
 has no VR hands. This patch replaces ModelSwapper's script files with copies
 that use those names, and adds Selaco's own guns as in-hand models, read
-from Selaco.ipk3 where they already are. It contains no Selaco code or
+from Selaco.ipk3 where they already are. The swapper's menu is under
+Options > Mod Options. It contains no Selaco code or
 files. renders/ has a wireframe of each gun. Built by ModelSwapper's
 tools_make_selaco_patch.py.
 """
@@ -317,9 +323,57 @@ def main():
                  "// Never subclass them (FindModelFrameRaw is an exact class test).\n" + "\n".join(stubs) + "\n")
     selaco_md = "// ModelSwapper Selaco patch: Selaco's own guns as in-hand models.\n\n" + "\n".join(blocks)
 
+    # MOD OPTIONS. Selaco's Options screen is its own and never shows the
+    # OptionsMenu ModelSwapper adds itself to, so the swapper's menu cannot be
+    # reached. Selaco's Mod Options page lists what is added to ModOptionsMenu,
+    # and says no mod has options when nothing is. Only Selaco defines that
+    # menu -- adding to it anywhere else is a fatal MENUDEF error -- so the
+    # entry lives here, never in ModelSwapper.
+    if "menudef" not in zlow:
+        fail("no MENUDEF in %s" % src)
+    ms_menu = z.read(zlow["menudef"]).decode("utf-8-sig")
+    entry = re.findall(r'^\s*Submenu\s+("[^"]*")\s*,\s*"RSFM_Main"', ms_menu, re.M | re.I)
+    if len(entry) != 1 or len(re.findall(r'^\s*OptionMenu\s+"RSFM_Main"', ms_menu, re.M | re.I)) != 1:
+        fail("ModelSwapper's MENUDEF no longer has one RSFM_Main menu with one entry to it")
+    selaco_menus = "\n".join(sz.read(n).decode("latin-1") for n in sz.namelist()
+                             if n.replace("\\", "/").split("/")[-1].split(".")[0].lower() == "menudef")
+    if not re.search(r'^\s*OptionMenu\s+"ModOptionsMenu"', selaco_menus, re.M | re.I):
+        fail("Selaco no longer defines ModOptionsMenu")
+
+    # MENUS A SCRIPT BUILDS. Selaco's options screen never opens a Submenu: it
+    # copies the target's MENUDEF items into the page it is showing. Choose
+    # Models and Scan Report are filled by their menu class when they open, so
+    # they have no items and copy as dead labels. MenuLink is Selaco's own item
+    # for opening a real menu (Menu.SetMenu), so those entries become MenuLinks
+    # in a copy of RSFM_Main that replaces ModelSwapper's. MenuLink is Selaco's
+    # class, which is why this copy lives in the patch.
+    if not re.search(r"^\s*MenuLink\s", selaco_menus, re.M | re.I):
+        fail("Selaco's MENUDEF no longer uses MenuLink")
+    scripted = [m.group(1) for m in re.finditer(r'^OptionMenu\s+"(\w+)"\s*\{(.*?)^\}', ms_menu, re.M | re.S)
+                if re.search(r"^\s*class\s+\w+", m.group(2), re.M | re.I)]
+    main = re.search(r'^OptionMenu\s+"RSFM_Main"\s*\{.*?^\}', ms_menu, re.M | re.S)
+    if not scripted or not main:
+        fail("ModelSwapper's MENUDEF no longer has script-built menus under RSFM_Main")
+    link = re.compile(r'^([ \t]*)Submenu(\s+"[^"]*"\s*,\s*"(?:%s)")' % "|".join(scripted), re.M | re.I)
+    main_block, n_main = link.subn(r"\1MenuLink\2", main.group(0))
+    n_all = len(link.findall(ms_menu))
+    if n_main != 2 or n_all != 2:
+        fail("entries to script-built menus expected 2, all in RSFM_Main; found %d, %d there -- ModelSwapper changed?" % (n_all, n_main))
+
+    menudef = ("// ModelSwapper Selaco patch.\n"
+               "// Selaco's options screen copies a Submenu's items into its page instead\n"
+               "// of opening it, so a menu a script builds on opening copies as a dead\n"
+               "// label. Those entries are MenuLinks here: Selaco's item that opens the\n"
+               "// real menu. This RSFM_Main replaces ModelSwapper's, which loads first.\n\n"
+               + main_block + "\n\n"
+               + ("// The swapper on Selaco's Mod Options page.\n"
+                  'AddOptionMenu "ModOptionsMenu"\n{\n\tSubmenu %s, "RSFM_Main"\n}\n' % entry[0]))
+    print("  MENUDEF: %s added to Selaco's Mod Options; %s open as menus" % (entry[0], ", ".join(scripted)))
+
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as o:
         o.writestr("zscript.txt", names_zs)
         o.writestr("modeldef.selaco", selaco_md)
+        o.writestr("MENUDEF", menudef)
         # Renders for people who want to see the guns. Distinct names, outside
         # every folder the engine reads textures or sprites from.
         for donor, png in pngs:
