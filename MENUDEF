@@ -48,13 +48,6 @@ OptionMenu "RSFM_Main"
     StaticText "OFF leaves any modelled weapon alone. Rescan after changing.", "DarkGray"
     StaticText " "
 
-    Option "Keep One-Handed Mods In One Hand", "rs_fm_handguard", "OnOff"
-    StaticText "ON by default. Some weapon mods only work in your main hand", "DarkGray"
-    StaticText "and crash the game when a gun is moved to the off hand --", "DarkGray"
-    StaticText "Project Brutality does. Their weapons stay in the main hand.", "DarkGray"
-    StaticText "Mods that know about the off hand are never touched.", "DarkGray"
-    StaticText " "
-
     Option "One Row Per Family", "rs_foreignmodels_byfamily", "OnOff"
     StaticText "OFF by default: a row for every weapon the scan found, by", "DarkGray"
     StaticText "name, so you can put a model on each one.", "DarkGray"

@@ -72,14 +72,6 @@ class RS_Fork play
 		if (psp) psp.NoDraw = v;
 	}
 
-	// WEAPON.NOHANDSWITCH on one weapon. A VR-fork flag -- QuestZDoom has
-	// it too, plain GZDoom does not -- so it lives in the shim. See
-	// RS_ForeignModelHandler.KeepOneHanded.
-	static void SetNoHandSwitch(Weapon w, bool v)
-	{
-		if (w) w.bNoHandSwitch = v;
-	}
-
 	static void ReleaseFrames(PSprite psp)
 	{
 		if (!psp) return;

@@ -29,11 +29,6 @@ WHY GENERATED, NOT COMMITTED. The file is PB's code. This script reads it out
 of your own copy of PB and edits it there, so no PB source lives in this repo.
 It refuses any file but PB 0.4.1's, by hash, and every edit must match an
 exact number of times -- a different PB fails loudly instead of half-patching.
-
-MODELSWAPPER NOTICES BY ITSELF. Its one-hand guard (KeepOneHanded) keeps a
-mod's guns out of the off hand when that mod's scripts look up the main-hand
-layer and never mention the off hand. The patched file mentions it, so with
-the patch loaded, PB's guns may move between hands again.
 """
 import hashlib
 import io

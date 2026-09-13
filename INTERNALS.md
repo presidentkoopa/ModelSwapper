@@ -125,32 +125,20 @@ Checked against the source of about twenty mods before shipping. The only rows i
 removes are abstract bases, helpers and that rocket. List Unbound Weapons shows them all
 again.
 
-### Mods written for one hand
+### Project Brutality in the off hand
 
-A VR engine can move a weapon to the off hand. The engine clears the main hand and raises
-the gun on the off-hand layer, and any script in its select animation that asks for
-`GetPSprite(PSP_WEAPON)` gets null back. Project Brutality writes straight through that
-null, so moving a PB gun across hands crashes the game, on QuestZDoom and this fork alike.
+A VR engine can move any weapon between hands, and ModelSwapper never stops it. Project
+Brutality's weapon code, though, asks for the main-hand sprite layer everywhere. While a
+gun moves to the off hand the main hand is briefly empty, the engine answers null, and
+eleven of PB's lookups use that answer unchecked, so a move occasionally crashes the game.
 
-The switch is synchronous, so it has to be stopped before it starts. When a mod's
-scripts look up the main-hand layer by constant and never mention the off hand, its
-weapons get `WEAPON.NOHANDSWITCH`, which `SwitchWeaponHand` refuses
-(`KeepOneHanded`). Of the tested mods that is Project Brutality, MetaDoom and Doom 64
-Unseen Evil. The last two guard their lookups and could have kept switching, but a text
-scan cannot tell a guarded lookup from an unguarded one. Everything else keeps free hand
-switching, and the menu option turns it off.
-
-The guard stops the crash, but it also stops you moving a PB gun between hands.
-`tools_make_pb_offhand_patch.py` builds a small patch that fixes the problem at its
-source. From your own copy of Project Brutality 0.4.1, it rewrites the eleven unguarded
-lookups in `zscript/Weapons/BaseWeapon_Functions.zsc` to ask for the hand the gun is in
-and check for null, then writes `PB-0.4.1-VR-Offhand-Patch.pk3`. Load it after PB. A
-later archive replaces an included script by carrying the same path, so no engine
-change is involved and it works on Quest. The patched file mentions the off hand, so
-the guard stands down for PB on its own. No PB code is committed here: the script edits
-your copy, refuses any file but 0.4.1's by hash, and fails if an edit does not match
-exactly.
-
+`tools_make_pb_offhand_patch.py` fixes that at the source without touching either engine.
+From your own copy of Project Brutality 0.4.1 it rewrites those lookups to ask for the
+hand the gun is actually in and to check for null, and writes
+`PB-0.4.1-VR-Offhand-Patch.pk3`. Load it after PB. A later archive replaces an included
+script by carrying the same path, so it works on Quest too. No PB code is committed here:
+the script edits your copy, refuses any file but 0.4.1's by hash, and fails if an edit
+does not match exactly.
 ---
 
 ## Compatibility targets

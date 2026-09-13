@@ -147,7 +147,6 @@ class RS_ForeignDebug : StaticEventHandler
 			if (e.guessedBySlot) notes = notes .. "guessed-from-slot ";
 			if (e.pinned)        notes = notes .. "pinned ";
 			if (h.EntryNeverHeld(i)) notes = notes .. "never-held ";
-			if (e.oneHanded)         notes = notes .. "one-handed ";
 			if (!e.modDefined)   notes = notes .. "engine-class ";
 			else if (e.srcContainer.Length() > 0)
 				notes = notes .. e.srcContainer .. " ";
