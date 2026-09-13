@@ -38,6 +38,3 @@ msdebug.txt
 
 # Built from the player's own copy of Project Brutality -- PB code, never committed.
 PB-0.4.1-VR-Offhand-Patch.pk3
-
-# Build artifact -- rebuild with tools_make_selaco_patch.py
-ModelSwapper-Selaco-Patch.pk3
