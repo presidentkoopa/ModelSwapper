@@ -79,6 +79,7 @@ Everything used on the models is in this repo. The scripts need Python 3, and th
 - tools_gen_pickups.ps1 generates the pickup model definitions from the meshes.
 - tools_gen_bd21.ps1 generates the Brutal Doom v21 shelf from Brutal Doom's own model definitions.
 - tools_zs_lint.py checks the ZScript for syntax errors before build.ps1 packs anything.
+- tools_make_pb_offhand_patch.py builds a patch from your own copy of Project Brutality 0.4.1 that lets its guns work in the VR off hand. Load it after PB.
 
 ## Which build
 

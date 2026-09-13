@@ -35,3 +35,6 @@ __pycache__/
 log-*.txt
 doomxr-log.txt
 msdebug.txt
+
+# Built from the player's own copy of Project Brutality -- PB code, never committed.
+PB-0.4.1-VR-Offhand-Patch.pk3

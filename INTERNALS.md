@@ -140,6 +140,17 @@ Unseen Evil. The last two guard their lookups and could have kept switching, but
 scan cannot tell a guarded lookup from an unguarded one. Everything else keeps free hand
 switching, and the menu option turns it off.
 
+The guard stops the crash, but it also stops you moving a PB gun between hands.
+`tools_make_pb_offhand_patch.py` builds a small patch that fixes the problem at its
+source. From your own copy of Project Brutality 0.4.1, it rewrites the eleven unguarded
+lookups in `zscript/Weapons/BaseWeapon_Functions.zsc` to ask for the hand the gun is in
+and check for null, then writes `PB-0.4.1-VR-Offhand-Patch.pk3`. Load it after PB. A
+later archive replaces an included script by carrying the same path, so no engine
+change is involved and it works on Quest. The patched file mentions the off hand, so
+the guard stands down for PB on its own. No PB code is committed here: the script edits
+your copy, refuses any file but 0.4.1's by hash, and fails if an edit does not match
+exactly.
+
 ---
 
 ## Compatibility targets
