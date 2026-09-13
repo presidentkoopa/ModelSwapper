@@ -3,8 +3,9 @@
     python tools_md3_reorigin.py MESH.md3 --rest N            # report only
     python tools_md3_reorigin.py MESH.md3 --rest N --apply    # write
 
-WHAT IT DOES. Computes the centroid of every vertex at the rest frame,
-rounds it to the MD3 grid (1/64 unit -- so the shift is exact and no
+WHAT IT DOES. Computes the centroid of every vertex at the rest frame --
+skipping any surface collapsed onto a single point, which renders as
+nothing (see visible_verts_at) -- rounds it to the MD3 grid (1/64 unit -- so the shift is exact and no
 vertex moves by a rounding error), and subtracts it from:
 
   - every vertex of every surface at every frame   (int16 xyz, /64)
@@ -58,6 +59,35 @@ def centroid(pts):
     return (sum(p[0] for p in pts) / n, sum(p[1] for p in pts) / n, sum(p[2] for p in pts) / n)
 
 
+# A surface whose vertices all sit within this of their own centre is parked,
+# not geometry.
+COLLAPSED = 0.5
+
+
+def visible_verts_at(b, h, frame):
+    """The vertices that are actually geometry at `frame`, and what was skipped.
+
+    Modellers hide an unused sub-mesh by welding every vertex of it onto one
+    point. It draws nothing, but it still counts in an average. VanAlek's fist
+    carries a whole duplicate glove collapsed to a point -- half the mesh's
+    vertices -- and centring on every vertex left the visible hand 16 units
+    off the origin; the revolver was 24 off, the super shotgun 4. So collapsed
+    surfaces are skipped. If every surface is collapsed, all vertices are used.
+    """
+    keep, ignored = [], []
+    for s in h["surfs"]:
+        base = s["base"] + s["oxyz"] + frame * s["nv"] * 8
+        pts = [tuple(c / GRID for c in struct.unpack_from("<hhh", b, base + v * 8)) for v in range(s["nv"])]
+        if not pts:
+            continue
+        c = centroid(pts)
+        if max(math.dist(p, c) for p in pts) < COLLAPSED:
+            ignored.append((s["name"], len(pts)))
+        else:
+            keep.extend(pts)
+    return (keep if keep else verts_at(b, h, frame)), ignored
+
+
 def main():
     args = sys.argv[1:]
     if not args:
@@ -72,11 +102,14 @@ def main():
     assert b[:4] == b"IDP3", "not an MD3"
     assert 0 <= rest < h["nf"], "rest frame out of range"
 
-    c = centroid(verts_at(b, h, rest))
+    vis, ignored = visible_verts_at(b, h, rest)
+    c = centroid(vis)
     # Snap to the vertex grid so subtraction is exact in int16.
     ci = tuple(int(round(x * GRID)) for x in c)
     cf = tuple(x / GRID for x in ci)
     print("%-40s frames %d tags %d surfaces %d" % (os.path.basename(path), h["nf"], h["nt"], h["ns"]))
+    for name, n in ignored:
+        print("ignored collapsed surface %-24s %d verts, parked on one point" % (name, n))
     print("rest frame %d centroid  %+8.3f %+8.3f %+8.3f" % (rest, c[0], c[1], c[2]))
     print("shift applied (grid)    %+8.3f %+8.3f %+8.3f" % cf)
 
@@ -124,7 +157,7 @@ def main():
     # ---- VERIFY against the file actually on disk ------------------------
     b2 = open(path, "rb").read()
     h2 = read_all(b2)
-    c2 = centroid(verts_at(b2, h2, rest))
+    c2 = centroid(visible_verts_at(b2, h2, rest)[0])
     ok = all(abs(x) <= 1.0 / GRID + 1e-6 for x in c2)
     print("verify: rest centroid   %+8.3f %+8.3f %+8.3f  %s" % (c2[0], c2[1], c2[2], "OK" if ok else "FAIL"))
 

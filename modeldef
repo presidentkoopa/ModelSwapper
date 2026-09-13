@@ -43,7 +43,7 @@ Model MS_Revolver
 	Model 0 "rev.md3"
 	Skin 0 "WPN-REV.png"
 	Scale 1.35 1.35 1.35
-	Offset 9.935 -38.328 -35.416
+	Offset 0.000 -33.857 -4.682
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -55,7 +55,7 @@ Model MS_Revolver2
 	Model 0 "rev.md3"
 	Skin 0 "WPN-REV2.png"
 	Scale 1.35 1.35 1.35
-	Offset 9.935 -38.328 -35.416
+	Offset 0.000 -33.857 -4.682
 	FrameIndex PISG A 0 0
 	FrameIndex PISG B 0 9999
 }
@@ -91,7 +91,7 @@ Model MS_SuperShotgun
 	Model 0 "ssg.md3"
 	Skin 0 "WPN-GUNS-k1.png"
 	Scale 1.35 1.35 1.35
-	Offset 0.485 -30.438 -2.805
+	Offset 0.000 -36.344 -2.995
 	FrameIndex SHT2 A 0 0
 	FrameIndex SHT2 B 0 9999
 }
@@ -255,7 +255,7 @@ Model MS_Fist
 	Model 0 "fist.md3"
 	Skin 0 "fist.png"
 	Scale -1.0 1.0 1.0
-	Offset -10.625 -13.234 -3.266
+	Offset -1.250 -26.484 -6.532
 	FrameIndex PUNG A 0 0
 	FrameIndex PUNG B 0 9999
 }
@@ -514,7 +514,7 @@ Model MS_PU_Revolver
 	Model 0 "rev.md3"
 	Skin 0 "WPN-REV.png"
 	Scale 0.8547 0.8547 0.8547
-	Offset -23.705 -0.003 9.908
+	Offset -3.092 0 4.597
 	AngleOffset 0.01
 	PitchOffset -10.6
 	RollOffset 0
@@ -527,7 +527,7 @@ Model MS_PU_Revolver2
 	Model 0 "rev.md3"
 	Skin 0 "WPN-REV2.png"
 	Scale 0.8547 0.8547 0.8547
-	Offset -23.705 -0.003 9.908
+	Offset -3.092 0 4.597
 	AngleOffset 0.01
 	PitchOffset -10.6
 	RollOffset 0
@@ -566,7 +566,7 @@ Model MS_PU_SuperShotgun
 	Model 0 "ssg.md3"
 	Skin 0 "WPN-GUNS-k1.png"
 	Scale 0.9371 0.9371 0.9371
-	Offset -24.208 -0.008 7.092
+	Offset 0.771 -0.024 3.81
 	AngleOffset -0.04
 	PitchOffset -5.03
 	RollOffset 0
@@ -735,7 +735,7 @@ Model MS_PU_Fist
 	Model 0 "fist.md3"
 	Skin 0 "fist.png"
 	Scale 1.4924 1.4924 1.4924
-	Offset -12.177 19.637 10.046
+	Offset 3.512 1.355 6.062
 	AngleOffset -13.74
 	PitchOffset -2.54
 	RollOffset -0.62
