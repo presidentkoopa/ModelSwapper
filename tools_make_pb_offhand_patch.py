@@ -6,13 +6,24 @@ their casings, smoke and muzzle sparks come off the gun instead of your face.
 Load order: Project Brutality, then this patch, then ModelSwapper. The patch
 must come after PB; its position relative to ModelSwapper does not matter.
 
-WHY, PART ONE: THE CRASH. A VR engine can move a weapon between hands. It
-empties the main hand first, and PB's weapon code asks for the main-hand
-sprite layer everywhere -- GetPSprite(PSP_WEAPON) -- which the engine answers
-with null for an empty hand. Eleven of PB's lookups use that answer without
-checking, so a gun moving to the off hand sometimes crashed the game.
+WHY, PART ONE: THE EMPTY-HAND CRASH. A VR engine can move a weapon between
+hands. It empties the main hand first, and PB's weapon code asks for the
+main-hand sprite layer everywhere -- GetPSprite(PSP_WEAPON) -- which the
+engine answers with null for an empty hand. Eleven of PB's lookups used that
+answer without checking, so a gun moving hands sometimes crashed the game.
 
-WHY, PART TWO: THE EFFECTS. PB builds its casings, gun smoke and muzzle
+WHY, PART TWO: THE WRONG-OWNER CRASH. With a gun in EACH hand, a lookup that
+does find a layer can still crash. The script-callable GetPSprite takes no
+owner, so the engine hands every ordinary layer to the MAIN-hand weapon -- and
+reassigns an existing layer while it is still running the other gun's
+animation (p_pspr.cpp: "Always update the caller here"). PB's overlay helpers
+(A_SetWeaponFrame, the ammo counters, the flash and overlay sprite setters)
+all look layers up that way, so an off-hand PB_M1Plasma's overlay became owned
+by the main-hand PB_M2Plasma, and the next tic aborted: "Invalid class
+PB_M2Plasma in function call to PB_M1Plasma.StateFunction". FindPSprite
+returns the same layer without touching its owner.
+
+WHY, PART THREE: THE EFFECTS. PB builds its casings, gun smoke and muzzle
 sparks at the EYE -- (pos.xy, player.viewz), turned by the head -- plus
 desktop screen fudges for FOV, pitch and weapon bob. On a monitor the gun is
 drawn at the eye, so that lands on the gun. In a headset the gun is in your
@@ -23,13 +34,17 @@ WHAT IT CHANGES. One file, zscript/Weapons/BaseWeapon_Functions.zsc:
     and, when VR is driving the attack, that hand's position, aim, and how
     far past it the muzzle sits
   - the eleven unguarded layer lookups rewritten to use them, or null-checked
+  - every GetPSprite in the file becomes FindPSprite, so no lookup can hand a
+    layer to the other gun; the three barrel-grab SetPSprite(1, ...) calls in
+    DoEffect target the off-hand layer when this gun is in the off hand
   - PB_SpawnCasing, PB_GunSmokeSpawn, _SpawnMuzzleSparks and
     _SpawnMuzzleSparksSG build from the hand when VR is driving: smoke and
     sparks at the muzzle, casings at the ejection port a third of the way
     along, each keeping PB's own side and up offsets and PB's own ejection
     velocity, turned by the hand. Without VR the original code runs unchanged.
 Nothing else in PB is touched. Its weapon states' direct A_FireCustomMissile
-smoke already launches from the hand on a VR engine.
+smoke already launches from the hand on a VR engine, and nothing outside this
+file calls GetPSprite.
 
 MUZZLE DISTANCE. Barrel length varies a lot. With ModelSwapper loaded, the
 patch asks its RS_WeaponArchetypeService -- found by name, so there is no
@@ -68,6 +83,10 @@ HELPERS = """
 	// PSP_WEAPON, the main-hand layer, which belongs to the other hand
 	// there -- or, while that hand is empty, comes back null and crashed
 	// the game. These read the layer of the hand the gun is actually in.
+	//
+	// Every lookup here is FindPSprite, never GetPSprite: GetPSprite gives
+	// an ordinary layer to the MAIN-hand weapon, even one still running the
+	// off-hand gun's animation, and the next tic aborts on the wrong class.
 	// ---------------------------------------------------------------------
 	action int PB_VR_HandLayer()
 	{
@@ -224,7 +243,8 @@ README = """PB-0.4.1-VR-Offhand-Patch
 =========================
 
 A VR patch for Project Brutality 0.4.1:
-  - guns move between hands without crashing
+  - guns move between hands without crashing, including with a PB gun in
+    each hand
   - casings, gun smoke and muzzle sparks come off the gun in whichever hand
     holds it, instead of out of your face
 
@@ -296,19 +316,32 @@ def main():
     text = replace_exact(text, "InStateSequence(player.GetPSprite(PSP_WEAPON).Curstate,",
                          "InStateSequence(PB_VR_HandState(),", 1, "gun-empty check")
 
-    # 5. the three sprite writes
+    # 5. the three sprite writes: null-checked, and the weapon sprite goes to
+    #    the gun's own hand
     text = sub_exact(text,
                      r"(action void A_SetOverlaySprite\(int layer, String str\)\s*\{\s*let psp = player\.GetPSprite\(layer\);\s*)psp\.sprite = GetSpriteIndex\(str\);",
                      r"\1if (psp) psp.sprite = GetSpriteIndex(str);", 1, "A_SetOverlaySprite")
     text = sub_exact(text,
                      r"(action void A_SetWeaponSprite\(String str\)\s*\{\s*)let psp = player\.GetPSprite\(PSP_WEAPON\);((?:\s*//[^\n]*)?\s*)psp\.sprite = GetSpriteIndex\(str\);",
-                     r"\1let psp = player.GetPSprite(PB_VR_HandLayer());\2if (psp) psp.sprite = GetSpriteIndex(str);",
+                     r"\1let psp = player.FindPSprite(PB_VR_HandLayer());\2if (psp) psp.sprite = GetSpriteIndex(str);",
                      1, "A_SetWeaponSprite")
     text = sub_exact(text,
                      r"(action void A_SetFlashWeaponSprite\(String str\)\s*\{\s*let psp = player\.GetPSprite\(PSP_FLASH\);\s*)psp\.sprite = GetSpriteIndex\(str\);",
                      r"\1if (psp) psp.sprite = GetSpriteIndex(str);", 1, "A_SetFlashWeaponSprite")
 
-    # 6. casings, smoke and sparks from the hand in VR
+    # 6. no lookup may hand a layer to the other gun: FindPSprite everywhere
+    text = replace_exact(text, "player.GetPSprite(layer)", "player.FindPSprite(layer)", 2,
+                         "PB_SetPRCounter / A_SetOverlaySprite owner")
+    text = replace_exact(text, "player.GetPSprite(OverlayID())", "player.FindPSprite(OverlayID())", 2,
+                         "A_SetWeaponFrame / A_SetWeaponSpriteEx owner")
+    text = replace_exact(text, "player.GetPSprite(PSP_FLASH)", "player.FindPSprite(PSP_FLASH)", 1,
+                         "A_SetFlashWeaponSprite owner")
+    #    ...and the barrel grab jumps the layer of the hand this gun is in
+    text = sub_exact(text, r"owner\.player\.SetPSprite\(1,\s*resolvestate\(",
+                     "owner.player.SetPSprite((owner.player.OffhandWeapon == self) ? PSP_OFFHANDWEAPON : PSP_WEAPON, resolvestate(",
+                     3, "DoEffect barrel-grab layer")
+
+    # 7. casings, smoke and sparks from the hand in VR
     text = replace_exact(text, SPARKS_OLD, SPARKS_NEW, 1, "_SpawnMuzzleSparks origin")
     text = replace_exact(text, SPARKS_SG_OLD, SPARKS_SG_NEW, 1, "_SpawnMuzzleSparksSG origin")
     text = replace_exact(text, SPARK_DECL_OLD, SPARK_DECL_NEW, 2, "muzzle-spark declarations")
@@ -317,9 +350,13 @@ def main():
     text = replace_exact(text, CASING_ANGLE_OLD, CASING_ANGLE_NEW, 1, "PB_SpawnCasing casing angle")
     text = replace_exact(text, CASING_SPARK_OLD, CASING_SPARK_NEW, 1, "PB_SpawnCasing spark origin")
 
-    # 7. checks: nothing unguarded left, every eye-built effect has a VR branch
+    # 8. checks
     code = "\n".join(l.split("//")[0] for l in text.splitlines())
-    left = re.findall(r"(?:GetPSprite|FindPSprite)\s*\([^)]*\)\s*\.", code)
+    if re.search(r"\bGetPSprite\s*\(", code):
+        fail("a GetPSprite call survived -- it could hand a layer to the other gun")
+    if re.search(r"\bSetPSprite\s*\(\s*1\s*,", code):
+        fail("a main-hand-only SetPSprite(1, ...) survived")
+    left = re.findall(r"FindPSprite\s*\([^)]*\)\s*\.", code)
     if left:
         fail("unguarded lookups remain: %s" % left)
     eye_built = len(re.findall(r"RelativeToGlobalCoords\(\(self\.pos\.xy, self\.player\.viewz\)", code))
@@ -337,7 +374,7 @@ def main():
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr(PB_FILE, data)
         z.writestr("PB-VR-OFFHAND-PATCH.txt", README)
-    print("wrote %s (%d bytes): %s patched -- 11 lookups hand-aware or null-safe, "
+    print("wrote %s (%d bytes): %s patched -- empty-hand and wrong-owner lookups fixed, "
           "casings, smoke and sparks built from the hand in VR" % (out, os.path.getsize(out), PB_FILE))
     return 0
 
