@@ -43,6 +43,12 @@ DEFAULT_OUT = os.path.join(HERE, "ModelSwapper-WW2Addon.pk3")
 BUILD = os.path.join(HERE, ".gen", "ww2")
 RENDERS = os.path.join(HERE, "renders", "ww2")
 
+# The owner's in-game calibration (2026-09-13): every WW2 gun sits 3 units
+# lower. The engine adds vr_hand_ofs_z (the Down / Up slider) into the same
+# zoffset slot as MODELDEF Offset z (models.cpp, RenderHUDModel), so -3.0 on
+# the slider is exactly -3.0 here.
+HEIGHT = -3.0
+
 # donor, menu name, pack folder, mesh, skin, anchor sprite, rest frame
 GUNS = [
     ("MS_BW_Luger", "Luger P08", "Luger", "luger.md3", "luger.png", "PISG", 0),
@@ -70,19 +76,6 @@ SHELF = [
 ]
 
 CLIPS = [
-    # Draw animations: the pack's Ready/Deselect sprite groups (ZLUS, Z19S,
-    # ZMPS, ...), forward on select and reversed on deselect. Flammenwerfer's
-    # IFLS 2-8 draw and FLMF 9-14 fire are read from sprite names, not states.
-    "MS_BW_Luger|select|53-60@1|-1|-1|-1", "MS_BW_Luger|deselect|60-53@1|-1|-1|-1",
-    "MS_BW_Colt|select|8-15@1|-1|-1|-1", "MS_BW_Colt|deselect|15-8@1|-1|-1|-1",
-    "MS_BW_MP40|select|1-12@1|-1|-1|-1", "MS_BW_MP40|deselect|12-1@1|-1|-1|-1",
-    "MS_BW_Thompson|select|40-52@1|-1|-1|-1", "MS_BW_Thompson|deselect|52-40@1|-1|-1|-1",
-    "MS_BW_Garand|select|11-18@1|-1|-1|-1", "MS_BW_Garand|deselect|18-11@1|-1|-1|-1",
-    "MS_BW_STG44|select|1-12@1|-1|-1|-1", "MS_BW_STG44|deselect|12-1@1|-1|-1|-1",
-    "MS_BW_Kar98|select|35-43@1|-1|-1|-1", "MS_BW_Kar98|deselect|43-35@1|-1|-1|-1",
-    "MS_BW_MG42|select|1-11@1|-1|-1|-1", "MS_BW_MG42|deselect|11-1@1|-1|-1|-1",
-    "MS_BW_Trenchgun|select|8-22@1|-1|-1|-1", "MS_BW_Trenchgun|deselect|22-8@1|-1|-1|-1",
-    "MS_BW_Flamethrower|select|2-8@1|-1|-1|-1", "MS_BW_Flamethrower|deselect|8-2@1|-1|-1|-1",
     "MS_BW_Luger|ready|0@1|-1|-1|-1",
     "MS_BW_Luger|fire|1@1,2@1,3-4@1,5@1|0|-1|-1",
     "MS_BW_Luger|reload|6-13@1,14-16@2,17-22@2,22-26@2,27-28@2,29-30@3,31-39@1,40-43@1,44-46@2,47-48@2,49@4,50-52@2,39-31@1|-1|0|24",
@@ -213,6 +206,7 @@ def main():
         counts[donor] = nf
         scale, off = pack_block(src, mesh)
         cpath, off = treat(donor, mpath, folder, mesh, rest, scale, off)
+        off[2] += HEIGHT
         blocks.append(
             "Model %s\n{\n"
             "\t// Brutal Wolfenstein VR weapon pack, %s. Scale as its author set it.\n"
