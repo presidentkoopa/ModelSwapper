@@ -141,7 +141,7 @@ Model MS_RocketLauncher
 	Skin 0 "RPG.png"
 	Scale -1.0 1.0 1.0
 	Offset 3.250 -14.172 8.828
-	FrameIndex MISG A 0 5
+	FrameIndex MISG A 0 4
 	FrameIndex MISG B 0 9999
 }
 
@@ -622,7 +622,7 @@ Model MS_PU_RocketLauncher
 	AngleOffset -1.23
 	PitchOffset -0.19
 	RollOffset 0
-	FrameIndex SHOT A 0 5
+	FrameIndex SHOT A 0 4
 }
 
 Model MS_PU_VR_BFG9000

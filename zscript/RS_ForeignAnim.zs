@@ -315,8 +315,11 @@ class RS_ForeignClip
 			"MS_Rifle|fire|1-10@1|0|-1|-1",
 			"MS_Rifle|ready|0@1|-1|-1|-1",
 			"MS_Rifle|reload|11-13@2,14-25@1,26-34@2,35-37@1,38-40@2,0@1|-1|-1|-1",
-			"MS_RocketLauncher|fire|10@6,10@4,5@1|0|-1|-1",
-			"MS_RocketLauncher|ready|5@1|-1|-1|-1",
+			// Rest is frame 4, not 5: frame 5 catches the 7-chamber drum
+			// mid-index, 10.87 degrees off; frame 4 has it home. Measured by the
+			// VR Weapons lane, 2026-09-13.
+			"MS_RocketLauncher|fire|10@6,10@4,4@1|0|-1|-1",
+			"MS_RocketLauncher|ready|4@1|-1|-1|-1",
 			"MS_RocketLauncher|reload|11-38@1|-1|0|14",
 			"MS_Shotgun|fire|1-4@1,5@1,6@1,7@1,8-12@1,13@1,14-19@1,0@1|0|-1|-1",
 			"MS_Shotgun|ready|0@1|-1|-1|-1",

@@ -121,7 +121,7 @@ class RS_ForeignShelf
 			"saw|MS_Jackhammer|SAWG|0|0|20",
 			"chaingun|MS_Chaingun|CHGG|0|4|16",
 			"plasma|MS_PlasmaRifle|PLSG|0|4|30",
-			"rocket|MS_RocketLauncher|MISG|0|5|39",
+			"rocket|MS_RocketLauncher|MISG|0|4|39",
 			"bfg|MS_VR_BFG9000|BFGG|0|6|16",
 			"smg|MS_BD_BrutalSMG|CHGG|0|3|27",
 			"smg|MS_MG_Tec9|CHGG|0|0|6",
