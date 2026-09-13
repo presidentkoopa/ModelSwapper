@@ -139,17 +139,22 @@ class RS_ForeignShelf
 			"kick|MS_BD_Boot|PUNG|0|0|58"
 		};
 		mRows.Clear();
-		for (int i = 0; i < SHELF.Size(); ++i)
+		// Addon rows come first, so loading an addon makes its models the
+		// default in their families. See RS_ForeignAddon.
+		Array<string> addon;
+		RS_ForeignAddon.Rows("shelf", addon);
+		for (int i = 0; i < addon.Size() + SHELF.Size(); ++i)
 		{
+			string row = (i < addon.Size()) ? addon[i] : SHELF[i - addon.Size()];
 			// Drop any row whose donor class is not loaded. A MODELDEF block
 			// is inert without a real actor class owning its name, and
 			// A_ChangeModel would print "invalid modeldef name" on every
 			// weapon select if pointed at nothing.
 			Array<string> f;
-			SHELF[i].Split(f, "|");
+			row.Split(f, "|");
 			if (f.Size() < 6) continue;
 			if (!DonorExists(f[1])) continue;
-			mRows.Push(SHELF[i]);
+			mRows.Push(row);
 		}
 	}
 
@@ -271,6 +276,10 @@ class RS_ForeignShelf
 		string key = cls .. "|";
 		for (int i = 0; i < NAMES.Size(); ++i)
 			if (NAMES[i].IndexOf(key) == 0) return NAMES[i].Mid(key.Length());
+		Array<string> addon;
+		RS_ForeignAddon.Rows("name", addon);
+		for (int i = 0; i < addon.Size(); ++i)
+			if (addon[i].IndexOf(key) == 0) return addon[i].Mid(key.Length());
 		return (cls.IndexOf("MS_") == 0) ? cls.Mid(3) : cls;
 	}
 

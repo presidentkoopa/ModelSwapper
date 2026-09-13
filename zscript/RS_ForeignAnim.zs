@@ -38,6 +38,45 @@
 //            seat. -1 = none. Used to anchor the warp so the recoil
 //            lands on their shot rather than merely near it.
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// ADDONS. A pk3 loaded beside ModelSwapper can bring its own models. It
+// declares its donor classes (class X : Actor {}) and their MODELDEF
+// blocks as the built-in ones are, and carries a text lump named MSADDON
+// (msaddon.txt at its root) whose lines join the built-in tables:
+//
+//   shelf family|donorClass|anchor|hand|restFrame|frameCount
+//   name  donorClass|Name shown in the menu
+//   clip  donorClass|seq|steps|markFire|markEject|markFeed
+//
+// Row formats are exactly the built-in SHELF, NAMES and CLIP rows. Shelf
+// rows from addons go FIRST in their family, so loading an addon makes
+// its models the default there. Every MSADDON lump in the load is read;
+// lines with any other start are ignored, so // comments are free.
+// No MSADDON lump, no change.
+// ---------------------------------------------------------------------
+class RS_ForeignAddon
+{
+	static clearscope void Rows(string tag, out Array<string> rows)
+	{
+		rows.Clear();
+		string pfx = tag .. " ";
+		int lump = -1;
+		while ((lump = Wads.FindLump("MSADDON", lump + 1)) != -1)
+		{
+			string text = Wads.ReadLump(lump);
+			Array<string> lines;
+			text.Split(lines, "\n");
+			for (int i = 0; i < lines.Size(); ++i)
+			{
+				string l = lines[i];
+				l.Replace("\r", "");
+				l.StripLeftRight();
+				if (l.IndexOf(pfx) == 0) rows.Push(l.Mid(pfx.Length()));
+			}
+		}
+	}
+}
+
 class RS_ForeignClip
 {
 	Array<string> mRows;
@@ -307,6 +346,9 @@ class RS_ForeignClip
 		};
 		mRows.Clear();
 		for (int i = 0; i < CLIP.Size(); ++i) mRows.Push(CLIP[i]);
+		Array<string> addon;
+		RS_ForeignAddon.Rows("clip", addon);
+		for (int i = 0; i < addon.Size(); ++i) mRows.Push(addon[i]);
 	}
 
 	// Expand a step list into one frame per tic. Clamped to the donor's

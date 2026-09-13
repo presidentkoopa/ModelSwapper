@@ -147,6 +147,50 @@ is not loaded. The script writes `PB-0.4.1-VR-Offhand-Patch.pk3`. Load it after 
 script by carrying the same path, so it works on Quest too. No PB code is committed here:
 the script edits your copy, refuses any file but 0.4.1's by hash, and fails if an edit
 does not match exactly.
+
+### Addons: models from outside this pk3
+
+A pk3 loaded after ModelSwapper can add models without touching ModelSwapper's scripts. It
+declares its donor classes (`class X : Actor {}`) and their MODELDEF blocks as the built-in
+ones are, and carries `msaddon.txt` (lump `MSADDON`) with lines in the built-in row formats:
+
+    shelf family|donorClass|anchor|hand|restFrame|frameCount
+    name  donorClass|Name shown in the menu
+    clip  donorClass|seq|steps|markFire|markEject|markFeed
+
+`RS_ForeignAddon` in `RS_ForeignAnim.zs` reads every `MSADDON` lump in the load. Shelf rows from
+addons go first in their family, so loading an addon makes its models the defaults there.
+Without an `MSADDON` lump nothing changes.
+
+`tools_make_ww2_addon.py` builds `ModelSwapper-WW2Addon.pk3` from the Brutal Wolfenstein VR
+weapon pack: Luger, Colt 1911, MP40, Thompson, M1 Garand, StG 44, Kar98k, MG42, Trench Gun and
+Flammenwerfer. Each mesh gets the same treatment as the core donors: centred on its rest
+frame (a copy in `.gen/ww2`), Offset compensated so it stays where the pack's author placed it,
+and before/after renders in `renders/ww2`. Clips and rest frames are the ones this repo shipped
+for the same meshes in `88b872e`, plus draw clips from the pack's Ready/Deselect frames.
+
+### Blade of Agony on QuestZDoom and UZDXREMA
+
+Blade of Agony C3.1.4 ships its own GZDoom 4.6, which has no `A_ChangeModel`, so ModelSwapper
+cannot run there. On QuestZDoom and UZDXREMA two of its scripts do not compile.
+`tools_make_boa_patch.py` writes `boa-patch-quest.pk3` from your own `boa.ipk3`:
+
+- `playerfollowers.zs` gets two `PathMarker` casts where `Array.Find` wants the exact type.
+- `skyboxview.zs` drops two writes to `SectorPortal` fields that are `internal` on these engines.
+  The engine's own `SkyViewPoint` still sets a map's default skybox; only Blade of Agony's forced
+  override (`args[3] > 0`) is lost.
+
+Load order: `boa.ipk3` as the IWAD, `boa-patch-quest.pk3`, ModelSwapper, then the WW2 addon. The
+patch is Blade of Agony's code, so it is built from your copy and never committed.
+
+### Selaco
+
+Selaco runs on its own GZDoom 4.12 fork. `tools_make_selaco_patch.py` rewrites ModelSwapper's
+own scripts for it: `WeaponBase` for `Weapon`, no VR hands, the older lump-container calls, no
+Heretic, Hexen or Strife classes, and an actor that makes Doom's sprite names known. It also adds
+Selaco's weapon pickup meshes as models, pointed at `Selaco.ipk3` where they already are. The
+patch holds only our code, so `ModelSwapper-Selaco-Patch.pk3` is committed. Load it after
+`ModelSwapper-QUEST.pk3`.
 ---
 
 ## Compatibility targets
