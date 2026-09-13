@@ -129,6 +129,16 @@ class RS_ForeignClip
 			"MS_BD_Rifle|select|3@1|-1|-1|-1",
 			"MS_BD_Rifle|sprint|21@1,22@1,23@1,24@1,25@1,30@1,31@1|-1|-1|-1",
 			"MS_BD_Boot|fire|5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1,15@1,16@1,17@1,18@1,19@1,20@1,21@1,22@1,23@1,24@1,25@1,26@1,27@1,28@1,29@1,30@1,31@1,32@1,33@1,34@1,35@1,36@1,37@1,38@1,39@1,40@1,53@1,54@1,55@1,56@1,57@1|0|-1|-1",
+			// VanAlek's VR fist, the melee family's only model. Fire is that
+			// weapon's real punch, read from its source (RS_Fist.zs Fire: PUNG
+			// B 4 / C 4 / D 5 / C 4 / B 5) through the fist MODELDEF's letter map,
+			// B/C/D = frames 1/2/3 -- not measured, so the pre-2026-09-04 frame
+			// reader bug never touched it. Ready, select and sprint hold the rest
+			// pose. Restored from c689d32 after the shelf trim left fists bare.
+			"MS_Fist|fire|1@4,2@4,3@5,2@4,1@5,0@1|0|-1|-1",
+			"MS_Fist|ready|0@1|-1|-1|-1",
+			"MS_Fist|select|0@1|-1|-1|-1",
+			"MS_Fist|sprint|0@1|-1|-1|-1",
 			"MS_BD_BrutalAxe|fire|5@1,6@1,7@1,8@1,9@1,10@1,11@1,12@1,13@1,14@1|0|-1|-1",
 			"MS_BD_BrutalAxe|ready|5@1|-1|-1|-1",
 			"MS_BD_BrutalAxe|select|5@1|-1|-1|-1",

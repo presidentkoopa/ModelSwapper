@@ -25,6 +25,7 @@ class MS_Beretta : Actor {}
 class MS_BD_Unmaker : Actor {}
 class MS_Chaingun : Actor {}
 class MS_Chainsaw : Actor {}
+class MS_Fist : Actor {}
 class MS_Cola_Revolver : Actor {}
 class MS_Jackhammer : Actor {}
 class MS_MG_Bolter : Actor {}
@@ -61,6 +62,7 @@ class MS_PU_BD_Rifle : MS_PickupModel {}
 class MS_PU_BD_Unmaker : MS_PickupModel {}
 class MS_PU_Chaingun : MS_PickupModel {}
 class MS_PU_Chainsaw : MS_PickupModel {}
+class MS_PU_Fist : MS_PickupModel {}
 class MS_PU_Cola_Revolver : MS_PickupModel {}
 class MS_PU_Jackhammer : MS_PickupModel {}
 class MS_PU_MG_Bolter : MS_PickupModel {}

@@ -135,6 +135,7 @@ class RS_ForeignShelf
 			"flamethrower|MS_BD_Flamethrower2|PLSG|0|0|6",
 			"flamethrower|MS_AE_Flamer|PLSG|0|0|20",
 			"unmaker|MS_BD_Unmaker|BFGG|0|4|16",
+			"melee|MS_Fist|PUNG|0|0|57",
 			"axe|MS_BD_BrutalAxe|PUNG|0|5|15",
 			"sword|MS_BD_DSweap|PUNG|0|0|10",
 			"kick|MS_BD_Boot|PUNG|0|0|58"
@@ -264,6 +265,7 @@ class RS_ForeignShelf
 			"MS_BD_Flamethrower2|Flamethrower",
 			"MS_AE_Flamer|Napalm Cannon",
 			"MS_BD_Unmaker|Unmaker",
+			"MS_Fist|Fist",
 			"MS_BD_BrutalAxe|Axe",
 			"MS_BD_DSweap|Sword",
 			"MS_BD_Boot|Boot"

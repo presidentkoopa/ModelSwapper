@@ -248,6 +248,18 @@ Model MS_BD_Unmaker
 	FrameIndex BFGG B 0 9999
 }
 
+Model MS_Fist
+{
+	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
+	Path "models/hud/Fist"
+	Model 0 "fist.md3"
+	Skin 0 "fist.png"
+	Scale -1.0 1.0 1.0
+	Offset -10.625 -13.234 -3.266
+	FrameIndex PUNG A 0 0
+	FrameIndex PUNG B 0 9999
+}
+
 Model MS_BD_BrutalAxe
 {
 	// origin: centred by tools_reorigin_all.py -- Offset compensates the mesh shift
@@ -715,6 +727,19 @@ Model MS_PU_BD_Unmaker
 	PitchOffset 4.01
 	RollOffset 0
 	FrameIndex SHOT A 0 4
+}
+
+Model MS_PU_Fist
+{
+	Path "models/hud/Fist"
+	Model 0 "fist.md3"
+	Skin 0 "fist.png"
+	Scale 1.4924 1.4924 1.4924
+	Offset -12.177 19.637 10.046
+	AngleOffset -13.74
+	PitchOffset -2.54
+	RollOffset -0.62
+	FrameIndex SHOT A 0 0
 }
 
 Model MS_PU_BD_BrutalAxe
