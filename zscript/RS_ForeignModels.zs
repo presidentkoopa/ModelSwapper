@@ -57,6 +57,8 @@ class RS_ForeignEntry
 	bool   poweredUp;     // +WEAPON.POWERED_UP: an upgraded form of a real weapon
 	bool   slotsLive;     // the defining archive's slot table is the one in play.
 	                      // These four feed EntryNeverHeld; see there and Scan.
+	bool   oneHanded;     // its mod's scripts assume the main hand and never
+	                      // mention the off hand -- see KeepOneHanded
 	int    modelPick1;    // MAINHAND  model: index into the archetype's shelf
 	int    modelPick2;    // OFFHAND   model: independent pick, same shelf
 	bool   pinned;        // player chose this; don't re-guess
@@ -695,10 +697,13 @@ class RS_ForeignScanner
 	// down by a parsing bug here. That rule is load-bearing; see Scan().
 	// -----------------------------------------------------------------
 	static void HarvestModClasses(out Array<string> outNames, out Array<string> outFrom,
+	                              out Array<string> outMainLayer, out Array<string> outOffhand,
 	                              out int roots, out int lumps)
 	{
 		outNames.Clear();
 		outFrom.Clear();
+		outMainLayer.Clear();
+		outOffhand.Clear();
 
 		roots = 0; lumps = 0;
 		Array<int> visited;
@@ -718,9 +723,16 @@ class RS_ForeignScanner
 
 			roots++;
 			string from = Wads.GetContainerName(Wads.GetLumpContainer(i));
-			ParseLump(i, from, outNames, outFrom, visited, 0);
+			ParseLump(i, from, outNames, outFrom, outMainLayer, outOffhand, visited, 0);
 			lumps = visited.Size();
 		}
+	}
+
+	static void PushUnique(in out Array<string> list, string s)
+	{
+		for (int i = 0; i < list.Size(); ++i)
+			if (list[i] == s) return;
+		list.Push(s);
 	}
 
 	// One lump: harvest "class X" / "actor X" declarations, recurse into
@@ -728,6 +740,7 @@ class RS_ForeignScanner
 	// with the compiler about NAMES, not semantics.
 	static void ParseLump(int lump, string from,
 	                      in out Array<string> outNames, in out Array<string> outFrom,
+	                      in out Array<string> outMainLayer, in out Array<string> outOffhand,
 	                      in out Array<int> visited, int depth)
 	{
 		// LIMITS SIZED FOR THE BIGGEST MOD, NOT THE AVERAGE ONE.
@@ -766,6 +779,21 @@ class RS_ForeignScanner
 			int lnLen  = int(ln.Length());
 			int lowLen = int(low.Length());
 
+			// WRITTEN FOR ONE HAND? Recorded per archive, for KeepOneHanded.
+			// A script that looks up the main-hand layer by constant --
+			// GetPSprite(PSP_WEAPON) -- gets null back while that weapon is in
+			// the off hand, and a mod that never mentions the off hand never
+			// checks. "hand" and "psp" are the cheap gate: every token below
+			// contains one of them, and most lines contain neither.
+			if (low.IndexOf("hand") >= 0 || low.IndexOf("psp") >= 0)
+			{
+				if (low.IndexOf("offhand") >= 0 || low.IndexOf("nohandswitch") >= 0)
+					PushUnique(outOffhand, from);
+				if (low.IndexOf("psp_weapon") >= 0
+				 && (low.IndexOf("getpsprite") >= 0 || low.IndexOf("findpsprite") >= 0))
+					PushUnique(outMainLayer, from);
+			}
+
 			// #include -- and DECORATE includes are often UNQUOTED
 			// ("#Include Actors/Weapons/Crowbar.txt", Ashes does exactly
 			// this), so both forms have to parse.
@@ -790,7 +818,7 @@ class RS_ForeignScanner
 				{
 					int il = Wads.CheckNumForFullName(path);
 					if (il < 0) { string lp = path.MakeLower(); il = Wads.CheckNumForFullName(lp); }
-					if (il >= 0) ParseLump(il, from, outNames, outFrom, visited, depth + 1);
+					if (il >= 0) ParseLump(il, from, outNames, outFrom, outMainLayer, outOffhand, visited, depth + 1);
 				}
 				continue;
 			}
@@ -855,7 +883,8 @@ class RS_ForeignScanner
 		}
 
 		Array<string> harvestNames, harvestFrom;
-		HarvestModClasses(harvestNames, harvestFrom, hRoots, hLumps);
+		Array<string> mainLayerFrom, offhandFrom;
+		HarvestModClasses(harvestNames, harvestFrom, mainLayerFrom, offhandFrom, hRoots, hLumps);
 		hNames = harvestNames.Size();
 
 		// WHOSE SLOT TABLE IS IN PLAY. EntryNeverHeld hides an unslotted class
@@ -1061,6 +1090,20 @@ class RS_ForeignScanner
 				if (playerSrc[k] == e.srcContainer) { ownsPlayers = true; break; }
 			e.slotsLive = !ownsPlayers || e.srcContainer == liveSrc;
 
+			// Written for one hand: its archive looks up the main-hand layer and
+			// never mentions the off hand. See KeepOneHanded.
+			e.oneHanded = false;
+			if (e.srcContainer.Length() > 0)
+			{
+				bool mainLayer = false;
+				bool offhand   = false;
+				for (int k = 0; k < mainLayerFrom.Size(); ++k)
+					if (mainLayerFrom[k] == e.srcContainer) { mainLayer = true; break; }
+				for (int k = 0; k < offhandFrom.Size(); ++k)
+					if (offhandFrom[k] == e.srcContainer) { offhand = true; break; }
+				e.oneHanded = mainLayer && !offhand;
+			}
+
 			string ammo1 = "", ammo2 = "";
 			if (def.AmmoType1 != null) ammo1 = "" .. def.AmmoType1.GetClassName();
 			if (def.AmmoType2 != null) ammo2 = "" .. def.AmmoType2.GetClassName();
@@ -1115,6 +1158,13 @@ class RS_ForeignModelHandler : StaticEventHandler
 	// item on a layer A_Overlay picked, and the caller is that item. Tracked
 	// the same way and for the same reason as the two hands above.
 	Array<Actor> mOvlBound;
+
+	// Weapons WE gave WEAPON.NOHANDSWITCH, so switching the option off clears
+	// exactly these. A mod that authors the flag itself mentions it in its
+	// scripts, which rules its archive out of oneHanded, so none of its
+	// weapons can land here. See KeepOneHanded.
+	Array<Actor> mHandLocked;
+	bool         mHandGuardWas;
 
 	// Anchor sprite index each hand is pinned to. A flash layer gets pinned to
 	// the SAME sprite, letter B, which resolves a model and draws nothing.
@@ -1308,6 +1358,7 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 		mScanned  = true;
 		mLastMain = null; mLastOff = null; mOvlBound.Clear();
+		GuardHands();
 
 		// NOT ReportScan() here. Rescan runs at WorldLoaded, before the
 		// player's weapon slot table is populated, so LocateWeapon says
@@ -1770,6 +1821,75 @@ class RS_ForeignModelHandler : StaticEventHandler
 		return -1;
 	}
 
+	// -----------------------------------------------------------------
+	// MODS WRITTEN FOR ONE HAND STAY IN ONE HAND.
+	//
+	// A VR engine can move a weapon to the off hand. SwitchWeaponHand clears
+	// ReadyWeapon and raises the gun on PSP_OFFHANDWEAPON, and anything in
+	// its select animation that asks player.GetPSprite(PSP_WEAPON) gets null
+	// back -- GetPSprite answers null for a hand with no weapon. Project
+	// Brutality's A_SetWeaponSprite writes straight through that null, so
+	// moving any PB gun across hands kills the game ("tried to write to
+	// address zero"), on QuestZDoom and this fork alike.
+	//
+	// The engine is not ours to change on Quest, so the switch is stopped
+	// before it starts: SwitchWeaponHand refuses a weapon with
+	// WEAPON.NOHANDSWITCH, and checks it before any state changes. The switch
+	// is synchronous -- PB's zero-tic raise reaches the bad line inside the
+	// same call -- so nothing that runs a tic later could catch it.
+	//
+	// WHICH WEAPONS: those whose archive looks up the main-hand layer by
+	// constant and never mentions the off hand (see ParseLump). Scanned
+	// against twenty-odd mods, that is Project Brutality, MetaDoom and Doom 64
+	// Unseen Evil. The last two guard their lookups, so they lose off-hand
+	// switching they could have kept -- a text scan cannot tell a guarded
+	// lookup from an unguarded one, and a crash is the worse mistake. Every
+	// other mod keeps free hand switching. The menu option turns this off.
+	// -----------------------------------------------------------------
+	static bool HandGuardOn()
+	{
+		CVar c = CVar.FindCVar("rs_fm_handguard");
+		return !c || c.GetBool();
+	}
+
+	void KeepOneHanded(Actor a)
+	{
+		let w = Weapon(a);
+		if (!w || !mScanned) return;
+		int i = FindEntry("" .. w.GetClassName());
+		if (i < 0 || !mEntries[i].oneHanded) return;
+		if (mHandLocked.Find(w) != mHandLocked.Size()) return;
+		RS_Fork.SetNoHandSwitch(w, true);
+		mHandLocked.Push(w);
+	}
+
+	// Every weapon in the level, inventories included. Runs after each scan
+	// and whenever the option changes; WorldThingSpawned covers the rest.
+	void GuardHands()
+	{
+		for (int i = mHandLocked.Size() - 1; i >= 0; --i)
+			if (mHandLocked[i] == null) mHandLocked.Delete(i);
+
+		mHandGuardWas = HandGuardOn();
+		if (!mHandGuardWas)
+		{
+			for (int i = 0; i < mHandLocked.Size(); ++i)
+				RS_Fork.SetNoHandSwitch(Weapon(mHandLocked[i]), false);
+			mHandLocked.Clear();
+			return;
+		}
+
+		let it = ThinkerIterator.Create("Weapon");
+		Actor a;
+		while ((a = Actor(it.Next())) != null) KeepOneHanded(a);
+	}
+
+	override void WorldThingSpawned(WorldEvent e)
+	{
+		if (!mScanned || !HandGuardOn()) return;
+		if (e.Thing is 'Weapon') KeepOneHanded(e.Thing);
+	}
+
 	// Paint ONE hand. `pick` selects which of the entry's two model slots
 	// to use -- mainhand reads modelPick1, offhand reads modelPick2, so the
 	// same weapon class can wear a different model in each hand.
@@ -1989,6 +2109,9 @@ class RS_ForeignModelHandler : StaticEventHandler
 
 	override void WorldTick()
 	{
+		// The one-hand option applies the moment it changes, not next map.
+		if (mScanned && HandGuardOn() != mHandGuardWas) GuardHands();
+
 		// Row indices are per-client -- the entry list is built against the
 		// console player -- and NetworkProcess applies `row` verbatim, so a
 		// cycle on one machine would retune a different weapon on another.

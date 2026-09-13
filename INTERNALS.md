@@ -125,6 +125,21 @@ Checked against the source of about twenty mods before shipping. The only rows i
 removes are abstract bases, helpers and that rocket. List Unbound Weapons shows them all
 again.
 
+### Mods written for one hand
+
+A VR engine can move a weapon to the off hand. The engine clears the main hand and raises
+the gun on the off-hand layer, and any script in its select animation that asks for
+`GetPSprite(PSP_WEAPON)` gets null back. Project Brutality writes straight through that
+null, so moving a PB gun across hands crashes the game, on QuestZDoom and this fork alike.
+
+The switch is synchronous, so it has to be stopped before it starts. When a mod's
+scripts look up the main-hand layer by constant and never mention the off hand, its
+weapons get `WEAPON.NOHANDSWITCH`, which `SwitchWeaponHand` refuses
+(`KeepOneHanded`). Of the tested mods that is Project Brutality, MetaDoom and Doom 64
+Unseen Evil. The last two guard their lookups and could have kept switching, but a text
+scan cannot tell a guarded lookup from an unguarded one. Everything else keeps free hand
+switching, and the menu option turns it off.
+
 ---
 
 ## Compatibility targets

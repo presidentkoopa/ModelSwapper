@@ -43,6 +43,16 @@ class RS_Fork play
 	// to paint. See the header note.
 	static clearscope bool HasOwnModel(class<Weapon> type) { return false; }
 
+	// By NAME, at runtime. QuestZDoom has bNoHandSwitch, but plain GZDoom
+	// does not, and naming the field would stop this pk3 loading there.
+	// A_ChangeFlag resolves the name when it runs, so an engine without the
+	// flag only logs a line. (It is deprecated in favour of b-fields, which
+	// are exactly the compile-time reference this file exists to avoid.)
+	static void SetNoHandSwitch(Weapon w, bool v)
+	{
+		if (w) w.A_ChangeFlag("NOHANDSWITCH", v);
+	}
+
 	// No per-tick frame override exists to release.
 	static void SetNoDraw(PSprite psp, bool v) {}
 	static void ReleaseFrames(PSprite psp) {}
