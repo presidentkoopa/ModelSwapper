@@ -44,3 +44,6 @@ ModelSwapper-WW2Addon.pk3
 
 # Built from the player's own copy of Blade of Agony -- BoA code, never committed.
 boa-patch-quest.pk3
+
+# The Blade of Agony patch under the name the player gave it -- BoA code, never committed.
+BoA-EnginePatch*.pk3
