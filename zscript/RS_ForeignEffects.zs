@@ -285,6 +285,20 @@ class MS_EffectRelocator : StaticEventHandler
 		// plausibly built from the view origin are worth naming.
 		if ((a.Pos - mEye).Length() > EYE_RADIUS) return;
 
+		// ALREADY AT THE GUN: leave it. A VR engine launches a weapon's own
+		// A_FireCustomMissile and relative-to-weapon spawns from the hand
+		// holding it, and a patched mod can build its effects there too. A
+		// gun held in front of you sits well inside EYE_RADIUS, so without
+		// this those arrived where they belong and were then shoved a second
+		// mesh-length off -- smoke hanging beyond the barrel, or back toward
+		// the face. Anything nearer the muzzle than the eye was not built
+		// from the eye.
+		if ((a.Pos - (mEye + mShift)).Length() < (a.Pos - mEye).Length())
+		{
+			Report(a, "at-gun");
+			return;
+		}
+
 		if (a.bShootable)     { Report(a, "shoot");  return; }
 		if (a.bMissile)       { Report(a, "missile"); return; }
 		if (a is 'Inventory') { Report(a, "invent"); return; }
