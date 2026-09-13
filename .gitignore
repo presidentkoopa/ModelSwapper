@@ -47,3 +47,6 @@ boa-patch-quest.pk3
 
 # The Blade of Agony patch under the name the player gave it -- BoA code, never committed.
 BoA-EnginePatch*.pk3
+
+# The Project Brutality patch under the name the player gave it -- PB code, never committed.
+ModelSwapper-PB-*.pk3
