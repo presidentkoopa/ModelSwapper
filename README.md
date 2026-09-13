@@ -40,8 +40,8 @@ Nothing in it is written for a particular mod, so a pack released tomorrow works
 - MeatGrinder
 - VanillaVR Plus
 - the DOOM Infinite demo
-- SELACO
-- Wolfenstein: Blade of Agony
+- SELACO - Uses its own models.
+- Wolfenstein: Blade of Agony - Recommend to use WW2 Addon.
 
 
 Each one's weapon code was checked against the model menu, so the menu lists the guns you can actually hold and leaves out the vehicles, meat shields, ledge grabs and other helpers a mod builds out of weapon code.
