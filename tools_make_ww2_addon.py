@@ -43,11 +43,11 @@ DEFAULT_OUT = os.path.join(HERE, "ModelSwapper-WW2Addon.pk3")
 BUILD = os.path.join(HERE, ".gen", "ww2")
 RENDERS = os.path.join(HERE, "renders", "ww2")
 
-# The owner's in-game calibration (2026-09-13): every WW2 gun sits 3 units
+# The owner's in-game calibration (2026-09-13): every WW2 gun sits 2 units
 # lower. The engine adds vr_hand_ofs_z (the Down / Up slider) into the same
-# zoffset slot as MODELDEF Offset z (models.cpp, RenderHUDModel), so -3.0 on
-# the slider is exactly -3.0 here.
-HEIGHT = -3.0
+# zoffset slot as MODELDEF Offset z (models.cpp, RenderHUDModel), so -2.0 on
+# the slider is exactly -2.0 here.
+HEIGHT = -2.0
 
 # donor, menu name, pack folder, mesh, skin, anchor sprite, rest frame
 GUNS = [
