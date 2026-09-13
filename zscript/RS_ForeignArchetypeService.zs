@@ -26,6 +26,15 @@
 //   GetString("weapon.donor", "", h)         donor model class currently worn
 //                                            by the weapon in hand h, "" when
 //                                            that weapon wears none of ours
+//   GetString("weapon.muzzle.hand", "", h)   how far past hand h the muzzle of
+//                                            the gun it holds sits, in map
+//                                            units, as a number in a string;
+//                                            "" when that hand holds nothing
+//                                            we scanned. The same per-family
+//                                            figure plus trim the casing
+//                                            relocator aims at, for a patched
+//                                            mod that builds its own muzzle
+//                                            effects at the hand.
 //
 // The archetype comes from the scan table when the weapon was scanned, and
 // from a fresh Classify when it was not -- so the answer is the same vocabulary
@@ -79,6 +88,15 @@ class RS_WeaponArchetypeService : Service
 			if (!h) return "";
 			if (intArg == 1) return h.mBridgeHasOff  ? h.mBridgeArcheOff  : "";
 			return h.mBridgeHasMain ? h.mBridgeArcheMain : "";
+		}
+
+		if (request == "weapon.muzzle.hand")
+		{
+			if (!h) return "";
+			bool has = (intArg == 1) ? h.mBridgeHasOff : h.mBridgeHasMain;
+			if (!has) return "";
+			string arche = (intArg == 1) ? h.mBridgeArcheOff : h.mBridgeArcheMain;
+			return String.Format("%.2f", MS_EffectRelocator.FamilyMuzzle(arche) + MS_EffectRelocator.MuzzleTrim());
 		}
 
 		if (request == "weapon.donor")

@@ -125,17 +125,25 @@ Checked against the source of about twenty mods before shipping. The only rows i
 removes are abstract bases, helpers and that rocket. List Unbound Weapons shows them all
 again.
 
-### Project Brutality in the off hand
+### Project Brutality in VR: both hands, and effects off the gun
 
 A VR engine can move any weapon between hands, and ModelSwapper never stops it. Project
 Brutality's weapon code, though, asks for the main-hand sprite layer everywhere. While a
 gun moves to the off hand the main hand is briefly empty, the engine answers null, and
 eleven of PB's lookups use that answer unchecked, so a move occasionally crashes the game.
 
-`tools_make_pb_offhand_patch.py` fixes that at the source without touching either engine.
+PB also builds its casings, gun smoke and muzzle sparks at the eye, turned by the head,
+with desktop screen corrections on top. In a headset that is your face, whichever hand
+fires.
+
+`tools_make_pb_offhand_patch.py` fixes both at the source without touching either engine.
 From your own copy of Project Brutality 0.4.1 it rewrites those lookups to ask for the
-hand the gun is actually in and to check for null, and writes
-`PB-0.4.1-VR-Offhand-Patch.pk3`. Load it after PB. A later archive replaces an included
+hand the gun is actually in and to check for null. When VR is driving the attack, it also
+builds casings, smoke and sparks from that hand, turned by its aim: smoke and sparks at the
+muzzle, casings at the ejection port, keeping PB's own ejection velocity. Without VR,
+PB's original code runs unchanged. The muzzle distance comes from ModelSwapper's service
+(`weapon.muzzle.hand`, looked up by name), with an average barrel assumed when ModelSwapper
+is not loaded. The script writes `PB-0.4.1-VR-Offhand-Patch.pk3`. Load it after PB. A later archive replaces an included
 script by carrying the same path, so it works on Quest too. No PB code is committed here:
 the script edits your copy, refuses any file but 0.4.1's by hash, and fails if an edit
 does not match exactly.
