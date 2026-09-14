@@ -143,7 +143,8 @@ class RS_ForeignShelf
 		// default in their families. See RS_ForeignAddon.
 		Array<string> addon;
 		RS_ForeignAddon.Rows("shelf", addon);
-		for (int i = 0; i < addon.Size() + SHELF.Size(); ++i)
+		int total = addon.Size() + SHELF.Size();
+		for (int i = 0; i < total; ++i)
 		{
 			string row = (i < addon.Size()) ? addon[i] : SHELF[i - addon.Size()];
 			// Drop any row whose donor class is not loaded. A MODELDEF block
